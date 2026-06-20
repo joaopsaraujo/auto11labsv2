@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto11Labs — Gerador de Áudios com IA</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+:root{--bg:#0a0a0a;--surface:#141414;--surface2:#1e1e1e;--border:#272727;--accent:#7c5cfc;--accent2:#a78bfa;--accent-glow:rgba(124,92,252,.12);--text:#f0f0f0;--muted:#5a5a5a;--muted2:#888;--success:#22c55e;--error:#ef4444;--warning:#f59e0b;--gold:#f59e0b}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh}
+.screen{display:none;min-height:100vh}.screen.active{display:flex}
+
+/* LOGIN */
+#screenLogin{align-items:center;justify-content:center;padding:24px;flex-direction:column}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 36px;width:100%;max-width:420px}
+.brand{text-align:center;margin-bottom:32px}
+.brand-icon{width:56px;height:56px;background:linear-gradient(135deg,#7c5cfc,#a78bfa);border-radius:16px;display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:14px}
+.brand h1{font-size:22px;font-weight:800;letter-spacing:-.5px}.brand p{color:var(--muted2);font-size:13px;margin-top:4px}
+.tab-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px;margin-bottom:24px}
+.tab-btn{flex:1;padding:8px;border:none;border-radius:7px;background:transparent;color:var(--muted2);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.tab-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+label{display:block;font-size:13px;font-weight:500;color:var(--muted2);margin-bottom:6px}
+input[type=email],input[type=password],input[type=text]{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;font-family:'Inter',sans-serif;margin-bottom:14px}
+input:focus{border-color:var(--accent)}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-primary{background:var(--accent);color:#fff;margin-top:4px}
+.btn-primary:hover:not(:disabled){background:#6a4de0;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.err-msg{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#fca5a5;margin-top:12px;display:none}
+.form-section{display:none}.form-section.active{display:block}
+
+/* APP */
+#screenApp{flex-direction:column}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10}
+.topbar-brand{display:flex;align-items:center;gap:10px}
+.topbar-icon{width:32px;height:32px;background:linear-gradient(135deg,#7c5cfc,#a78bfa);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.topbar-name{font-size:15px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.plano-badge{padding:4px 12px;border-radius:999px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.plano-gratuito{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
+.plano-pago{background:rgba(124,92,252,.15);color:var(--accent2);border:1px solid rgba(124,92,252,.3)}
+.plano-vitalicio{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.3)}
+.btn-icon{background:none;border:1px solid var(--border);color:var(--muted2);padding:6px 12px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s}
+.btn-icon:hover{color:var(--text);border-color:var(--muted2)}
+.app-body{display:flex;flex-direction:column;align-items:center;padding:32px 16px 80px;gap:16px}
+.banner-upgrade{width:100%;max-width:680px;background:linear-gradient(135deg,rgba(124,92,252,.15),rgba(167,139,250,.08));border:1px solid rgba(124,92,252,.3);border-radius:16px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.banner-upgrade.hidden{display:none}
+.banner-text h3{font-size:15px;font-weight:700;margin-bottom:4px}.banner-text p{font-size:13px;color:var(--muted2)}
+.banner-btns{display:flex;gap:8px;flex-wrap:wrap}
+.btn-upgrade{padding:9px 18px;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-upgrade-mensal{background:var(--accent);color:#fff}.btn-upgrade-mensal:hover{background:#6a4de0}
+.btn-upgrade-vitalicio{background:rgba(245,158,11,.15);color:var(--gold);border:1px solid rgba(245,158,11,.3)}.btn-upgrade-vitalicio:hover{background:rgba(245,158,11,.25)}
+.uso-card{width:100%;max-width:680px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;font-size:13px}
+.uso-card.hidden{display:none}
+.uso-label{color:var(--muted2)}.uso-valor{font-weight:600;font-family:'JetBrains Mono',monospace}
+.uso-bar-bg{height:4px;background:var(--border);border-radius:999px;flex:1;margin:0 16px}
+.uso-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s}.uso-bar-fill.danger{background:var(--error)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:680px}
+.card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:18px}
+.field{margin-bottom:18px}.field:last-child{margin-bottom:0}
+.field label{margin-bottom:6px}
+.field input{margin-bottom:0}
+.input-wrap{position:relative}
+.input-wrap input{padding-right:40px;margin-bottom:0}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px}
+.voice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.voice-card{background:var(--bg);border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;position:relative}
+.voice-card:hover{border-color:var(--accent)}.voice-card.selected{border-color:var(--accent);background:var(--accent-glow)}
+.voice-card input[type=radio]{position:absolute;opacity:0;width:0;height:0}
+.voice-flag{font-size:22px;margin-bottom:6px}.voice-name{font-size:13px;font-weight:600}.voice-lang{font-size:11px;color:var(--muted);margin-top:2px}
+.check-dot{width:18px;height:18px;border:2px solid var(--border);border-radius:50%;position:absolute;top:12px;right:12px;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.voice-card.selected .check-dot{background:var(--accent);border-color:var(--accent)}.voice-card.selected .check-dot::after{content:'';width:6px;height:6px;background:#fff;border-radius:50%}
+.mode-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px}
+.mode-btn{flex:1;padding:8px;border:none;border-radius:6px;background:transparent;color:var(--muted2);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.mode-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.upload-area{border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-area:hover,.upload-area.dragover{border-color:var(--accent);background:var(--accent-glow)}
+.upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:28px;margin-bottom:8px}.upload-text{font-size:13px;font-weight:500}.upload-hint{font-size:11px;color:var(--muted);margin-top:4px}
+.upload-name{font-size:12px;color:var(--accent);font-family:'JetBrains Mono',monospace;margin-top:6px;display:none}
+textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;resize:vertical;min-height:130px;outline:none;transition:border-color .2s;line-height:1.6}
+textarea:focus{border-color:var(--accent)}
+.textarea-hint{font-size:11px;color:var(--muted);margin-top:6px}
+.btn-generate{width:100%;max-width:680px;padding:16px;background:var(--accent);border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:700;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Inter',sans-serif}
+.btn-generate:hover:not(:disabled){background:#6a4de0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,92,252,.3)}
+.btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.progress-card{display:none;width:100%;max-width:680px}.progress-card.visible{display:block}
+.progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.progress-label{font-size:13px;font-weight:500}.progress-count{font-size:12px;color:var(--muted2);font-family:'JetBrains Mono',monospace}
+.progress-bar-bg{height:5px;background:var(--border);border-radius:999px;overflow:hidden;margin-bottom:14px}
+.progress-bar-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .3s;width:0}
+.log-area{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;max-height:220px;overflow-y:auto;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8}
+.log-line{color:var(--muted2)}.log-line.ok{color:var(--success)}.log-line.err{color:var(--error)}.log-line.info{color:var(--accent2)}.log-line.warn{color:var(--warning)}
+.btn-download{width:100%;padding:14px;background:var(--success);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;display:none;align-items:center;justify-content:center;gap:8px;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-download:hover{background:#16a34a}.btn-download.visible{display:flex}
+.info-tip{background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.2);border-radius:8px;padding:9px 13px;font-size:12px;color:#a78bfa;margin-top:8px;line-height:1.5}
+
+/* NOMES */
+.nomes-mode{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:3px;gap:3px;margin-bottom:14px}
+.nomes-mode-btn{flex:1;padding:7px;border:none;border-radius:6px;background:transparent;color:var(--muted2);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.nomes-mode-btn.active{background:var(--surface);color:var(--text);border:1px solid var(--border)}
+.nomes-lista{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
+.nome-item{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px}
+.nome-num{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;min-width:26px}
+.nome-input{flex:1;background:transparent;border:none;color:var(--text);font-size:13px;outline:none;font-family:'Inter',sans-serif}
+.nome-input::placeholder{color:var(--muted)}
+.nomes-hint{font-size:11px;color:var(--muted);margin-top:8px}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-overlay.visible{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px;width:100%;max-width:440px}
+.modal h2{font-size:20px;font-weight:800;margin-bottom:8px}.modal p{font-size:13px;color:var(--muted2);margin-bottom:24px;line-height:1.5}
+.planos-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:20px}
+.plano-card{background:var(--bg);border:2px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;position:relative}
+.plano-card:hover{border-color:var(--accent)}.plano-card.selected{border-color:var(--accent);background:var(--accent-glow)}
+.plano-tag{position:absolute;top:12px;right:12px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.tag-popular{background:rgba(124,92,252,.2);color:var(--accent2)}.tag-melhor{background:rgba(245,158,11,.15);color:var(--gold)}
+.plano-nome{font-size:15px;font-weight:700;margin-bottom:4px}.plano-preco{font-size:22px;font-weight:800;color:var(--accent)}.plano-desc{font-size:12px;color:var(--muted2);margin-top:4px}
+.btn-pagar{width:100%;padding:14px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn-pagar:hover{background:#6a4de0}
+.btn-fechar-modal{width:100%;padding:10px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted2);font-size:13px;cursor:pointer;margin-top:8px;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-fechar-modal:hover{color:var(--text)}
+.modal-sucesso{text-align:center}.modal-sucesso .icone{font-size:48px;margin-bottom:16px}.modal-sucesso h2{color:var(--success)}
+
+/* ADMIN */
+#screenAdmin{flex-direction:column}
+.admin-body{display:flex;flex-direction:column;align-items:center;padding:32px 16px 80px;gap:16px}
+.admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:900px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.stat-num{font-size:28px;font-weight:800;color:var(--accent)}.stat-label{font-size:12px;color:var(--muted2);margin-top:4px}
+.users-table{width:100%;max-width:900px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.table-header{padding:16px 20px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+th{padding:12px 16px;text-align:left;font-size:11px;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.badge{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.badge-gratuito{background:var(--surface2);color:var(--muted2);border:1px solid var(--border)}
+.badge-mensal{background:rgba(124,92,252,.15);color:var(--accent2);border:1px solid rgba(124,92,252,.3)}
+.badge-vitalicio{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.3)}
+.action-btns{display:flex;gap:6px}
+.btn-sm{padding:5px 10px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
+.btn-sm-accent{background:rgba(124,92,252,.15);color:var(--accent2)}.btn-sm-accent:hover{background:rgba(124,92,252,.3)}
+.btn-sm-gold{background:rgba(245,158,11,.12);color:var(--gold)}.btn-sm-gold:hover{background:rgba(245,158,11,.25)}
+.btn-sm-danger{background:rgba(239,68,68,.1);color:#fca5a5}.btn-sm-danger:hover{background:rgba(239,68,68,.2)}
+.btn-sm-success{background:rgba(34,197,94,.1);color:var(--success)}.btn-sm-success:hover{background:rgba(34,197,94,.2)}
+.search-bar{width:100%;max-width:900px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;font-family:'Inter',sans-serif}
+.search-bar:focus{border-color:var(--accent)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screenLogin" class="screen active">
+  <div class="login-box">
+    <div class="brand">
+      <div class="brand-icon">🎙️</div>
+      <h1>Auto11Labs</h1>
+      <p>Gerador de áudios com IA</p>
+    </div>
+    <div class="tab-toggle">
+      <button class="tab-btn active" onclick="setTab('login',this)">Entrar</button>
+      <button class="tab-btn" onclick="setTab('cadastro',this)">Criar conta</button>
+    </div>
+
+    <!-- Login -->
+    <div class="form-section active" id="formLogin">
+      <div class="field"><label>E-mail</label><input type="email" id="loginEmail" placeholder="voce@email.com" onkeydown="if(event.key==='Enter')login()"></div>
+      <div class="field"><label>Senha</label><input type="password" id="loginSenha" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()"></div>
+      <button class="btn btn-primary" onclick="login()" id="btnLogin">Entrar →</button>
+      <div class="err-msg" id="errLogin"></div>
+    </div>
+
+    <!-- Cadastro -->
+    <div class="form-section" id="formCadastro">
+      <div class="field"><label>E-mail</label><input type="email" id="cadEmail" placeholder="voce@email.com"></div>
+      <div class="field"><label>Senha</label><input type="password" id="cadSenha" placeholder="Mínimo 6 caracteres"></div>
+      <div class="field"><label>Confirmar senha</label><input type="password" id="cadSenha2" placeholder="Repita a senha" onkeydown="if(event.key==='Enter')cadastrar()"></div>
+      <button class="btn btn-primary" onclick="cadastrar()" id="btnCadastrar">Criar conta →</button>
+      <div class="err-msg" id="errCadastro"></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screenApp" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">🎙️</div>
+      <span class="topbar-name">Auto11Labs</span>
+    </div>
+    <div class="topbar-right">
+      <span class="plano-badge" id="planoBadge">Gratuito</span>
+      <button class="btn-icon" onclick="irParaVideoMix()">🎬 VideoMix</button>
+      <button class="btn-icon" id="btnAdmin" onclick="irParaAdmin()" style="display:none">⚙️ Admin</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="banner-upgrade" id="bannerUpgrade">
+      <div class="banner-text">
+        <h3>🚀 Remova o limite de áudios</h3>
+        <p>Plano gratuito: 10 áudios/mês. Faça upgrade para ilimitado.</p>
+      </div>
+      <div class="banner-btns">
+        <button class="btn-upgrade btn-upgrade-mensal" onclick="abrirModal('mensal')">2 meses — R$44,90</button>
+        <button class="btn-upgrade btn-upgrade-vitalicio" onclick="abrirModal('vitalicio')">Vitalício — R$198,90</button>
+      </div>
+    </div>
+
+    <div class="uso-card" id="usoCard">
+      <span class="uso-label">Áudios este mês</span>
+      <div class="uso-bar-bg"><div class="uso-bar-fill" id="usoBarFill"></div></div>
+      <span class="uso-valor" id="usoValor">0 / 10</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 Configuração</div>
+      <div class="field">
+        <label>API Key do ElevenLabs</label>
+        <div class="input-wrap">
+          <input type="password" id="apiKey" placeholder="sk_..." autocomplete="off">
+          <button class="eye-btn" onclick="toggleKey()">👁️</button>
+        </div>
+        <div class="info-tip">Sua key fica só no seu navegador — não é enviada para nenhum servidor nosso.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎤 Voz</div>
+      <div class="voice-grid">
+        <div class="voice-card selected" onclick="selectVoice(this,'ewn5JTa3lNPY8QVuZJi6')">
+          <input type="radio" name="voice" checked>
+          <div class="voice-flag">🇲🇽</div>
+          <div class="voice-name">Voz Feminina</div>
+          <div class="voice-lang">Español · México</div>
+          <div class="check-dot"></div>
+        </div>
+        <div class="voice-card" onclick="selectVoice(this,'83Nae6GFQiNslSbuzmE7')">
+          <input type="radio" name="voice">
+          <div class="voice-flag">🇧🇷</div>
+          <div class="voice-name">Eduardo Monteiro</div>
+          <div class="voice-lang">Português · Brasil</div>
+          <div class="check-dot"></div>
+        </div>
+      </div>
+      <div class="field" style="margin-top:14px">
+        <label>Voz personalizada (ID opcional)</label>
+        <input type="text" id="customVoiceId" placeholder="ID da voz do ElevenLabs">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📄 Textos</div>
+      <div class="field">
+        <div class="mode-toggle">
+          <button class="mode-btn active" onclick="setMode('text',this)">✏️ Colar texto</button>
+          <button class="mode-btn" onclick="setMode('file',this)">📁 Upload .docx / .txt</button>
+        </div>
+      </div>
+      <div id="modeText">
+        <div class="field">
+          <label>Cole os textos abaixo</label>
+          <textarea id="textoInput" placeholder="Texto 1&#10;&#10;---&#10;&#10;Texto 2&#10;&#10;---&#10;&#10;Texto 3"></textarea>
+          <div class="textarea-hint">Separe cada criativo com <strong>---</strong> em linha própria, ou um por linha.</div>
+        </div>
+      </div>
+      <div id="modeFile" style="display:none">
+        <div class="field">
+          <div class="upload-area" id="uploadArea">
+            <input type="file" id="fileInput" accept=".txt,.docx" onchange="handleFile(this)">
+            <div class="upload-icon">📂</div>
+            <div class="upload-text">Clique ou arraste o arquivo</div>
+            <div class="upload-hint">.txt ou .docx · Separado por --- ou por linha</div>
+            <div class="upload-name" id="uploadName"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Idioma para filtrar do .docx</label>
+          <div class="mode-toggle">
+            <button class="mode-btn active" onclick="setLang('pt',this)" id="langPT">🇧🇷 Português</button>
+            <button class="mode-btn" onclick="setLang('es',this)" id="langES">🇲🇽 Español</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏷️ Nomes dos Áudios</div>
+      <div class="nomes-mode">
+        <button class="nomes-mode-btn active" onclick="setNomeMode('auto',this)">✨ Automático</button>
+        <button class="nomes-mode-btn" onclick="setNomeMode('manual',this)">✏️ Editar nomes</button>
+        <button class="nomes-mode-btn" onclick="setNomeMode('numerado',this)">🔢 Numerado</button>
+      </div>
+      <div id="nomesAuto" style="display:block">
+        <div class="nomes-hint">Os nomes serão gerados automaticamente com as primeiras palavras de cada texto.</div>
+      </div>
+      <div id="nomesManual" style="display:none">
+        <div class="nomes-lista" id="nomesLista"></div>
+        <div class="nomes-hint">Edite o nome de cada áudio. Deixe em branco para usar o automático.</div>
+      </div>
+      <div id="nomesNumerado" style="display:none">
+        <div class="nomes-hint">Os arquivos serão nomeados como: 001.mp3, 002.mp3, 003.mp3...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💾 Download</div>
+      <div class="field">
+        <label>Nome do arquivo ZIP</label>
+        <input type="text" id="zipName" value="audios_gerados" placeholder="audios_gerados">
+      </div>
+    </div>
+
+    <button class="btn-generate" id="btnGerar" onclick="iniciarGeracao()">🎙️ Gerar Áudios</button>
+
+    <div class="progress-card card" id="progressCard">
+      <div class="progress-header">
+        <span class="progress-label" id="progressLabel">Gerando...</span>
+        <span class="progress-count" id="progressCount">0 / 0</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <div class="log-area" id="logArea"></div>
+      <button class="btn-download" id="btnDownload" onclick="baixarZip()">⬇️ Baixar ZIP</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="screenAdmin" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">⚙️</div>
+      <span class="topbar-name">Painel Admin</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-icon" onclick="irParaApp()">← Voltar ao app</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <div class="admin-stats">
+      <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Usuários total</div></div>
+      <div class="stat-card"><div class="stat-num" id="statPagos">0</div><div class="stat-label">Planos pagos</div></div>
+      <div class="stat-card"><div class="stat-num" id="statAudios">0</div><div class="stat-label">Áudios este mês</div></div>
+    </div>
+
+    <input type="text" class="search-bar" placeholder="🔍 Buscar por email..." oninput="filtrarUsers(this.value)">
+
+    <div class="users-table">
+      <div class="table-header">Usuários</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Plano</th>
+            <th>Áudios/mês</th>
+            <th>Cadastro</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEOMIX -->
+<div id="screenVideoMix" class="screen" style="flex-direction:column">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:linear-gradient(135deg,#22c55e,#16a34a)">🎬</div>
+      <span class="topbar-name">VideoMix</span>
+      <span style="font-size:11px;color:var(--muted2);margin-left:4px">Editor de Criativos</span>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:12px;color:var(--muted2)" id="vmStatus">Pronto</span>
+      <button class="btn-icon" onclick="irParaApp()">← Voltar</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <style>
+  .vm-layout{display:grid;grid-template-columns:260px 1fr 220px;height:calc(100vh - 57px);overflow:hidden}
+  .vm-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+  .vm-panel-right{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
+  .vm-panel-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .vm-upload-zone{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;position:relative;transition:all .2s}
+  .vm-upload-zone:hover{border-color:var(--accent);background:rgba(124,92,252,.06)}
+  .vm-clip-item{background:var(--surface2);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s;position:relative}
+  .vm-clip-item:hover{border-color:var(--accent)!important}
+  .vm-clip-item.vm-selected{border-color:var(--accent)!important;background:rgba(124,92,252,.08)!important}
+
+  /* TIMELINE */
+  .vm-timeline-wrap{position:relative;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;user-select:none}
+  .vm-tl-ruler{height:18px;background:var(--surface2);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+  .vm-tl-ruler-mark{position:absolute;top:0;height:100%;display:flex;align-items:center;font-size:9px;color:var(--muted);padding-left:3px;border-left:1px solid var(--border)}
+  .vm-tl-track{height:52px;position:relative;display:flex;gap:3px;padding:6px;align-items:center;overflow-x:auto;min-width:100%}
+  .vm-tl-clip{height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;cursor:pointer;position:relative;flex-shrink:0;overflow:hidden;transition:box-shadow .15s}
+  .vm-tl-clip:hover{box-shadow:0 0 0 2px var(--accent)}
+  .vm-tl-clip.vm-tl-selected{box-shadow:0 0 0 2px var(--accent)}
+  .vm-tl-clip.vm-tl-pinned{box-shadow:0 0 0 2px var(--warning)}
+
+  /* HANDLE DE CORTE */
+  .vm-handle{position:absolute;top:0;bottom:0;width:8px;background:rgba(255,255,255,.9);cursor:col-resize;z-index:5;display:flex;align-items:center;justify-content:center;border-radius:2px}
+  .vm-handle-left{left:0;border-radius:4px 0 0 4px}
+  .vm-handle-right{right:0;border-radius:0 4px 4px 0}
+  .vm-handle::after{content:'';width:2px;height:14px;background:rgba(0,0,0,.4);border-radius:999px}
+
+  /* PLAYHEAD */
+  .vm-playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--error);pointer-events:none;z-index:10}
+  .vm-playhead::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:var(--error);border-radius:50%}
+
+  .vm-audio-track{height:28px;position:relative;display:flex;align-items:center;padding:0 6px;gap:6px;overflow-x:auto}
+  .vm-audio-slot{height:22px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;flex-shrink:0;white-space:nowrap}
+
+  /* PREVIEW */
+  .vm-preview-phone{width:140px;height:248px;background:#111;border-radius:18px;border:2px solid var(--border);overflow:hidden;box-shadow:0 0 40px rgba(34,197,94,.12)}
+
+  .vm-prop-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px}
+  .vm-prop-label{color:var(--muted2);font-size:11px}
+  </style>
+
+  <div class="vm-layout">
+
+    <!-- ESQUERDA -->
+    <div class="vm-panel">
+      <div style="padding:14px;border-bottom:1px solid var(--border)">
+        <div class="vm-panel-title">🎥 Clipes <span id="vmClipCount" style="font-weight:400">0</span></div>
+        <div class="vm-upload-zone">
+          <input type="file" id="vmInputClipes" accept="video/mp4" multiple onchange="vmAdicionarClipes(this.files)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+          <div style="font-size:20px;margin-bottom:4px">📁</div>
+          <div style="font-size:11px;color:var(--muted2)">Arraste <strong style="color:var(--accent2)">.mp4</strong> aqui</div>
+        </div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:5px" id="vmClipsList">
+        <div style="text-align:center;padding:20px;color:var(--muted);font-size:11px">Adicione clipes .mp4</div>
+      </div>
+
+      <!-- Áudio pasta -->
+      <div style="padding:14px;border-top:1px solid var(--border)">
+        <div class="vm-panel-title">🎵 Pasta de Áudios</div>
+        <div style="position:relative;padding:10px;background:rgba(34,197,94,.08);border:1px dashed rgba(34,197,94,.4);border-radius:8px;text-align:center;cursor:pointer;font-size:11px;color:var(--success)">
+          <input type="file" id="vmInputAudios" accept="audio/mp3,audio/mpeg" multiple onchange="vmAdicionarAudios(this.files)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+          📂 Selecionar áudios .mp3
+        </div>
+        <div id="vmAudioCount" style="font-size:11px;color:var(--muted2);margin-top:6px;display:none"></div>
+      </div>
+    </div>
+
+    <!-- CENTRO -->
+    <div style="display:flex;flex-direction:column;overflow:hidden">
+
+      <!-- Preview -->
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#050505;position:relative;gap:24px">
+        <div class="vm-preview-phone">
+          <video id="vmPreviewVideo" style="width:100%;height:100%;object-fit:cover;display:none" playsinline></video>
+          <div id="vmPreviewPlaceholder" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:6px">
+            <span style="font-size:24px">📱</span>
+            <span style="font-size:10px">Preview 9:16</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button onclick="vmPreviewAnterior()" style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;color:var(--text);cursor:pointer;font-size:14px">⏮</button>
+          <button onclick="vmTogglePlay()" id="vmBtnPlay" style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;color:var(--text);cursor:pointer;font-size:14px">▶️</button>
+          <button onclick="vmPreviewProximo()" style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;color:var(--text);cursor:pointer;font-size:14px">⏭</button>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div style="border-top:1px solid var(--border);padding:14px;background:var(--surface)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">🎞 Timeline</span>
+          <span style="font-size:11px;color:var(--muted2)" id="vmTotalDur">0s total</span>
+        </div>
+
+        <!-- Track de vídeo -->
+        <div class="vm-timeline-wrap" id="vmTimelineWrap">
+          <div class="vm-tl-ruler" id="vmRuler"></div>
+          <div class="vm-tl-track" id="vmTlTrack">
+            <div style="color:var(--muted);font-size:11px;padding:8px">Adicione clipes</div>
+          </div>
+          <div class="vm-playhead" id="vmPlayhead" style="left:6px;display:none"></div>
+        </div>
+
+        <!-- Track de áudio -->
+        <div style="display:flex;gap:4px;align-items:center;margin-top:5px">
+          <span style="font-size:10px;color:var(--muted);min-width:30px">🎵</span>
+          <div class="vm-audio-track" id="vmAudioTrack" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px">
+            <div style="color:var(--muted);font-size:10px;padding:4px">Selecione áudios na pasta acima</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIREITA -->
+    <div class="vm-panel-right">
+
+      <!-- Clipe selecionado -->
+      <div style="padding:14px;border-bottom:1px solid var(--border)">
+        <div class="vm-panel-title">✂️ Clipe Selecionado</div>
+        <div id="vmPropEmpty" style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">Clique num clipe</div>
+        <div id="vmPropControls" style="display:none">
+          <div style="font-size:12px;color:var(--accent2);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500" id="vmPropNome"></div>
+          <div class="vm-prop-row">
+            <span class="vm-prop-label">Duração total</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)" id="vmPropDurTotal"></span>
+          </div>
+          <div class="vm-prop-row">
+            <span class="vm-prop-label">Trecho selecionado</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--success)" id="vmPropCorte"></span>
+          </div>
+          <div style="font-size:11px;color:var(--muted2);margin:10px 0 6px">Arraste as bordas ◀▶ do clipe na timeline para cortar</div>
+          <div class="vm-prop-row" style="margin-top:10px">
+            <span class="vm-prop-label">📌 Fixar posição</span>
+            <input type="checkbox" id="vmCheckPin" onchange="vmTogglePin()" style="cursor:pointer">
+          </div>
+          <input type="number" id="vmInputPinPos" min="1" placeholder="Posição (ex: 1)" disabled onchange="vmAtualizarPinPos()"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;margin-top:4px">
+          <button onclick="vmRemoverClipeSelecionado()" style="width:100%;padding:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#fca5a5;font-size:12px;cursor:pointer;margin-top:10px;font-family:'Inter',sans-serif">🗑 Remover clipe</button>
+        </div>
+      </div>
+
+      <!-- Config geração -->
+      <div style="padding:14px;border-bottom:1px solid var(--border)">
+        <div class="vm-panel-title">🎬 Geração</div>
+        <div class="vm-prop-row">
+          <span class="vm-prop-label">Qtd. de vídeos</span>
+          <input type="number" id="vmQtd" value="5" min="1" max="30" style="width:50px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--text);font-size:11px;outline:none;text-align:right;font-family:'JetBrains Mono',monospace">
+        </div>
+        <div style="margin-top:6px">
+          <div class="vm-prop-label" style="margin-bottom:4px">Nome base</div>
+          <input type="text" id="vmNomeBase" value="criativo" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;font-family:'Inter',sans-serif">
+        </div>
+      </div>
+
+      <!-- Botões -->
+      <div style="padding:14px;display:flex;flex-direction:column;gap:8px">
+        <button onclick="vmRandomizar()" id="vmBtnRandomizar" disabled style="width:100%;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;opacity:.4;transition:all .2s">
+          🔀 Randomizar Ordem
+        </button>
+        <button onclick="vmGerarVideos()" id="vmBtnGerar" disabled style="width:100%;padding:10px;background:var(--success);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;opacity:.4;transition:all .2s">
+          ⚡ Gerar Vídeos
+        </button>
+      </div>
+
+      <!-- Progresso -->
+      <div style="padding:0 14px 10px;display:none" id="vmProgressWrap">
+        <div style="height:4px;background:var(--border);border-radius:999px;overflow:hidden">
+          <div id="vmProgressFill" style="height:100%;background:var(--success);border-radius:999px;width:0;transition:width .3s"></div>
+        </div>
+        <div id="vmProgressText" style="font-size:10px;color:var(--muted2);margin-top:5px;font-family:'JetBrains Mono',monospace">Preparando...</div>
+      </div>
+
+      <!-- Outputs -->
+      <div style="padding:14px;flex:1">
+        <div class="vm-panel-title">📦 Gerados</div>
+        <div id="vmOutputList"><div style="font-size:11px;color:var(--muted);text-align:center">Aparecerão aqui</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PAGAMENTO -->
+<div class="modal-overlay" id="modalPagamento">
+  <div class="modal">
+    <h2>Fazer upgrade</h2>
+    <p>Escolha seu plano e tenha geração de áudios ilimitada.</p>
+    <div class="planos-grid">
+      <div class="plano-card selected" id="cardMensal" onclick="selecionarPlano('mensal')">
+        <span class="plano-tag tag-popular">Popular</span>
+        <div class="plano-nome">2 Meses</div>
+        <div class="plano-preco">R$ 44,90</div>
+        <div class="plano-desc">Acesso ilimitado por 60 dias</div>
+      </div>
+      <div class="plano-card" id="cardVitalicio" onclick="selecionarPlano('vitalicio')">
+        <span class="plano-tag tag-melhor">Melhor valor</span>
+        <div class="plano-nome">Vitalício</div>
+        <div class="plano-preco">R$ 198,90</div>
+        <div class="plano-desc">Pague uma vez, use para sempre</div>
+      </div>
+    </div>
+    <button class="btn-pagar" onclick="pagar()" id="btnPagar">Pagar agora →</button>
+    <button class="btn-fechar-modal" onclick="fecharModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL SUCESSO -->
+<div class="modal-overlay" id="modalSucesso">
+  <div class="modal modal-sucesso">
+    <div class="icone">🎉</div>
+    <h2>Pagamento aprovado!</h2>
+    <p style="margin-top:8px;margin-bottom:24px">Seu plano foi ativado. Aproveite a geração ilimitada!</p>
+    <button class="btn-pagar" onclick="fecharModalSucesso()">Começar a usar</button>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+const LIMITE_FREE = 10;
+const USER_KEY = 'a11_user';
+
+let user = null;
+let selectedVoiceId = 'ewn5JTa3lNPY8QVuZJi6';
+let currentMode = 'text';
+let currentLang = 'pt';
+let docxFile = null;
+let zipInstance = null;
+let audioFiles = [];
+let planoSelecionado = 'mensal';
+let todosUsers = [];
+let nomeMode = 'auto';
+let nomesCustom = [];
+
+// ── INIT ──────────────────────────────────────────────────
+window.onload = async () => {
+  const params = new URLSearchParams(location.search);
+  if (params.get('pagamento') === 'sucesso') {
+    const userId = params.get('user');
+    const plano = params.get('plano');
+    if (userId && plano) await fetch(`${API}/confirmar-pagamento?user=${userId}&plano=${plano}`);
+    history.replaceState({}, '', '/');
+  }
+
+  const saved = localStorage.getItem(USER_KEY);
+  if (saved) {
+    user = JSON.parse(saved);
+    if (params.get('pagamento') === 'sucesso') {
+      document.getElementById('modalSucesso').classList.add('visible');
+    }
+    mostrarApp();
+  }
+};
+
+// ── LOGIN / CADASTRO ──────────────────────────────────────
+function setTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('formLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('formCadastro').classList.toggle('active', tab === 'cadastro');
+  document.getElementById('errLogin').style.display = 'none';
+  document.getElementById('errCadastro').style.display = 'none';
+}
+
+async function login() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const senha = document.getElementById('loginSenha').value;
+  const errEl = document.getElementById('errLogin');
+  errEl.style.display = 'none';
+
+  if (!email || !senha) { errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true; btn.textContent = 'Entrando...';
+
+  try {
+    const r = await callApi('login', { email, senha });
+    if (r.ok) {
+      user = r.user;
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      mostrarApp();
+    } else {
+      errEl.textContent = r.erro || 'Erro ao entrar.';
+      errEl.style.display = 'block';
+    }
+  } catch { errEl.textContent = 'Erro de conexão.'; errEl.style.display = 'block'; }
+
+  btn.disabled = false; btn.textContent = 'Entrar →';
+}
+
+async function cadastrar() {
+  const email = document.getElementById('cadEmail').value.trim();
+  const senha = document.getElementById('cadSenha').value;
+  const senha2 = document.getElementById('cadSenha2').value;
+  const errEl = document.getElementById('errCadastro');
+  errEl.style.display = 'none';
+
+  if (!email || !senha) { errEl.textContent = 'Preencha todos os campos.'; errEl.style.display = 'block'; return; }
+  if (senha !== senha2) { errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return; }
+  if (senha.length < 6) { errEl.textContent = 'Senha deve ter pelo menos 6 caracteres.'; errEl.style.display = 'block'; return; }
+
+  const btn = document.getElementById('btnCadastrar');
+  btn.disabled = true; btn.textContent = 'Criando conta...';
+
+  try {
+    const r = await callApi('cadastrar', { email, senha });
+    if (r.ok) {
+      user = r.user;
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      mostrarApp();
+    } else {
+      errEl.textContent = r.erro || 'Erro ao criar conta.';
+      errEl.style.display = 'block';
+    }
+  } catch { errEl.textContent = 'Erro de conexão.'; errEl.style.display = 'block'; }
+
+  btn.disabled = false; btn.textContent = 'Criar conta →';
+}
+
+function sair() {
+  localStorage.removeItem(USER_KEY);
+  user = null;
+  document.getElementById('screenApp').classList.remove('active');
+  document.getElementById('screenAdmin').classList.remove('active');
+  document.getElementById('screenLogin').classList.add('active');
+}
+
+// ── NAVEGAÇÃO ─────────────────────────────────────────────
+function mostrarApp() {
+  document.getElementById('screenLogin').classList.remove('active');
+  document.getElementById('screenAdmin').classList.remove('active');
+  document.getElementById('screenApp').classList.add('active');
+  atualizarUI();
+}
+
+function irParaAdmin() {
+  document.getElementById('screenApp').classList.remove('active');
+  document.getElementById('screenAdmin').classList.add('active');
+  carregarAdmin();
+}
+
+function irParaApp() {
+  document.getElementById('screenAdmin').classList.remove('active');
+  document.getElementById('screenApp').classList.add('active');
+}
+
+function atualizarUI() {
+  if (!user) return;
+  const plano = user.plano || 'gratuito';
+  const badge = document.getElementById('planoBadge');
+  badge.textContent = plano === 'gratuito' ? 'Gratuito' : plano === 'mensal' ? '⭐ Pro' : '👑 Vitalício';
+  badge.className = 'plano-badge ' + (plano === 'gratuito' ? 'plano-gratuito' : plano === 'vitalicio' ? 'plano-vitalicio' : 'plano-pago');
+  document.getElementById('bannerUpgrade').classList.toggle('hidden', plano !== 'gratuito');
+  document.getElementById('btnAdmin').style.display = user.is_admin ? 'block' : 'none';
+
+  const usoCard = document.getElementById('usoCard');
+  if (plano === 'gratuito') {
+    usoCard.classList.remove('hidden');
+    const usado = user.audios_mes || 0;
+    const pct = Math.min((usado / LIMITE_FREE) * 100, 100);
+    document.getElementById('usoValor').textContent = `${usado} / ${LIMITE_FREE}`;
+    const fill = document.getElementById('usoBarFill');
+    fill.style.width = pct + '%';
+    fill.className = 'uso-bar-fill' + (pct >= 80 ? ' danger' : '');
+  } else {
+    usoCard.classList.add('hidden');
+  }
+}
+
+// ── ADMIN ─────────────────────────────────────────────────
+async function carregarAdmin() {
+  const r = await fetch(`${API}/admin/usuarios?admin_id=${user.id}`);
+  const data = await r.json();
+  if (!data.ok) return;
+
+  todosUsers = data.users;
+  renderUsers(todosUsers);
+
+  document.getElementById('statTotal').textContent = todosUsers.length;
+  document.getElementById('statPagos').textContent = todosUsers.filter(u => u.plano !== 'gratuito').length;
+  document.getElementById('statAudios').textContent = todosUsers.reduce((a, u) => a + (u.audios_mes || 0), 0);
+}
+
+function filtrarUsers(query) {
+  const filtrado = todosUsers.filter(u => u.email.toLowerCase().includes(query.toLowerCase()));
+  renderUsers(filtrado);
+}
+
+function renderUsers(users) {
+  const tbody = document.getElementById('usersTableBody');
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td>${u.email}</td>
+      <td><span class="badge badge-${u.plano}">${u.plano}</span></td>
+      <td>${u.audios_mes || 0}</td>
+      <td>${new Date(u.criado_em).toLocaleDateString('pt-BR')}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-sm btn-sm-accent" onclick="alterarPlano('${u.id}','mensal')">Pro</button>
+          <button class="btn-sm btn-sm-gold" onclick="alterarPlano('${u.id}','vitalicio')">Vitalício</button>
+          <button class="btn-sm btn-sm-danger" onclick="alterarPlano('${u.id}','gratuito')">Free</button>
+          <button class="btn-sm btn-sm-success" onclick="resetarUso('${u.id}')">Reset uso</button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function alterarPlano(userId, plano) {
+  await callApi('admin/alterar-plano', { admin_id: user.id, user_id: userId, plano });
+  carregarAdmin();
+}
+
+async function resetarUso(userId) {
+  await callApi('admin/resetar-uso', { admin_id: user.id, user_id: userId });
+  carregarAdmin();
+}
+
+// ── PAGAMENTO ─────────────────────────────────────────────
+function abrirModal(plano) {
+  planoSelecionado = plano || 'mensal';
+  document.getElementById('cardMensal').classList.toggle('selected', planoSelecionado === 'mensal');
+  document.getElementById('cardVitalicio').classList.toggle('selected', planoSelecionado === 'vitalicio');
+  document.getElementById('modalPagamento').classList.add('visible');
+}
+
+function fecharModal() { document.getElementById('modalPagamento').classList.remove('visible'); }
+
+function fecharModalSucesso() {
+  document.getElementById('modalSucesso').classList.remove('visible');
+  const saved = localStorage.getItem(USER_KEY);
+  if (saved) { user = JSON.parse(saved); atualizarUI(); }
+}
+
+function selecionarPlano(plano) {
+  planoSelecionado = plano;
+  document.getElementById('cardMensal').classList.toggle('selected', plano === 'mensal');
+  document.getElementById('cardVitalicio').classList.toggle('selected', plano === 'vitalicio');
+}
+
+async function pagar() {
+  const btn = document.getElementById('btnPagar');
+  btn.disabled = true; btn.textContent = 'Aguarde...';
+  try {
+    const r = await callApi('criar-pagamento', { user_id: user.id, plano: planoSelecionado });
+    if (r.ok && r.url) window.location.href = r.url;
+    else alert(r.erro || 'Erro ao criar pagamento.');
+  } catch { alert('Erro de conexão.'); }
+  btn.disabled = false; btn.textContent = 'Pagar agora →';
+}
+
+// ── GERAÇÃO ───────────────────────────────────────────────
+// ── NOMES ─────────────────────────────────────────────────
+function setNomeMode(mode, btn) {
+  nomeMode = mode;
+  document.querySelectorAll('.nomes-mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('nomesAuto').style.display = mode === 'auto' ? 'block' : 'none';
+  document.getElementById('nomesManual').style.display = mode === 'manual' ? 'block' : 'none';
+  document.getElementById('nomesNumerado').style.display = mode === 'numerado' ? 'block' : 'none';
+  if (mode === 'manual') renderNomesLista();
+}
+
+function gerarNomeAuto(texto, index) {
+  const palavras = texto.trim().split(/\s+/).slice(0, 5).join('_');
+  return palavras.replace(/[^a-zA-Z0-9_\u00C0-\u017E]/g, '').substring(0, 40) || `audio_${String(index+1).padStart(3,'0')}`;
+}
+
+function renderNomesLista() {
+  const lista = document.getElementById('nomesLista');
+  if (!nomesCustom.length) { lista.innerHTML = '<div style="color:var(--muted);font-size:13px">Gere os textos primeiro para editar os nomes.</div>'; return; }
+  lista.innerHTML = nomesCustom.map((item, i) => `
+    <div class="nome-item">
+      <span class="nome-num">${String(i+1).padStart(3,'0')}</span>
+      <input class="nome-input" type="text" value="${item.nome}" placeholder="${item.auto}"
+        onchange="nomesCustom[${i}].nome = this.value">
+    </div>
+  `).join('');
+}
+
+function getNomeArquivo(index, texto, zipName) {
+  if (nomeMode === 'numerado') return `${zipName}_${String(index+1).padStart(3,'0')}.mp3`;
+  if (nomeMode === 'manual' && nomesCustom[index]?.nome) return `${nomesCustom[index].nome}.mp3`;
+  return `${gerarNomeAuto(texto, index)}.mp3`;
+}
+
+function selectVoice(card, voiceId) {
+  document.querySelectorAll('.voice-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedVoiceId = voiceId;
+}
+
+function toggleKey() {
+  const el = document.getElementById('apiKey');
+  el.type = el.type === 'password' ? 'text' : 'password';
+}
+
+function setMode(mode, btn) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-toggle .mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('modeText').style.display = mode === 'text' ? 'block' : 'none';
+  document.getElementById('modeFile').style.display = mode === 'file' ? 'block' : 'none';
+}
+
+function setLang(lang, btn) {
+  currentLang = lang;
+  document.getElementById('langPT').classList.toggle('active', lang === 'pt');
+  document.getElementById('langES').classList.toggle('active', lang === 'es');
+}
+
+function handleFile(input) {
+  if (!input.files[0]) return;
+  docxFile = input.files[0];
+  const el = document.getElementById('uploadName');
+  el.textContent = docxFile.name; el.style.display = 'block';
+}
+
+const uploadArea = document.getElementById('uploadArea');
+uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+uploadArea.addEventListener('drop', e => {
+  e.preventDefault(); uploadArea.classList.remove('dragover');
+  const f = e.dataTransfer.files[0];
+  if (f) { docxFile = f; const el = document.getElementById('uploadName'); el.textContent = f.name; el.style.display = 'block'; }
+});
+
+async function getTextos() {
+  if (currentMode === 'text') {
+    const raw = document.getElementById('textoInput').value.trim();
+    if (!raw) return [];
+    return raw.includes('---') ? raw.split(/\n---\n/).map(t => t.trim()).filter(Boolean) : raw.split(/\n/).map(t => t.trim()).filter(Boolean);
+  }
+  if (!docxFile) return [];
+  if (docxFile.name.endsWith('.txt')) {
+    const text = await docxFile.text();
+    return text.includes('---') ? text.split(/\n---\n/).map(t => t.trim()).filter(Boolean) : text.split(/\n/).map(t => t.trim()).filter(Boolean);
+  }
+  return await extrairDocx(docxFile, currentLang);
+}
+
+async function extrairDocx(file, lang) {
+  const JSZipLocal = new JSZip();
+  const zip = await JSZipLocal.loadAsync(file);
+  const xmlStr = await zip.file('word/document.xml').async('string');
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
+  const paras = xmlDoc.querySelectorAll('p');
+  const flag = lang === 'es' ? 'ESPAÑOL' : 'PORTUGUÊS';
+  const linhas = [];
+  paras.forEach(p => { const t = Array.from(p.querySelectorAll('t')).map(n => n.textContent).join('').trim(); if (t) linhas.push(t); });
+  const textos = []; let capturando = false, buffer = [];
+  for (const linha of linhas) {
+    if (linha.includes(flag)) { capturando = true; buffer = []; continue; }
+    if (capturando) {
+      if (linha.includes('🇲🇽') || linha.includes('🇧🇷') || linha.includes('CRIATIVO') || linha.includes('──')) {
+        if (buffer.length) { textos.push(buffer.join(' ').trim()); buffer = []; }
+        capturando = !(linha.includes('CRIATIVO') || linha.includes('──'));
+      } else if (linha) buffer.push(linha);
+    }
+  }
+  if (buffer.length) textos.push(buffer.join(' ').trim());
+  return textos;
+}
+
+function log(msg, tipo = '') {
+  const el = document.getElementById('logArea');
+  const line = document.createElement('div');
+  line.className = `log-line ${tipo}`; line.textContent = msg;
+  el.appendChild(line); el.scrollTop = el.scrollHeight;
+}
+
+function setProgress(atual, total) {
+  const pct = total > 0 ? (atual / total * 100).toFixed(1) : 0;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressCount').textContent = `${atual} / ${total}`;
+}
+
+async function iniciarGeracao() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const customId = document.getElementById('customVoiceId').value.trim();
+  const voiceId = customId || selectedVoiceId;
+  const zipName = document.getElementById('zipName').value.trim() || 'audios_gerados';
+
+  if (!apiKey) { alert('Coloque sua API Key do ElevenLabs.'); return; }
+
+  const textos = await getTextos();
+  if (!textos.length) { alert('Nenhum texto encontrado.'); return; }
+
+  // Prepara nomes customizados
+  nomesCustom = textos.map((t, i) => ({ auto: gerarNomeAuto(t, i), nome: gerarNomeAuto(t, i) }));
+  if (nomeMode === 'manual') renderNomesLista();
+
+  if (user.plano === 'gratuito') {
+    const disponiveis = LIMITE_FREE - (user.audios_mes || 0);
+    if (disponiveis <= 0) { abrirModal(); return; }
+    if (textos.length > disponiveis) {
+      if (!confirm(`Você tem ${disponiveis} áudio(s) disponíveis. Serão gerados apenas os primeiros ${disponiveis}. Continuar?`)) return;
+      textos.splice(disponiveis);
+    }
+  }
+
+  document.getElementById('btnGerar').disabled = true;
+  document.getElementById('logArea').innerHTML = '';
+  document.getElementById('progressCard').classList.add('visible');
+  document.getElementById('btnDownload').classList.remove('visible');
+  audioFiles = []; zipInstance = new JSZip();
+
+  log(`Iniciando geração de ${textos.length} áudios...`, 'info');
+  setProgress(0, textos.length);
+
+  let ok = 0, erros = 0;
+
+  for (let i = 0; i < textos.length; i++) {
+    const num = String(i + 1).padStart(3, '0');
+    const nomeArquivo = getNomeArquivo(i, textos[i], zipName);
+    document.getElementById('progressLabel').textContent = `Gerando ${num} de ${textos.length}...`;
+
+    try {
+      const reg = await callApi('registrar-audio', { user_id: user.id });
+      if (!reg.ok) { log(`[${num}] ✗ Limite atingido.`, 'warn'); abrirModal(); break; }
+
+      log(`[${num}] Gerando: ${nomeArquivo}`);
+
+      const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: textos[i], model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
+      });
+
+      if (!resp.ok) { const err = await resp.json().catch(() => ({})); throw new Error(err?.detail?.message || `HTTP ${resp.status}`); }
+
+      const blob = await resp.blob();
+      audioFiles.push({ name: nomeArquivo, blob });
+      zipInstance.file(nomeArquivo, blob);
+      ok++;
+      user.audios_mes = reg.audios_mes;
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+      atualizarUI();
+      log(`[${num}] ✓ ${nomeArquivo}`, 'ok');
+    } catch (e) { erros++; log(`[${num}] ✗ Erro: ${e.message}`, 'err'); }
+
+    setProgress(i + 1, textos.length);
+    await sleep(300);
+  }
+
+  document.getElementById('progressLabel').textContent = 'Concluído!';
+  log(`\nFinalizado: ${ok} gerados, ${erros} erros.`, ok > 0 ? 'info' : 'err');
+  if (ok > 0) { const btn = document.getElementById('btnDownload'); btn.classList.add('visible'); btn.textContent = `⬇️ Baixar ZIP — ${ok} áudios (${zipName}.zip)`; }
+  document.getElementById('btnGerar').disabled = false;
+}
+
+async function baixarZip() {
+  const zipName = document.getElementById('zipName').value.trim() || 'audios_gerados';
+  log('\nComprimindo ZIP...', 'info');
+  const blob = await zipInstance.generateAsync({ type: 'blob' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `${zipName}.zip`; a.click();
+  URL.revokeObjectURL(url);
+  log('ZIP baixado!', 'ok');
+}
+
+async function callApi(endpoint, body) {
+  const r = await fetch(`${API}/${endpoint}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  return r.json();
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// VIDEOMIX
+// ══════════════════════════════════════════════════════════
+let vmClipes = [];
+let vmSequencia = [];
+let vmAudios = [];
+let vmClipeSelecionado = null;
+let vmPreviewIdx = 0;
+let vmFfmpeg = null;
+let vmFfmpegOk = false;
+let vmDragHandle = null; // { clipId, tipo: 'left'|'right', startX, startVal }
+let vmPlayheadPos = 0;
+
+function irParaVideoMix() {
+  document.getElementById('screenApp').classList.remove('active');
+  document.getElementById('screenAdmin').classList.remove('active');
+  document.getElementById('screenVideoMix').classList.add('active');
+}
+
+function irParaApp() {
+  document.getElementById('screenAdmin').classList.remove('active');
+  document.getElementById('screenVideoMix').classList.remove('active');
+  document.getElementById('screenApp').classList.add('active');
+}
+
+function vmSetStatus(msg) {
+  const el = document.getElementById('vmStatus');
+  if (el) el.textContent = msg;
+}
+
+function vmFmt(s) {
+  if (!s && s !== 0) return '0s';
+  if (s < 60) return s.toFixed(1) + 's';
+  return Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
+}
+
+// ── FFMPEG ────────────────────────────────────────────────
+async function vmCarregarFFmpeg() {
+  if (vmFfmpegOk) return true;
+  vmSetStatus('Carregando FFmpeg...');
+  try {
+    if (!window.FFmpegWASM) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    }
+    const { FFmpeg } = window.FFmpegWASM;
+    vmFfmpeg = new FFmpeg();
+    vmFfmpeg.on('progress', ({ progress }) => {
+      document.getElementById('vmProgressFill').style.width = (progress * 100) + '%';
+    });
+    vmFfmpeg.on('log', ({ message }) => {
+      document.getElementById('vmProgressText').textContent = message.substring(0, 60);
+    });
+    await vmFfmpeg.load({ coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js' });
+    vmFfmpegOk = true;
+    vmSetStatus('Pronto');
+    return true;
+  } catch(e) {
+    vmSetStatus('Erro FFmpeg: ' + e.message);
+    return false;
+  }
+}
+
+// ── CLIPES ────────────────────────────────────────────────
+async function vmAdicionarClipes(files) {
+  for (const f of files) {
+    if (!f.type.includes('video')) continue;
+    const id = Date.now() + Math.random();
+    const url = URL.createObjectURL(f);
+    const dur = await vmGetDur(url);
+    vmClipes.push({ id, nome: f.name.replace(/\.mp4$/i,''), file: f, url, dur, start: 0, end: dur, pinned: false, pinPos: null });
+    vmSequencia.push(id);
+  }
+  vmRenderClipes();
+  vmRenderTimeline();
+  vmAtualizarBotoes();
+  document.getElementById('vmClipCount').textContent = vmClipes.length;
+}
+
+function vmGetDur(url) {
+  return new Promise(res => {
+    const v = document.createElement('video');
+    v.src = url;
+    v.onloadedmetadata = () => res(v.duration);
+    v.onerror = () => res(30);
+  });
+}
+
+// ── ÁUDIOS ────────────────────────────────────────────────
+function vmAdicionarAudios(files) {
+  vmAudios = Array.from(files).filter(f => f.type.includes('audio'));
+  const el = document.getElementById('vmAudioCount');
+  el.textContent = `${vmAudios.length} áudio(s) carregado(s)`;
+  el.style.display = 'block';
+  vmRenderAudioTrack();
+}
+
+function vmRenderAudioTrack() {
+  const track = document.getElementById('vmAudioTrack');
+  if (!vmAudios.length) {
+    track.innerHTML = '<div style="color:var(--muted);font-size:10px;padding:4px">Selecione áudios na pasta acima</div>';
+    return;
+  }
+  track.innerHTML = vmAudios.map((a, i) => `
+    <div class="vm-audio-slot" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--success);min-width:80px">
+      🎵 ${a.name.replace(/\.(mp3|wav)$/i,'').substring(0,12)}
+    </div>
+  `).join('');
+}
+
+// ── RENDER CLIPES LISTA ───────────────────────────────────
+function vmRenderClipes() {
+  const lista = document.getElementById('vmClipsList');
+  if (!vmClipes.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px">Adicione clipes .mp4</div>';
+    return;
+  }
+  lista.innerHTML = vmClipes.map(c => {
+    const sel = vmClipeSelecionado && String(vmClipeSelecionado.id) === String(c.id);
+    return `<div class="vm-clip-item ${sel ? 'vm-selected' : ''}" style="border:1px solid ${c.pinned ? 'var(--warning)' : sel ? 'var(--accent)' : 'var(--border)'}" onclick="vmSelecionarClipe('${c.id}')">
+      ${c.pinned ? `<span style="position:absolute;top:-3px;right:-3px;background:var(--warning);color:#000;font-size:9px;font-weight:700;padding:1px 4px;border-radius:999px">P${c.pinPos||'?'}</span>` : ''}
+      <div style="width:28px;height:42px;background:var(--border);border-radius:4px;overflow:hidden;flex-shrink:0">
+        <video src="${c.url}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.nome}</div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:2px;font-family:'JetBrains Mono',monospace">${vmFmt(c.start)}→${vmFmt(c.end)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── TIMELINE COM HANDLES ──────────────────────────────────
+const VM_PX_PER_SEC = 40; // pixels por segundo
+
+function vmRenderTimeline() {
+  const track = document.getElementById('vmTlTrack');
+  const playhead = document.getElementById('vmPlayhead');
+
+  if (!vmSequencia.length) {
+    track.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px">Adicione clipes</div>';
+    playhead.style.display = 'none';
+    document.getElementById('vmTotalDur').textContent = '0s total';
+    return;
+  }
+
+  playhead.style.display = 'block';
+
+  let total = 0;
+  let html = '';
+  for (let i = 0; i < vmSequencia.length; i++) {
+    const c = vmClipes.find(x => String(x.id) === String(vmSequencia[i]));
+    if (!c) continue;
+    const dur = c.end - c.start;
+    const w = Math.max(48, dur * VM_PX_PER_SEC);
+    total += dur;
+    const sel = vmClipeSelecionado && String(vmClipeSelecionado.id) === String(c.id);
+    const bgColor = c.pinned ? 'rgba(245,158,11,.18)' : 'rgba(124,92,252,.22)';
+    const borderColor = sel ? 'var(--accent)' : c.pinned ? 'var(--warning)' : 'rgba(124,92,252,.5)';
+    const textColor = c.pinned ? 'var(--warning)' : 'var(--accent2)';
+
+    html += `<div class="vm-tl-clip ${sel ? 'vm-tl-selected' : ''} ${c.pinned ? 'vm-tl-pinned' : ''}"
+      data-id="${c.id}"
+      style="width:${w}px;background:${bgColor};border:1px solid ${borderColor};color:${textColor}"
+      onclick="vmSelecionarClipe('${c.id}')">
+      ${c.pinned ? `<span style="position:absolute;top:2px;right:4px;font-size:9px">📌</span>` : ''}
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px;font-size:10px">${c.nome.substring(0,10)}</span>
+      <div class="vm-handle vm-handle-left" onmousedown="vmStartHandle(event,'${c.id}','left')" ontouchstart="vmStartHandleTouch(event,'${c.id}','left')"></div>
+      <div class="vm-handle vm-handle-right" onmousedown="vmStartHandle(event,'${c.id}','right')" ontouchstart="vmStartHandleTouch(event,'${c.id}','right')"></div>
+    </div>`;
+  }
+
+  track.innerHTML = html;
+  document.getElementById('vmTotalDur').textContent = vmFmt(total) + ' total';
+  vmRenderRuler(total);
+  vmAtualizarPlayhead();
+}
+
+function vmRenderRuler(total) {
+  const ruler = document.getElementById('vmRuler');
+  let html = '';
+  const step = total > 30 ? 10 : total > 10 ? 5 : 2;
+  for (let t = 0; t <= total; t += step) {
+    const left = 6 + t * VM_PX_PER_SEC;
+    html += `<div class="vm-tl-ruler-mark" style="left:${left}px">${t}s</div>`;
+  }
+  ruler.innerHTML = html;
+}
+
+function vmAtualizarPlayhead() {
+  const ph = document.getElementById('vmPlayhead');
+  ph.style.left = (6 + vmPlayheadPos * VM_PX_PER_SEC) + 'px';
+}
+
+// ── HANDLES DE CORTE ──────────────────────────────────────
+function vmStartHandle(e, id, tipo) {
+  e.stopPropagation();
+  e.preventDefault();
+  const c = vmClipes.find(x => String(x.id) === String(id));
+  if (!c) return;
+  vmClipeSelecionado = c;
+  vmDragHandle = { clipId: id, tipo, startX: e.clientX, startVal: tipo === 'left' ? c.start : c.end };
+  vmRenderClipes();
+  vmRenderTimeline();
+  vmMostrarProps();
+}
+
+function vmStartHandleTouch(e, id, tipo) {
+  e.stopPropagation();
+  const touch = e.touches[0];
+  const c = vmClipes.find(x => String(x.id) === String(id));
+  if (!c) return;
+  vmClipeSelecionado = c;
+  vmDragHandle = { clipId: id, tipo, startX: touch.clientX, startVal: tipo === 'left' ? c.start : c.end };
+  vmRenderClipes();
+  vmRenderTimeline();
+  vmMostrarProps();
+}
+
+document.addEventListener('mousemove', (e) => {
+  if (!vmDragHandle) return;
+  vmMoverHandle(e.clientX);
+});
+
+document.addEventListener('touchmove', (e) => {
+  if (!vmDragHandle) return;
+  vmMoverHandle(e.touches[0].clientX);
+}, { passive: true });
+
+document.addEventListener('mouseup', () => { vmDragHandle = null; });
+document.addEventListener('touchend', () => { vmDragHandle = null; });
+
+function vmMoverHandle(clientX) {
+  const { clipId, tipo, startX, startVal } = vmDragHandle;
+  const c = vmClipes.find(x => String(x.id) === String(clipId));
+  if (!c) return;
+
+  const delta = (clientX - startX) / VM_PX_PER_SEC;
+  const MINIMO = 0.5;
+
+  if (tipo === 'left') {
+    c.start = Math.max(0, Math.min(startVal + delta, c.end - MINIMO));
+  } else {
+    c.end = Math.min(c.dur, Math.max(startVal + delta, c.start + MINIMO));
+  }
+
+  vmRenderTimeline();
+  vmAtualizarProps();
+}
+
+// ── SELEÇÃO E PROPRIEDADES ────────────────────────────────
+function vmSelecionarClipe(id) {
+  vmClipeSelecionado = vmClipes.find(c => String(c.id) === String(id));
+  if (!vmClipeSelecionado) return;
+  vmPreviewClipe(vmClipeSelecionado);
+  vmMostrarProps();
+  vmRenderClipes();
+  vmRenderTimeline();
+}
+
+function vmMostrarProps() {
+  document.getElementById('vmPropEmpty').style.display = 'none';
+  document.getElementById('vmPropControls').style.display = 'block';
+  document.getElementById('vmCheckPin').checked = vmClipeSelecionado.pinned;
+  document.getElementById('vmInputPinPos').disabled = !vmClipeSelecionado.pinned;
+  document.getElementById('vmInputPinPos').value = vmClipeSelecionado.pinPos || '';
+  vmAtualizarProps();
+}
+
+function vmAtualizarProps() {
+  if (!vmClipeSelecionado) return;
+  document.getElementById('vmPropNome').textContent = vmClipeSelecionado.nome;
+  document.getElementById('vmPropDurTotal').textContent = vmFmt(vmClipeSelecionado.dur);
+  document.getElementById('vmPropCorte').textContent = vmFmt(vmClipeSelecionado.end - vmClipeSelecionado.start);
+}
+
+function vmTogglePin() {
+  if (!vmClipeSelecionado) return;
+  vmClipeSelecionado.pinned = document.getElementById('vmCheckPin').checked;
+  document.getElementById('vmInputPinPos').disabled = !vmClipeSelecionado.pinned;
+  if (!vmClipeSelecionado.pinned) vmClipeSelecionado.pinPos = null;
+  vmRenderClipes(); vmRenderTimeline();
+}
+
+function vmAtualizarPinPos() {
+  if (!vmClipeSelecionado) return;
+  vmClipeSelecionado.pinPos = parseInt(document.getElementById('vmInputPinPos').value) || null;
+  vmRenderClipes(); vmRenderTimeline();
+}
+
+function vmRemoverClipeSelecionado() {
+  if (!vmClipeSelecionado) return;
+  const id = vmClipeSelecionado.id;
+  vmClipes = vmClipes.filter(c => String(c.id) !== String(id));
+  vmSequencia = vmSequencia.filter(s => String(s) !== String(id));
+  vmClipeSelecionado = null;
+  document.getElementById('vmPropEmpty').style.display = 'block';
+  document.getElementById('vmPropControls').style.display = 'none';
+  vmRenderClipes(); vmRenderTimeline(); vmAtualizarBotoes();
+  document.getElementById('vmClipCount').textContent = vmClipes.length;
+}
+
+// ── PREVIEW ───────────────────────────────────────────────
+function vmPreviewClipe(c) {
+  const v = document.getElementById('vmPreviewVideo');
+  const ph = document.getElementById('vmPreviewPlaceholder');
+  v.src = c.url; v.currentTime = c.start;
+  v.style.display = 'block'; ph.style.display = 'none';
+}
+
+function vmTogglePlay() {
+  const v = document.getElementById('vmPreviewVideo');
+  if (v.paused) { v.play(); document.getElementById('vmBtnPlay').textContent = '⏸'; }
+  else { v.pause(); document.getElementById('vmBtnPlay').textContent = '▶️'; }
+}
+
+function vmPreviewAnterior() {
+  if (!vmSequencia.length) return;
+  vmPreviewIdx = (vmPreviewIdx - 1 + vmSequencia.length) % vmSequencia.length;
+  const c = vmClipes.find(x => String(x.id) === String(vmSequencia[vmPreviewIdx]));
+  if (c) vmPreviewClipe(c);
+}
+
+function vmPreviewProximo() {
+  if (!vmSequencia.length) return;
+  vmPreviewIdx = (vmPreviewIdx + 1) % vmSequencia.length;
+  const c = vmClipes.find(x => String(x.id) === String(vmSequencia[vmPreviewIdx]));
+  if (c) vmPreviewClipe(c);
+}
+
+// ── RANDOMIZAR ────────────────────────────────────────────
+function vmRandomizar() {
+  const fixados = vmClipes.filter(c => c.pinned && c.pinPos);
+  const livres = vmSequencia.filter(id => {
+    const c = vmClipes.find(x => String(x.id) === String(id));
+    return !c?.pinned;
+  });
+  for (let i = livres.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [livres[i], livres[j]] = [livres[j], livres[i]];
+  }
+  const nova = [...livres];
+  fixados.sort((a,b) => (a.pinPos||0) - (b.pinPos||0)).forEach(c => {
+    const pos = Math.min((c.pinPos || 1) - 1, nova.length);
+    nova.splice(pos, 0, c.id);
+  });
+  vmSequencia = nova;
+  vmRenderTimeline();
+  vmSetStatus('Randomizado!');
+}
+
+// ── GERAR VÍDEOS ──────────────────────────────────────────
+async function vmGerarVideos() {
+  if (!vmSequencia.length) { alert('Adicione clipes primeiro.'); return; }
+  const ok = await vmCarregarFFmpeg();
+  if (!ok) { alert('Erro ao carregar FFmpeg. Use Chrome e tente novamente.'); return; }
+
+  const qtd = parseInt(document.getElementById('vmQtd').value) || 1;
+  const nomeBase = document.getElementById('vmNomeBase').value.trim() || 'criativo';
+
+  document.getElementById('vmProgressWrap').style.display = 'block';
+  document.getElementById('vmBtnGerar').disabled = true;
+  document.getElementById('vmBtnRandomizar').disabled = true;
+  document.getElementById('vmOutputList').innerHTML = '';
+
+  // Embaralha áudios se houver
+  const audiosEmbaralhados = [...vmAudios].sort(() => Math.random() - 0.5);
+
+  for (let v = 0; v < qtd; v++) {
+    if (v > 0) vmRandomizar();
+    const nomeArquivo = `${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
+    const audioAtual = audiosEmbaralhados[v % Math.max(audiosEmbaralhados.length, 1)] || null;
+    vmSetStatus(`Gerando ${v+1}/${qtd}...`);
+    document.getElementById('vmProgressText').textContent = `Vídeo ${v+1} de ${qtd}`;
+    try {
+      const blob = await vmProcessar(nomeArquivo, audioAtual);
+      vmAdicionarOutput(nomeArquivo, blob, true);
+    } catch(e) {
+      console.error(e);
+      vmAdicionarOutput(nomeArquivo, null, false, e.message);
+    }
+    document.getElementById('vmProgressFill').style.width = ((v+1)/qtd*100) + '%';
+  }
+
+  vmSetStatus(`Concluído! ${qtd} vídeo(s) gerado(s).`);
+  document.getElementById('vmProgressText').textContent = 'Concluído!';
+  document.getElementById('vmBtnGerar').disabled = false;
+  document.getElementById('vmBtnRandomizar').disabled = false;
+  vmAtualizarBotoes();
+}
+
+async function vmProcessar(nomeOut, audioFile) {
+  const toUint8 = async (file) => new Uint8Array(await file.arrayBuffer());
+
+  const partes = [];
+  for (let i = 0; i < vmSequencia.length; i++) {
+    const c = vmClipes.find(x => String(x.id) === String(vmSequencia[i]));
+    if (!c) continue;
+    const fname = `c${i}.mp4`;
+    await vmFfmpeg.writeFile(fname, await toUint8(c.file));
+    partes.push({ fname, start: c.start, end: c.end });
+  }
+
+  let fc = '';
+  let ci = '';
+  const inputArgs = [];
+  for (let i = 0; i < partes.length; i++) {
+    const p = partes[i];
+    fc += `[${i}:v]trim=start=${p.start.toFixed(3)}:end=${p.end.toFixed(3)},setpts=PTS-STARTPTS,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1[v${i}];`;
+    fc += `[${i}:a]atrim=start=${p.start.toFixed(3)}:end=${p.end.toFixed(3)},asetpts=PTS-STARTPTS[a${i}];`;
+    ci += `[v${i}][a${i}]`;
+    inputArgs.push('-i', p.fname);
+  }
+  fc += `${ci}concat=n=${partes.length}:v=1:a=1[outv][outa]`;
+
+  const args = [...inputArgs];
+  if (audioFile) {
+    await vmFfmpeg.writeFile('aud.mp3', await toUint8(audioFile));
+    args.push('-i', 'aud.mp3');
+    fc += `;[outa]volume=0[silv];[${partes.length}:a]volume=1[audout]`;
+    args.push('-filter_complex', fc, '-map', '[outv]', '-map', '[audout]', '-shortest', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26', '-c:a', 'aac', '-b:a', '128k', nomeOut);
+  } else {
+    args.push('-filter_complex', fc, '-map', '[outv]', '-map', '[outa]', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26', '-c:a', 'aac', '-b:a', '128k', nomeOut);
+  }
+
+  await vmFfmpeg.exec(args);
+  const data = await vmFfmpeg.readFile(nomeOut);
+  const blob = new Blob([data.buffer], { type: 'video/mp4' });
+
+  for (const p of partes) { try { await vmFfmpeg.deleteFile(p.fname); } catch {} }
+  try { await vmFfmpeg.deleteFile(nomeOut); } catch {}
+  if (audioFile) { try { await vmFfmpeg.deleteFile('aud.mp3'); } catch {} }
+
+  return blob;
+}
+
+function vmAdicionarOutput(nome, blob, ok, errMsg) {
+  const list = document.getElementById('vmOutputList');
+  const empty = list.querySelector('div[style*="text-align:center"]');
+  if (empty) empty.remove();
+  const item = document.createElement('div');
+  item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:5px';
+  if (ok && blob) {
+    const url = URL.createObjectURL(blob);
+    item.innerHTML = `<div><div style="font-size:11px;font-weight:500">${nome}</div><div style="font-size:10px;color:var(--success)">✓ Pronto</div></div><a href="${url}" download="${nome}"><button style="background:none;border:none;color:var(--accent2);cursor:pointer;font-size:18px">⬇️</button></a>`;
+  } else {
+    item.innerHTML = `<div><div style="font-size:11px;font-weight:500">${nome}</div><div style="font-size:10px;color:var(--error)">✗ ${(errMsg||'Erro').substring(0,40)}</div></div>`;
+  }
+  list.appendChild(item);
+}
+
+function vmAtualizarBotoes() {
+  const tem = vmClipes.length > 0;
+  const br = document.getElementById('vmBtnRandomizar');
+  const bg = document.getElementById('vmBtnGerar');
+  if (br) { br.disabled = !tem; br.style.opacity = tem ? '1' : '.4'; }
+  if (bg) { bg.disabled = !tem; bg.style.opacity = tem ? '1' : '.4'; }
+}
+</script>
+</body>
+</html>
