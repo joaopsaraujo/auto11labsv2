@@ -297,6 +297,40 @@ input:focus{border-color:rgba(124,92,252,.5);box-shadow:0 0 0 3px rgba(124,92,25
 
 .app-body{display:flex;flex-direction:column;align-items:center;padding:28px 16px 80px;gap:14px}
 
+/* ── SIDEBAR (Notion/Claude style) ───────────────────────── */
+#appSidebar{
+  display:none;
+  position:fixed;top:0;left:0;bottom:0;width:248px;z-index:100;
+  flex-direction:column;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  padding:16px 12px;
+}
+body.has-sidebar #appSidebar{display:flex}
+body.has-sidebar .screen.active{margin-left:248px;min-height:100vh}
+@media (max-width:860px){
+  #appSidebar{width:72px;padding:16px 8px}
+  body.has-sidebar .screen.active{margin-left:72px}
+  #appSidebar .sidebar-label{display:none}
+}
+.sidebar-brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px;font-weight:700;font-size:15px;letter-spacing:-.2px}
+.sidebar-brand .topbar-icon{font-size:20px}
+.sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sidebar-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;cursor:pointer;
+  font-size:13.5px;font-weight:500;color:var(--muted2);
+  transition:all .15s;white-space:nowrap;overflow:hidden;
+}
+.sidebar-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+.sidebar-item.active{background:rgba(29,78,216,.14);color:var(--accent3)}
+.sidebar-item .sidebar-icon{font-size:16px;width:18px;text-align:center;flex-shrink:0}
+.sidebar-divider{height:1px;background:var(--border);margin:10px 4px}
+.sidebar-footer{display:flex;flex-direction:column;gap:6px;padding-top:10px;border-top:1px solid var(--border)}
+.sidebar-user{display:flex;flex-direction:column;gap:2px;padding:8px 10px}
+.sidebar-user-email{font-size:12px;font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-user-plano{font-size:11px;color:var(--muted2)}
+
 /* Banner upgrade — sem caixa, linha sutil */
 .banner-upgrade{
   width:100%;max-width:680px;
@@ -433,8 +467,15 @@ textarea:focus{border-color:var(--accent)}
 #screenAdmin{flex-direction:column}
 .admin-body{display:flex;flex-direction:column;align-items:center;padding:32px 16px 80px;gap:16px}
 .admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:900px}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
-.stat-num{font-size:28px;font-weight:800;color:var(--accent)}.stat-label{font-size:12px;color:var(--muted2);margin-top:4px}
+.stat-card{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.04);border-radius:0;padding:20px;text-align:center}
+.stat-num{font-size:28px;font-weight:800;color:var(--accent2)}.stat-label{font-size:12px;color:var(--muted2);margin-top:4px}
+.admin-tab{padding:8px 16px;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted2);font-size:13px;font-weight:500;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+.admin-tab.active{color:var(--text);border-bottom-color:var(--accent2)}
+.admin-tab:hover{color:var(--text)}
+.grafico-barra{flex:1;background:rgba(59,130,246,.3);border-radius:3px 3px 0 0;min-height:2px;transition:all .3s;cursor:default;position:relative}
+.grafico-barra:hover{background:var(--accent2)}
+.grafico-barra:hover::after{content:attr(title);position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);background:rgba(8,15,28,.95);border:1px solid rgba(255,255,255,.08);padding:3px 7px;border-radius:5px;font-size:10px;white-space:nowrap;color:var(--text)}
+.grafico-label{flex:1;text-align:center;font-size:9px;color:var(--muted2);margin-top:4px}
 .users-table{width:100%;max-width:900px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
 .table-header{padding:16px 20px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)}
 table{width:100%;border-collapse:collapse}
@@ -460,6 +501,38 @@ tr:hover td{background:var(--surface2)}
 
 <!-- TOAST CONTAINER -->
 <div id="toastContainer"></div>
+
+<!-- SIDEBAR (Notion/Claude style) — visível só quando logado -->
+<div id="appSidebar">
+  <div class="sidebar-brand">
+    <div class="topbar-icon">🎙️</div>
+    <span class="sidebar-label">Auto11Labs</span>
+  </div>
+  <div class="sidebar-nav">
+    <div class="sidebar-item" id="sidebarItem-home" onclick="irParaHome()">
+      <span class="sidebar-icon">🏠</span><span class="sidebar-label">Início</span>
+    </div>
+    <div class="sidebar-item" id="sidebarItem-app" onclick="irParaApp()">
+      <span class="sidebar-icon">🎙️</span><span class="sidebar-label">Gerador de Áudios</span>
+    </div>
+    <div class="sidebar-item" id="sidebarItem-videomix" onclick="irParaVideoMix()">
+      <span class="sidebar-icon">🎬</span><span class="sidebar-label">VideoMix</span>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-item" id="sidebarItem-admin" onclick="irParaAdmin()" style="display:none">
+      <span class="sidebar-icon">⚙️</span><span class="sidebar-label">Painel Admin</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-user">
+      <span class="sidebar-user-email sidebar-label" id="sidebarUserEmail"></span>
+      <span class="sidebar-user-plano sidebar-label" id="sidebarUserPlano"></span>
+    </div>
+    <div class="sidebar-item" onclick="sair()">
+      <span class="sidebar-icon">↩</span><span class="sidebar-label">Sair</span>
+    </div>
+  </div>
+</div>
 
 <!-- LOGIN -->
 <div id="screenLogin" class="screen active">
@@ -529,7 +602,7 @@ tr:hover td{background:var(--surface2)}
   <!-- LADO DIREITO: FORM -->
   <div class="login-box">
     <div class="login-box-title">Bem-vindo de volta</div>
-    <div class="login-box-sub">Entre na sua conta para continuar</div>
+    <div class="login-box-sub">Entre na sua conta para continuar · <a onclick="irParaPrecos()" style="color:var(--accent2);cursor:pointer;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">Ver planos</a></div>
 
     <div class="tab-toggle">
       <button class="tab-btn active" onclick="setTab('login',this)">Entrar</button>
@@ -781,7 +854,8 @@ tr:hover td{background:var(--surface2)}
         <div id="modeText">
           <div class="field">
             <label>Cole os textos abaixo</label>
-            <textarea id="textoInput" placeholder="Texto 1&#10;&#10;---&#10;&#10;Texto 2&#10;&#10;---&#10;&#10;Texto 3"></textarea>
+            <textarea id="textoInput" placeholder="Texto 1&#10;&#10;---&#10;&#10;Texto 2&#10;&#10;---&#10;&#10;Texto 3" oninput="atualizarContadorChars()"></textarea>
+            <div id="charCounter" class="char-counter ok">0 / 2500 chars</div>
             <div class="textarea-hint">Separe cada criativo com <strong>---</strong> em linha própria, ou um por linha.</div>
           </div>
         </div>
@@ -848,6 +922,19 @@ tr:hover td{background:var(--surface2)}
       <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
       <div class="log-area" id="logArea"></div>
       <button class="btn-download" id="btnDownload" onclick="baixarZip()">⬇️ Baixar ZIP</button>
+      <!-- Player inline -->
+      <div id="audioPlayerContainer" style="margin-top:14px;display:flex;flex-direction:column;gap:0"></div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleSection('historicoBody','historicoArrow');renderHistorico()">
+        <div class="card-title" style="margin-bottom:0">🕘 Histórico</div>
+        <span id="historicoArrow" style="font-size:11px;color:var(--muted2);transition:transform .2s">▼</span>
+      </div>
+      <div id="historicoBody" style="display:none;margin-top:14px">
+        <div id="historicoLista"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -860,233 +947,383 @@ tr:hover td{background:var(--surface2)}
       <span class="topbar-name">Painel Admin</span>
     </div>
     <div class="topbar-right">
-      <button class="btn-icon" onclick="irParaApp()">← Voltar ao app</button>
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
       <button class="btn-icon" onclick="sair()">Sair</button>
     </div>
   </div>
 
   <div class="admin-body">
+    <!-- Stats -->
     <div class="admin-stats">
-      <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Usuários total</div></div>
-      <div class="stat-card"><div class="stat-num" id="statPagos">0</div><div class="stat-label">Planos pagos</div></div>
-      <div class="stat-card"><div class="stat-num" id="statAudios">0</div><div class="stat-label">Áudios este mês</div></div>
+      <div class="stat-card"><div class="stat-num" id="statTotal">—</div><div class="stat-label">Usuários total</div></div>
+      <div class="stat-card"><div class="stat-num" id="statPagos">—</div><div class="stat-label">Planos pagos</div></div>
+      <div class="stat-card"><div class="stat-num" id="statAudios">—</div><div class="stat-label">Áudios este mês</div></div>
+      <div class="stat-card"><div class="stat-num" id="statReceita">—</div><div class="stat-label">Receita estimada</div></div>
     </div>
 
-    <input type="text" class="search-bar" placeholder="🔍 Buscar por email..." oninput="filtrarUsers(this.value)">
-
-    <div class="users-table">
-      <div class="table-header">Usuários</div>
-      <table>
-        <thead>
-          <tr>
-            <th>Email</th>
-            <th>Plano</th>
-            <th>Áudios/mês</th>
-            <th>Cadastro</th>
-            <th>Ações</th>
-          </tr>
-        </thead>
-        <tbody id="usersTableBody"></tbody>
-      </table>
+    <!-- Gráfico crescimento -->
+    <div style="width:100%;max-width:900px;background:transparent;border-bottom:1px solid rgba(255,255,255,.04);padding-bottom:24px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:16px">Cadastros por dia (últimos 14 dias)</div>
+      <div style="display:flex;align-items:flex-end;gap:6px;height:80px" id="graficoBarras">
+        <!-- barras geradas por JS -->
+      </div>
+      <div style="display:flex;gap:6px;margin-top:6px" id="graficoLabels"></div>
     </div>
+
+    <!-- Abas admin -->
+    <div style="width:100%;max-width:900px">
+      <div style="display:flex;gap:0;border-bottom:1px solid rgba(255,255,255,.06);margin-bottom:20px">
+        <button class="admin-tab active" onclick="adminAba('usuarios',this)">Usuários</button>
+        <button class="admin-tab" onclick="adminAba('logs',this)">Logs de Pagamento</button>
+      </div>
+
+      <!-- Aba usuários -->
+      <div id="adminAbaUsuarios">
+        <input type="text" class="search-bar" placeholder="🔍 Buscar por email..." oninput="filtrarUsers(this.value)" style="margin-bottom:16px">
+        <div class="users-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Plano</th>
+                <th>Áudios/mês</th>
+                <th>Cadastro</th>
+                <th>IP</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Aba logs -->
+      <div id="adminAbaLogs" style="display:none">
+        <div class="users-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Dados</th>
+                <th>Erro</th>
+                <th>Data</th>
+              </tr>
+            </thead>
+            <tbody id="logsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PREÇOS PÚBLICO -->
+<div id="screenPrecos" class="screen" style="flex-direction:column">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon">🎙️</div>
+      <span class="topbar-name">Auto11Labs</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-icon" onclick="irParaLogin()">Entrar</button>
+      <button class="btn-icon" style="background:var(--accent);color:#fff;border-radius:6px;padding:6px 14px" onclick="irParaLogin()">Começar grátis</button>
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:60px 24px 80px;background:radial-gradient(ellipse 80% 50% at 50% 0%, rgba(29,78,216,.1) 0%, transparent 60%)">
+
+    <div style="text-align:center;max-width:560px;margin-bottom:56px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:14px">Planos</div>
+      <h1 style="font-size:36px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,#e8f0fe 0%,#93c5fd 60%,#1d4ed8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:14px">Simples e sem surpresas</h1>
+      <p style="font-size:15px;color:var(--muted2);line-height:1.6">Comece grátis. Faça upgrade quando precisar de mais.</p>
+    </div>
+
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;width:100%;max-width:800px">
+
+      <!-- Gratuito -->
+      <div style="flex:1;min-width:240px;max-width:280px;position:relative;border-radius:20px;padding:32px 28px;background:rgba(255,255,255,.02)">
+        <div style="position:absolute;inset:0;border-radius:20px;padding:1px;background:linear-gradient(135deg,rgba(255,255,255,.08) 0%,transparent 60%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none"></div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:16px">Gratuito</div>
+        <div style="font-size:36px;font-weight:800;color:var(--text);margin-bottom:4px">R$0</div>
+        <div style="font-size:12px;color:var(--muted2);margin-bottom:28px">Para sempre</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> 10 áudios por mês</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> PT e ES</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> VideoMix</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted2)"><span>—</span> Histórico limitado</div>
+        </div>
+        <button onclick="irParaLogin()" style="width:100%;padding:11px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">Começar grátis</button>
+      </div>
+
+      <!-- 2 Meses — destaque -->
+      <div style="flex:1;min-width:240px;max-width:280px;position:relative;border-radius:20px;padding:32px 28px;background:rgba(29,78,216,.08)">
+        <div style="position:absolute;inset:0;border-radius:20px;padding:1px;background:linear-gradient(135deg,rgba(59,130,246,.35) 0%,rgba(59,130,246,.05) 60%,transparent 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none"></div>
+        <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:999px;white-space:nowrap">⭐ MAIS POPULAR</div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:16px">Pro · 2 Meses</div>
+        <div style="font-size:36px;font-weight:800;color:var(--text);margin-bottom:4px">R$44<span style="font-size:20px">,90</span></div>
+        <div style="font-size:12px;color:var(--muted2);margin-bottom:28px">60 dias de acesso ilimitado</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> <strong>Áudios ilimitados</strong></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> PT e ES</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> VideoMix completo</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> Histórico completo</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> Suporte prioritário</div>
+        </div>
+        <button onclick="irParaLogin()" style="width:100%;padding:11px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;box-shadow:0 4px 20px rgba(29,78,216,.3)" onmouseover="this.style.background='#1e40af'" onmouseout="this.style.background='var(--accent)'">Começar agora</button>
+      </div>
+
+      <!-- Vitalício -->
+      <div style="flex:1;min-width:240px;max-width:280px;position:relative;border-radius:20px;padding:32px 28px;background:rgba(245,158,11,.04)">
+        <div style="position:absolute;inset:0;border-radius:20px;padding:1px;background:linear-gradient(135deg,rgba(245,158,11,.2) 0%,transparent 60%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none"></div>
+        <div style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--gold);margin-bottom:16px">👑 Vitalício</div>
+        <div style="font-size:36px;font-weight:800;color:var(--text);margin-bottom:4px">R$198<span style="font-size:20px">,90</span></div>
+        <div style="font-size:12px;color:var(--muted2);margin-bottom:28px">Pague uma vez, use para sempre</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> <strong>Tudo do Pro</strong></div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> Acesso vitalício</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--success)">✓</span> Todas as futuras features</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="color:var(--gold)">★</span> Melhor custo-benefício</div>
+        </div>
+        <button onclick="irParaLogin()" style="width:100%;padding:11px;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);border-radius:8px;color:var(--gold);font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s" onmouseover="this.style.background='rgba(245,158,11,.2)'" onmouseout="this.style.background='rgba(245,158,11,.12)'">Garantir acesso</button>
+      </div>
+    </div>
+
+    <!-- FAQ rápido -->
+    <div style="max-width:560px;width:100%;margin-top:56px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);margin-bottom:20px;text-align:center">Dúvidas frequentes</div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div style="padding:16px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Preciso de conta no ElevenLabs?</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Sim, você usa sua própria API key do ElevenLabs. Os créditos de geração são os seus — o Auto11Labs só automatiza o processo.</div>
+        </div>
+        <div style="padding:16px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">O que conta como "áudio" no plano gratuito?</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Cada texto gerado conta como 1 áudio. O limite de 10 renova todo mês automaticamente.</div>
+        </div>
+        <div style="padding:16px 0">
+          <div style="font-size:13px;font-weight:600;margin-bottom:6px">Posso cancelar o plano?</div>
+          <div style="font-size:12px;color:var(--muted2);line-height:1.5">Os planos são pagamento único (não recorrente). Sem assinaturas, sem cobranças automáticas.</div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <!-- VIDEOMIX -->
 <div id="screenVideoMix" class="screen" style="flex-direction:column">
+  <style>
+  /* VideoMix estilos */
+  .vm-wrap{display:grid;grid-template-columns:280px 1fr 220px;height:calc(100vh - 57px);overflow:hidden}
+  .vm-col{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid rgba(255,255,255,.04)}
+  .vm-col:last-child{border-right:none;border-left:1px solid rgba(255,255,255,.04)}
+  .vm-col-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);padding:16px 16px 10px;display:flex;justify-content:space-between;align-items:center}
+  .vm-scroll{flex:1;overflow-y:auto;padding:0 12px 12px}
+
+  /* Upload zone */
+  .vm-drop{border:1px dashed rgba(255,255,255,.1);border-radius:10px;padding:20px;text-align:center;cursor:pointer;position:relative;transition:all .2s;margin:0 12px 12px}
+  .vm-drop:hover{border-color:var(--accent2);background:rgba(29,78,216,.04)}
+  .vm-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+
+  /* Clipe item */
+  .vm-clip{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative}
+  .vm-clip:hover{border-color:rgba(59,130,246,.3);background:rgba(29,78,216,.05)}
+  .vm-clip.selected{border-color:var(--accent2);background:rgba(29,78,216,.08)}
+  .vm-clip-thumb{width:32px;height:48px;background:var(--border);border-radius:4px;overflow:hidden;flex-shrink:0}
+  .vm-clip-thumb video{width:100%;height:100%;object-fit:cover}
+
+  /* Timeline */
+  .vm-tl{background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.04);padding:12px}
+  .vm-tl-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);margin-bottom:8px;display:flex;justify-content:space-between}
+  .vm-tl-track{display:flex;gap:3px;min-height:52px;align-items:stretch;overflow-x:auto;background:rgba(0,0,0,.2);border-radius:6px;padding:4px}
+  .vm-tl-clip{height:44px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;cursor:grab;position:relative;flex-shrink:0;overflow:hidden;transition:box-shadow .15s;color:var(--accent2);background:rgba(29,78,216,.2);border:1px solid rgba(59,130,246,.35)}
+  .vm-tl-clip:hover{box-shadow:0 0 0 1px var(--accent2)}
+  .vm-tl-clip.vm-tl-selected{box-shadow:0 0 0 2px var(--accent2)}
+  .vm-tl-clip.vm-tl-playing{box-shadow:0 0 0 2px var(--success);background:rgba(16,185,129,.15);border-color:var(--success)}
+  .vm-tl-clip.vm-tl-drop-target{box-shadow:0 0 0 2px #fff;background:rgba(255,255,255,.1)}
+  .vm-tl-clip.pinned{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--gold)}
+
+  /* Handles de corte */
+  .vm-handle{position:absolute;top:0;bottom:0;width:7px;background:rgba(255,255,255,.85);cursor:col-resize;z-index:5;display:flex;align-items:center;justify-content:center;border-radius:2px}
+  .vm-handle-l{left:0;border-radius:3px 0 0 3px}
+  .vm-handle-r{right:0;border-radius:0 3px 3px 0}
+  .vm-handle::after{content:'';width:2px;height:12px;background:rgba(0,0,0,.35);border-radius:1px}
+
+  /* Preview */
+  .vm-preview{flex:1;display:flex;align-items:center;justify-content:center;background:#020408;position:relative}
+  .vm-phone{width:150px;height:266px;background:#080f1c;border-radius:18px;border:1px solid rgba(255,255,255,.08);overflow:hidden;box-shadow:0 0 40px rgba(29,78,216,.12)}
+  .vm-phone video{width:100%;height:100%;object-fit:cover;display:none}
+  .vm-phone-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted2);gap:6px;font-size:11px}
+  .vm-ctrl{display:flex;gap:8px;margin-top:12px}
+  .vm-ctrl-btn{width:34px;height:34px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:50%;color:var(--text);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  .vm-ctrl-btn:hover{background:rgba(29,78,216,.2);border-color:var(--accent2)}
+
+  /* Painel direito */
+  .vm-prop{padding:14px;border-bottom:1px solid rgba(255,255,255,.04)}
+  .vm-prop-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);margin-bottom:10px}
+  .vm-range{width:100%;-webkit-appearance:none;height:3px;background:rgba(255,255,255,.08);border-radius:999px;outline:none;cursor:pointer;margin:6px 0}
+  .vm-range::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent2);border-radius:50%;cursor:pointer}
+  .vm-btn{width:100%;padding:10px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+  .vm-btn-blue{background:var(--accent);color:#fff}.vm-btn-blue:hover:not(:disabled){background:#1e40af}
+  .vm-btn-green{background:var(--success);color:#fff}.vm-btn-green:hover:not(:disabled){background:#059669}
+  .vm-btn:disabled{opacity:.35;cursor:not-allowed}
+
+  /* Output */
+  .vm-out{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:7px;margin-bottom:5px;font-size:11px}
+  .vm-out-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px}
+  .vm-out-ok{color:var(--success)}.vm-out-err{color:var(--error)}
+  .vm-dl-btn{background:none;border:none;color:var(--accent2);cursor:pointer;font-size:16px;flex-shrink:0}
+
+  /* Keyboard hints */
+  .vm-keys{display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.04)}
+  .vm-key{padding:2px 6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:4px;font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace}
+  </style>
+
+  <!-- Topbar -->
   <div class="topbar">
     <div class="topbar-brand">
       <div class="topbar-icon" style="background:none">🎬</div>
       <span class="topbar-name">VideoMix</span>
-      <span style="font-size:11px;color:var(--muted2);margin-left:4px">Editor de Criativos</span>
     </div>
     <div class="topbar-right">
-      <span style="font-size:12px;color:var(--muted2)" id="vmStatus">Pronto</span>
-      <button class="btn-icon" onclick="irParaApp()">← Voltar</button>
+      <span style="font-size:11px;color:var(--muted2)" id="vmStatus">Pronto</span>
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
       <button class="btn-icon" onclick="sair()">Sair</button>
     </div>
   </div>
 
-  <style>
-  .vm-layout{display:grid;grid-template-columns:260px 1fr 220px;height:calc(100vh - 57px);overflow:hidden}
-  .vm-panel{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-  .vm-panel-right{border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto}
-  .vm-panel-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
-  .vm-upload-zone{border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;cursor:pointer;position:relative;transition:all .2s}
-  .vm-upload-zone:hover{border-color:var(--accent);background:rgba(124,92,252,.06)}
-  .vm-clip-item{background:var(--surface2);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;cursor:pointer;transition:all .2s;position:relative}
-  .vm-clip-item:hover{border-color:var(--accent)!important}
-  .vm-clip-item.vm-selected{border-color:var(--accent)!important;background:rgba(124,92,252,.08)!important}
+  <div class="vm-wrap">
 
-  /* TIMELINE */
-  .vm-timeline-wrap{position:relative;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden;user-select:none}
-  .vm-tl-ruler{height:18px;background:var(--surface2);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-  .vm-tl-ruler-mark{position:absolute;top:0;height:100%;display:flex;align-items:center;font-size:9px;color:var(--muted);padding-left:3px;border-left:1px solid var(--border)}
-  .vm-tl-track{height:52px;position:relative;display:flex;gap:3px;padding:6px;align-items:center;overflow-x:auto;min-width:100%}
-  .vm-tl-clip{height:40px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;cursor:pointer;position:relative;flex-shrink:0;overflow:hidden;transition:box-shadow .15s}
-  .vm-tl-clip:hover{box-shadow:0 0 0 2px var(--accent)}
-  .vm-tl-clip.vm-tl-selected{box-shadow:0 0 0 2px var(--accent)}
-  .vm-tl-clip.vm-tl-pinned{box-shadow:0 0 0 2px var(--warning)}
-
-  /* HANDLE DE CORTE */
-  .vm-handle{position:absolute;top:0;bottom:0;width:8px;background:rgba(255,255,255,.9);cursor:col-resize;z-index:5;display:flex;align-items:center;justify-content:center;border-radius:2px}
-  .vm-handle-left{left:0;border-radius:4px 0 0 4px}
-  .vm-handle-right{right:0;border-radius:0 4px 4px 0}
-  .vm-handle::after{content:'';width:2px;height:14px;background:rgba(0,0,0,.4);border-radius:999px}
-
-  /* PLAYHEAD */
-  .vm-playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--error);pointer-events:none;z-index:10}
-  .vm-playhead::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:var(--error);border-radius:50%}
-
-  .vm-audio-track{height:28px;position:relative;display:flex;align-items:center;padding:0 6px;gap:6px;overflow-x:auto}
-  .vm-audio-slot{height:22px;border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:500;flex-shrink:0;white-space:nowrap}
-
-  /* PREVIEW */
-  .vm-preview-phone{width:140px;height:248px;background:#111;border-radius:18px;border:2px solid var(--border);overflow:hidden;box-shadow:0 0 40px rgba(34,197,94,.12)}
-
-  .vm-prop-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:12px}
-  .vm-prop-label{color:var(--muted2);font-size:11px}
-  </style>
-
-  <div class="vm-layout">
-
-    <!-- ESQUERDA -->
-    <div class="vm-panel">
-      <div style="padding:14px;border-bottom:1px solid var(--border)">
-        <div class="vm-panel-title">🎥 Clipes <span id="vmClipCount" style="font-weight:400">0</span></div>
-        <div class="vm-upload-zone">
-          <input type="file" id="vmInputClipes" accept="video/mp4" multiple onchange="vmAdicionarClipes(this.files)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
-          <div style="font-size:20px;margin-bottom:4px">📁</div>
-          <div style="font-size:11px;color:var(--muted2)">Arraste <strong style="color:var(--accent2)">.mp4</strong> aqui</div>
-        </div>
+    <!-- COL ESQUERDA: Clipes + Áudios -->
+    <div class="vm-col">
+      <div class="vm-col-title">🎥 Clipes <span id="vmClipCount" style="font-weight:400;font-size:10px">0</span></div>
+      <div class="vm-drop">
+        <input type="file" id="vmInputClipes" accept="video/mp4,video/*" multiple onchange="vmAddClipes(this.files)">
+        <div style="font-size:18px;margin-bottom:4px">📁</div>
+        <div style="font-size:11px;color:var(--muted2)">Arraste <strong style="color:var(--accent2)">.mp4</strong> aqui</div>
       </div>
-      <div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:5px" id="vmClipsList">
-        <div style="text-align:center;padding:20px;color:var(--muted);font-size:11px">Adicione clipes .mp4</div>
+      <div class="vm-scroll" id="vmClipesList">
+        <div style="text-align:center;padding:16px;color:var(--muted2);font-size:11px">Adicione clipes</div>
       </div>
 
-      <!-- Áudio pasta -->
-      <div style="padding:14px;border-top:1px solid var(--border)">
-        <div class="vm-panel-title">🎵 Pasta de Áudios</div>
-        <div style="position:relative;padding:10px;background:rgba(34,197,94,.08);border:1px dashed rgba(34,197,94,.4);border-radius:8px;text-align:center;cursor:pointer;font-size:11px;color:var(--success)">
-          <input type="file" id="vmInputAudios" accept="audio/mp3,audio/mpeg" multiple onchange="vmAdicionarAudios(this.files)" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
-          📂 Selecionar áudios .mp3
+      <!-- Áudios -->
+      <div style="border-top:1px solid rgba(255,255,255,.04);padding:12px">
+        <div class="vm-col-title" style="padding:0 0 8px">🎵 Áudios <span id="vmAudioCount" style="font-weight:400;font-size:10px"></span></div>
+        <div class="vm-drop" style="margin:0 0 0">
+          <input type="file" id="vmInputAudios" accept="audio/*" multiple onchange="vmAddAudios(this.files)">
+          <div style="font-size:11px;color:var(--muted2)">📂 Selecionar .mp3 (pasta ou vários)</div>
         </div>
-        <div id="vmAudioCount" style="font-size:11px;color:var(--muted2);margin-top:6px;display:none"></div>
       </div>
     </div>
 
-    <!-- CENTRO -->
+    <!-- COL CENTRO: Preview + Timeline -->
     <div style="display:flex;flex-direction:column;overflow:hidden">
-
       <!-- Preview -->
-      <div style="flex:1;display:flex;align-items:center;justify-content:center;background:#050505;position:relative;gap:24px">
-        <div class="vm-preview-phone">
-          <video id="vmPreviewVideo" style="width:100%;height:100%;object-fit:cover;display:none" playsinline></video>
-          <div id="vmPreviewPlaceholder" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);gap:6px">
-            <span style="font-size:24px">📱</span>
-            <span style="font-size:10px">Preview 9:16</span>
+      <div class="vm-preview">
+        <div style="display:flex;flex-direction:column;align-items:center">
+          <div class="vm-phone">
+            <video id="vmVideo" playsinline muted style="width:100%;height:100%;object-fit:cover;display:none"></video>
+            <div class="vm-phone-ph" id="vmPh"><span style="font-size:24px">📱</span><span>Preview 9:16</span></div>
           </div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <button onclick="vmPreviewAnterior()" style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;color:var(--text);cursor:pointer;font-size:14px">⏮</button>
-          <button onclick="vmTogglePlay()" id="vmBtnPlay" style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;color:var(--text);cursor:pointer;font-size:14px">▶️</button>
-          <button onclick="vmPreviewProximo()" style="width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:50%;color:var(--text);cursor:pointer;font-size:14px">⏭</button>
+          <div class="vm-ctrl">
+            <button class="vm-ctrl-btn" onclick="vmPrevClipe()" title="Anterior (←)">⏮</button>
+            <button class="vm-ctrl-btn" id="vmPlayBtn" onclick="vmTogglePlay()" title="Play/Pause (Espaço)">▶️</button>
+            <button class="vm-ctrl-btn" onclick="vmNextClipe()" title="Próximo (→)">⏭</button>
+            <button class="vm-ctrl-btn" onclick="vmPlayFull()" title="Preview completo (P)" style="width:auto;padding:0 10px;border-radius:17px;font-size:11px;font-weight:600">▶ Full</button>
+          </div>
         </div>
       </div>
 
       <!-- Timeline -->
-      <div style="border-top:1px solid var(--border);padding:14px;background:var(--surface)">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">🎞 Timeline</span>
-          <span style="font-size:11px;color:var(--muted2)" id="vmTotalDur">0s total</span>
+      <div class="vm-tl">
+        <div class="vm-tl-title">
+          🎞 Timeline
+          <span id="vmTotalDur" style="font-weight:400;color:var(--muted2)">0s</span>
         </div>
-
-        <!-- Track de vídeo -->
-        <div class="vm-timeline-wrap" id="vmTimelineWrap">
-          <div class="vm-tl-ruler" id="vmRuler"></div>
-          <div class="vm-tl-track" id="vmTlTrack">
-            <div style="color:var(--muted);font-size:11px;padding:8px">Adicione clipes</div>
-          </div>
-          <div class="vm-playhead" id="vmPlayhead" style="left:6px;display:none"></div>
+        <!-- Clipes track -->
+        <div class="vm-tl-track" id="vmTlTrack">
+          <div style="color:var(--muted2);font-size:10px;padding:12px;display:flex;align-items:center">Adicione clipes → arraste para reordenar</div>
         </div>
-
-        <!-- Track de áudio -->
-        <div style="display:flex;gap:4px;align-items:center;margin-top:5px">
-          <span style="font-size:10px;color:var(--muted);min-width:30px">🎵</span>
-          <div class="vm-audio-track" id="vmAudioTrack" style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px">
-            <div style="color:var(--muted);font-size:10px;padding:4px">Selecione áudios na pasta acima</div>
+        <!-- Áudio track -->
+        <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+          <span style="font-size:10px;color:var(--muted2);min-width:30px;flex-shrink:0">🎵</span>
+          <div id="vmAudioTrack" style="flex:1;height:26px;background:rgba(0,0,0,.2);border:1px dashed rgba(255,255,255,.06);border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--muted2)">
+            Nenhum áudio selecionado
           </div>
+        </div>
+        <!-- Atalhos -->
+        <div class="vm-keys">
+          <span class="vm-key">Espaço</span><span style="font-size:10px;color:var(--muted2)">play</span>
+          <span class="vm-key">P</span><span style="font-size:10px;color:var(--muted2)">full preview</span>
+          <span class="vm-key">Del</span><span style="font-size:10px;color:var(--muted2)">remover</span>
+          <span class="vm-key">← →</span><span style="font-size:10px;color:var(--muted2)">navegar</span>
+          <span class="vm-key">R</span><span style="font-size:10px;color:var(--muted2)">randomizar</span>
         </div>
       </div>
     </div>
 
-    <!-- DIREITA -->
-    <div class="vm-panel-right">
+    <!-- COL DIREITA: Props + Geração -->
+    <div class="vm-col" style="overflow-y:auto">
 
-      <!-- Clipe selecionado -->
-      <div style="padding:14px;border-bottom:1px solid var(--border)">
-        <div class="vm-panel-title">✂️ Clipe Selecionado</div>
-        <div id="vmPropEmpty" style="font-size:11px;color:var(--muted);text-align:center;padding:10px 0">Clique num clipe</div>
-        <div id="vmPropControls" style="display:none">
-          <div style="font-size:12px;color:var(--accent2);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500" id="vmPropNome"></div>
-          <div class="vm-prop-row">
-            <span class="vm-prop-label">Duração total</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted2)" id="vmPropDurTotal"></span>
+      <!-- Editar clipe -->
+      <div class="vm-prop">
+        <div class="vm-prop-title">✂️ Editar Clipe</div>
+        <div id="vmPropVazio" style="font-size:11px;color:var(--muted2);text-align:center;padding:8px 0">Clique num clipe</div>
+        <div id="vmPropBody" style="display:none">
+          <div style="font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="vmPropNome"></div>
+          <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">
+            Início <span id="vmPropStart" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
           </div>
-          <div class="vm-prop-row">
-            <span class="vm-prop-label">Trecho selecionado</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--success)" id="vmPropCorte"></span>
+          <input type="range" class="vm-range" id="vmRangeStart" min="0" max="60" value="0" step="0.05" oninput="vmUpdateCorte()">
+          <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">
+            Fim <span id="vmPropEnd" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
           </div>
-          <div style="font-size:11px;color:var(--muted2);margin:10px 0 6px">Arraste as bordas ◀▶ do clipe na timeline para cortar</div>
-          <div class="vm-prop-row" style="margin-top:10px">
-            <span class="vm-prop-label">📌 Fixar posição</span>
-            <input type="checkbox" id="vmCheckPin" onchange="vmTogglePin()" style="cursor:pointer">
+          <input type="range" class="vm-range" id="vmRangeEnd" min="0" max="60" value="60" step="0.05" oninput="vmUpdateCorte()">
+          <div style="font-size:11px;color:var(--success);margin:6px 0 10px;font-family:'JetBrains Mono',monospace" id="vmPropDur"></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <span style="font-size:11px;color:var(--muted2)">📌 Fixar posição</span>
+            <input type="checkbox" id="vmPinCheck" onchange="vmTogglePin()">
           </div>
-          <input type="number" id="vmInputPinPos" min="1" placeholder="Posição (ex: 1)" disabled onchange="vmAtualizarPinPos()"
-            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;margin-top:4px">
-          <button onclick="vmRemoverClipeSelecionado()" style="width:100%;padding:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:6px;color:#fca5a5;font-size:12px;cursor:pointer;margin-top:10px;font-family:'Inter',sans-serif">🗑 Remover clipe</button>
+          <input type="number" id="vmPinPos" min="1" placeholder="Posição (1, 2, 3...)" disabled
+            style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;font-family:'Inter',sans-serif"
+            onchange="vmUpdatePin()">
+          <button onclick="vmRemoverSelecionado()" style="width:100%;padding:7px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:6px;color:#fca5a5;font-size:11px;cursor:pointer;margin-top:10px;font-family:'Inter',sans-serif">🗑 Remover</button>
         </div>
       </div>
 
-      <!-- Config geração -->
-      <div style="padding:14px;border-bottom:1px solid var(--border)">
-        <div class="vm-panel-title">🎬 Geração</div>
-        <div class="vm-prop-row">
-          <span class="vm-prop-label">Qtd. de vídeos</span>
-          <input type="number" id="vmQtd" value="5" min="1" max="30" style="width:50px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:5px 6px;color:var(--text);font-size:11px;outline:none;text-align:right;font-family:'JetBrains Mono',monospace">
+      <!-- Configuração -->
+      <div class="vm-prop">
+        <div class="vm-prop-title">⚙️ Geração</div>
+        <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Qtd. de vídeos</div>
+        <input type="number" id="vmQtd" value="5" min="1" max="30"
+          style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;outline:none;font-family:'JetBrains Mono',monospace;margin-bottom:10px">
+        <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Nome base</div>
+        <input type="text" id="vmNomeBase" value="criativo"
+          style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;outline:none;font-family:'Inter',sans-serif;margin-bottom:10px">
+        <div style="font-size:10px;color:var(--muted2);margin-bottom:12px;padding:8px;background:rgba(59,130,246,.05);border-radius:6px;border-left:2px solid rgba(59,130,246,.2);line-height:1.5">
+          Cada vídeo usa a sequência dos clipes embaralhada + um áudio da pasta. O áudio determina a duração — o último clipe é ajustado para encaixar.
         </div>
-        <div style="margin-top:6px">
-          <div class="vm-prop-label" style="margin-bottom:4px">Nome base</div>
-          <input type="text" id="vmNomeBase" value="criativo" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;font-family:'Inter',sans-serif">
-        </div>
-      </div>
-
-      <!-- Botões -->
-      <div style="padding:14px;display:flex;flex-direction:column;gap:8px">
-        <button onclick="vmRandomizar()" id="vmBtnRandomizar" disabled style="width:100%;padding:10px;background:var(--accent);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;opacity:.4;transition:all .2s">
-          🔀 Randomizar Ordem
-        </button>
-        <button onclick="vmGerarVideos()" id="vmBtnGerar" disabled style="width:100%;padding:10px;background:var(--success);border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;opacity:.4;transition:all .2s">
-          ⚡ Gerar Vídeos
-        </button>
+        <button class="vm-btn vm-btn-blue" onclick="vmRandomizar()" id="vmBtnRand" disabled style="margin-bottom:8px">🔀 Randomizar</button>
+        <button class="vm-btn vm-btn-green" onclick="vmGerar()" id="vmBtnGerar" disabled>⚡ Gerar Vídeos</button>
       </div>
 
       <!-- Progresso -->
-      <div style="padding:0 14px 10px;display:none" id="vmProgressWrap">
-        <div style="height:4px;background:var(--border);border-radius:999px;overflow:hidden">
+      <div id="vmProgressWrap" style="display:none;padding:0 14px 10px">
+        <div style="height:3px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden">
           <div id="vmProgressFill" style="height:100%;background:var(--success);border-radius:999px;width:0;transition:width .3s"></div>
         </div>
         <div id="vmProgressText" style="font-size:10px;color:var(--muted2);margin-top:5px;font-family:'JetBrains Mono',monospace">Preparando...</div>
       </div>
 
       <!-- Outputs -->
-      <div style="padding:14px;flex:1">
-        <div class="vm-panel-title">📦 Gerados</div>
-        <div id="vmOutputList"><div style="font-size:11px;color:var(--muted);text-align:center">Aparecerão aqui</div></div>
+      <div class="vm-prop" style="flex:1">
+        <div class="vm-prop-title">📦 Gerados</div>
+        <div id="vmOutputList"><div style="font-size:11px;color:var(--muted2);text-align:center">Aparecerão aqui</div></div>
       </div>
     </div>
   </div>
 </div>
+
 
 <!-- MODAL PAGAMENTO -->
 <div class="modal-overlay" id="modalPagamento">
@@ -1124,6 +1361,14 @@ tr:hover td{background:var(--surface2)}
 
 <script>
 const API = '/api';
+const LIMITE_FREE = 10;
+const USER_KEY = 'a11_user';
+const TOKEN_KEY = 'a11_token';
+const API_KEY_CACHE = 'a11_apikey';
+const VOZ_CACHE = 'a11_voz';
+const HISTORICO_KEY = 'a11_historico';
+const CHAR_LIMITE = 2500; // ElevenLabs recomenda até 2500 por chamada
+
 
 // ── TYPEWRITER LOGIN ──────────────────────────────────────
 const TW_FRASES = [
@@ -1187,9 +1432,6 @@ window.addEventListener('load', () => {
   setTimeout(() => twCardTick('twVideo', TW_VIDEO, {idx:0,char:0,ap:false}, ()=>{}), 1200);
 });
 
-const LIMITE_FREE = 10;
-const USER_KEY = 'a11_user';
-
 let user = null;
 let selectedVoiceId = 'ewn5JTa3lNPY8QVuZJi6';
 let currentMode = 'text';
@@ -1205,17 +1447,26 @@ let nomesCustom = [];
 // ── INIT ──────────────────────────────────────────────────
 window.onload = async () => {
   const params = new URLSearchParams(location.search);
-  if (params.get('pagamento') === 'sucesso') {
-    const userId = params.get('user');
-    const plano = params.get('plano');
-    if (userId && plano) await fetch(`${API}/confirmar-pagamento?user=${userId}&plano=${plano}`);
-    history.replaceState({}, '', '/');
-  }
+  const pagamentoSucesso = params.get('pagamento') === 'sucesso';
+  if (params.has('pagamento')) history.replaceState({}, '', '/');
 
   const saved = localStorage.getItem(USER_KEY);
-  if (saved) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (saved && token) {
     user = JSON.parse(saved);
-    if (params.get('pagamento') === 'sucesso') {
+    // Revalida a sessão e busca o plano atual direto do servidor (nunca confia em query params)
+    try {
+      const r = await callApiAuth('me', null, 'GET');
+      if (r.ok) {
+        user = r.user;
+        localStorage.setItem(USER_KEY, JSON.stringify(user));
+      } else {
+        sair();
+        return;
+      }
+    } catch {}
+
+    if (pagamentoSucesso) {
       document.getElementById('modalSucesso').classList.add('visible');
     }
     mostrarApp();
@@ -1248,6 +1499,7 @@ async function login() {
     if (r.ok) {
       user = r.user;
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.setItem(TOKEN_KEY, r.token);
       mostrarApp();
     } else {
       errEl.textContent = r.erro || 'Erro ao entrar.';
@@ -1277,6 +1529,7 @@ async function cadastrar() {
     if (r.ok) {
       user = r.user;
       localStorage.setItem(USER_KEY, JSON.stringify(user));
+      localStorage.setItem(TOKEN_KEY, r.token);
       mostrarApp();
     } else {
       errEl.textContent = r.erro || 'Erro ao criar conta.';
@@ -1289,10 +1542,35 @@ async function cadastrar() {
 
 function sair() {
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(TOKEN_KEY);
   user = null;
   document.getElementById('screenApp').classList.remove('active');
   document.getElementById('screenAdmin').classList.remove('active');
+  document.getElementById('screenVideoMix').classList.remove('active');
+  document.getElementById('screenHome').classList.remove('active');
   document.getElementById('screenLogin').classList.add('active');
+  document.body.classList.remove('has-sidebar');
+}
+
+// ── SIDEBAR (Notion/Claude style) ─────────────────────────
+function renderSidebar() {
+  if (!user) return;
+  document.body.classList.add('has-sidebar');
+  const sidebarAdmin = document.getElementById('sidebarItem-admin');
+  if (sidebarAdmin) sidebarAdmin.style.display = user.is_admin ? 'flex' : 'none';
+  const emailEl = document.getElementById('sidebarUserEmail');
+  if (emailEl) emailEl.textContent = user.email;
+  const planoEl = document.getElementById('sidebarUserPlano');
+  if (planoEl) {
+    const plano = user.plano || 'gratuito';
+    planoEl.textContent = plano === 'gratuito' ? 'Gratuito' : plano === 'mensal' ? '⭐ Pro' : '👑 Vitalício';
+  }
+}
+
+function setSidebarActive(tela) {
+  document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById('sidebarItem-' + tela);
+  if (el) el.classList.add('active');
 }
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────
@@ -1302,6 +1580,8 @@ function mostrarApp() {
     if (el) el.classList.remove('active');
   });
   document.getElementById('screenHome').classList.add('active');
+  renderSidebar();
+  setSidebarActive('home');
   atualizarHomeUI();
 }
 
@@ -1311,6 +1591,7 @@ function irParaHome() {
     if (el) el.classList.remove('active');
   });
   document.getElementById('screenHome').classList.add('active');
+  setSidebarActive('home');
   atualizarHomeUI();
 }
 
@@ -1320,6 +1601,7 @@ function irParaAdmin() {
     if (el) el.classList.remove('active');
   });
   document.getElementById('screenAdmin').classList.add('active');
+  setSidebarActive('admin');
   carregarAdmin();
 }
 
@@ -1329,7 +1611,19 @@ function irParaApp() {
     if (el) el.classList.remove('active');
   });
   document.getElementById('screenApp').classList.add('active');
+  setSidebarActive('app');
   atualizarUI();
+  carregarCacheApiKey();
+  carregarCacheVoz();
+}
+
+function irParaVideoMix() {
+  ['screenHome','screenAdmin','screenApp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('active');
+  });
+  document.getElementById('screenVideoMix').classList.add('active');
+  setSidebarActive('videomix');
 }
 
 function atualizarHomeUI() {
@@ -1378,16 +1672,100 @@ function atualizarUI() {
 
 // ── ADMIN ─────────────────────────────────────────────────
 async function carregarAdmin() {
-  const r = await fetch(`${API}/admin/usuarios?admin_id=${user.id}`);
-  const data = await r.json();
-  if (!data.ok) return;
+  // Skeleton loading
+  document.getElementById('statTotal').textContent = '...';
+  document.getElementById('statPagos').textContent = '...';
+  document.getElementById('statAudios').textContent = '...';
+  document.getElementById('statReceita').textContent = '...';
+
+  const data = await callApiAuth('admin/usuarios', null, 'GET');
+  if (!data.ok) { toast('Erro ao carregar admin', 'error'); return; }
 
   todosUsers = data.users;
   renderUsers(todosUsers);
 
+  // Stats
+  const pagos = todosUsers.filter(u => u.plano !== 'gratuito');
+  const mensais = todosUsers.filter(u => u.plano === 'mensal').length;
+  const vitalicios = todosUsers.filter(u => u.plano === 'vitalicio').length;
+  const receita = (mensais * 44.90 + vitalicios * 198.90).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
   document.getElementById('statTotal').textContent = todosUsers.length;
-  document.getElementById('statPagos').textContent = todosUsers.filter(u => u.plano !== 'gratuito').length;
+  document.getElementById('statPagos').textContent = pagos.length;
   document.getElementById('statAudios').textContent = todosUsers.reduce((a, u) => a + (u.audios_mes || 0), 0);
+  document.getElementById('statReceita').textContent = receita;
+
+  // Gráfico de cadastros por dia (últimos 14 dias)
+  renderGrafico(todosUsers);
+
+  // Carrega logs
+  carregarLogs();
+}
+
+function renderGrafico(users) {
+  const barras = document.getElementById('graficoBarras');
+  const labels = document.getElementById('graficoLabels');
+  if (!barras || !labels) return;
+
+  // Conta cadastros por dia nos últimos 14 dias
+  const dias = [];
+  const hoje = new Date();
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(hoje);
+    d.setDate(d.getDate() - i);
+    dias.push({
+      label: d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+      data: d.toISOString().slice(0, 10),
+      count: 0,
+    });
+  }
+
+  users.forEach(u => {
+    if (!u.criado_em) return;
+    const dataUser = u.criado_em.slice(0, 10);
+    const dia = dias.find(d => d.data === dataUser);
+    if (dia) dia.count++;
+  });
+
+  const maxCount = Math.max(...dias.map(d => d.count), 1);
+
+  barras.innerHTML = dias.map(d => `
+    <div class="grafico-barra" style="height:${Math.max(4, (d.count / maxCount) * 72)}px" title="${d.label}: ${d.count} cadastro${d.count !== 1 ? 's' : ''}"></div>
+  `).join('');
+
+  // Mostra só alguns labels para não poluir
+  labels.innerHTML = dias.map((d, i) => `
+    <div class="grafico-label">${i % 3 === 0 ? d.label : ''}</div>
+  `).join('');
+}
+
+async function carregarLogs() {
+  const data = await callApiAuth('admin/logs', null, 'GET');
+  if (!data.ok) return;
+
+  const tbody = document.getElementById('logsTableBody');
+  if (!tbody) return;
+
+  if (!data.logs || !data.logs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted2);padding:20px">Nenhum log ainda</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = data.logs.map(l => `
+    <tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent2)">${l.tipo}</span></td>
+      <td style="font-size:11px;color:var(--muted2);max-width:200px;overflow:hidden;text-overflow:ellipsis">${l.dados || '—'}</td>
+      <td style="font-size:11px;color:${l.erro ? 'var(--error)' : 'var(--muted2)'}">${l.erro || '—'}</td>
+      <td style="font-size:11px;color:var(--muted2);white-space:nowrap">${new Date(l.criado_em).toLocaleString('pt-BR')}</td>
+    </tr>
+  `).join('');
+}
+
+function adminAba(aba, btn) {
+  document.querySelectorAll('.admin-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('adminAbaUsuarios').style.display = aba === 'usuarios' ? 'block' : 'none';
+  document.getElementById('adminAbaLogs').style.display = aba === 'logs' ? 'block' : 'none';
 }
 
 function filtrarUsers(query) {
@@ -1403,12 +1781,13 @@ function renderUsers(users) {
       <td><span class="badge badge-${u.plano}">${u.plano}</span></td>
       <td>${u.audios_mes || 0}</td>
       <td>${new Date(u.criado_em).toLocaleDateString('pt-BR')}</td>
+      <td style="font-size:11px;color:var(--muted2)">${u.ip_cadastro || '—'}</td>
       <td>
         <div class="action-btns">
           <button class="btn-sm btn-sm-accent" onclick="alterarPlano('${u.id}','mensal')">Pro</button>
           <button class="btn-sm btn-sm-gold" onclick="alterarPlano('${u.id}','vitalicio')">Vitalício</button>
           <button class="btn-sm btn-sm-danger" onclick="alterarPlano('${u.id}','gratuito')">Free</button>
-          <button class="btn-sm btn-sm-success" onclick="resetarUso('${u.id}')">Reset uso</button>
+          <button class="btn-sm btn-sm-success" onclick="resetarUso('${u.id}')">Reset</button>
         </div>
       </td>
     </tr>
@@ -1416,12 +1795,12 @@ function renderUsers(users) {
 }
 
 async function alterarPlano(userId, plano) {
-  await callApi('admin/alterar-plano', { admin_id: user.id, user_id: userId, plano });
+  await callApiAuth('admin/alterar-plano', { user_id: userId, plano });
   carregarAdmin();
 }
 
 async function resetarUso(userId) {
-  await callApi('admin/resetar-uso', { admin_id: user.id, user_id: userId });
+  await callApiAuth('admin/resetar-uso', { user_id: userId });
   carregarAdmin();
 }
 
@@ -1435,10 +1814,15 @@ function abrirModal(plano) {
 
 function fecharModal() { document.getElementById('modalPagamento').classList.remove('visible'); }
 
-function fecharModalSucesso() {
+async function fecharModalSucesso() {
   document.getElementById('modalSucesso').classList.remove('visible');
-  const saved = localStorage.getItem(USER_KEY);
-  if (saved) { user = JSON.parse(saved); atualizarUI(); }
+  // Busca o plano real no servidor — o webhook do Mercado Pago pode levar alguns segundos
+  const r = await callApiAuth('me', null, 'GET');
+  if (r.ok) {
+    user = r.user;
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  }
+  atualizarUI();
 }
 
 function selecionarPlano(plano) {
@@ -1451,10 +1835,10 @@ async function pagar() {
   const btn = document.getElementById('btnPagar');
   btn.disabled = true; btn.textContent = 'Aguarde...';
   try {
-    const r = await callApi('criar-pagamento', { user_id: user.id, plano: planoSelecionado });
+    const r = await callApiAuth('criar-pagamento', { plano: planoSelecionado });
     if (r.ok && r.url) window.location.href = r.url;
-    else alert(r.erro || 'Erro ao criar pagamento.');
-  } catch { alert('Erro de conexão.'); }
+    else toast(r.erro || 'Erro ao criar pagamento.', 'error');
+  } catch { toast('Erro de conexão.', 'error'); }
   btn.disabled = false; btn.textContent = 'Pagar agora →';
 }
 
@@ -1475,6 +1859,8 @@ function selectVoice(card, voiceId, nome, flag) {
   selectedVoiceId = voiceId;
   const label = nome || voiceId;
   document.getElementById('vozSelecionadaLabel').textContent = (flag || '') + ' ' + label;
+  // Salva cache da voz
+  localStorage.setItem(VOZ_CACHE, JSON.stringify({ id: voiceId, nome: label, flag: flag || '🎤' }));
   salvarVozRecente(voiceId, nome, flag);
 }
 
@@ -1592,12 +1978,21 @@ async function getTextos() {
   if (currentMode === 'text') {
     const raw = document.getElementById('textoInput').value.trim();
     if (!raw) return [];
-    return raw.includes('---') ? raw.split(/\n---\n/).map(t => t.trim()).filter(Boolean) : raw.split(/\n/).map(t => t.trim()).filter(Boolean);
+    // Separa por --- ou por parágrafo duplo (\n\n)
+    if (raw.includes('---')) {
+      return raw.split(/\n\s*---\s*\n/).map(t => t.trim()).filter(Boolean);
+    }
+    if (raw.includes('\n\n')) {
+      return raw.split(/\n\n+/).map(t => t.trim().replace(/\n/g, ' ')).filter(Boolean);
+    }
+    return raw.split(/\n/).map(t => t.trim()).filter(Boolean);
   }
   if (!docxFile) return [];
   if (docxFile.name.endsWith('.txt')) {
     const text = await docxFile.text();
-    return text.includes('---') ? text.split(/\n---\n/).map(t => t.trim()).filter(Boolean) : text.split(/\n/).map(t => t.trim()).filter(Boolean);
+    if (text.includes('---')) return text.split(/\n\s*---\s*\n/).map(t => t.trim()).filter(Boolean);
+    if (text.includes('\n\n')) return text.split(/\n\n+/).map(t => t.trim().replace(/\n/g, ' ')).filter(Boolean);
+    return text.split(/\n/).map(t => t.trim()).filter(Boolean);
   }
   return await extrairDocx(docxFile, currentLang);
 }
@@ -1645,10 +2040,20 @@ async function iniciarGeracao() {
   const voiceId = customId || selectedVoiceId;
   const zipName = document.getElementById('zipName').value.trim() || 'audios_gerados';
 
-  if (!apiKey) { alert('Coloque sua API Key do ElevenLabs.'); return; }
+  if (!apiKey) { toast('Coloque sua API Key do ElevenLabs.', 'error'); return; }
 
   const textos = await getTextos();
-  if (!textos.length) { alert('Nenhum texto encontrado.'); return; }
+  if (!textos.length) { toast('Nenhum texto encontrado.', 'error'); return; }
+
+  // Verifica limite de caracteres
+  const textoLongo = textos.find(t => t.length > CHAR_LIMITE);
+  if (textoLongo) {
+    toast(`Um texto tem ${textoLongo.length} chars (limite: ${CHAR_LIMITE}). Reduza antes de gerar.`, 'warning', 5000);
+    return;
+  }
+
+  // Salva API key no cache
+  salvarCacheApiKey(apiKey);
 
   // Prepara nomes customizados
   nomesCustom = textos.map((t, i) => ({ auto: gerarNomeAuto(t, i), nome: gerarNomeAuto(t, i) }));
@@ -1658,7 +2063,7 @@ async function iniciarGeracao() {
     const disponiveis = LIMITE_FREE - (user.audios_mes || 0);
     if (disponiveis <= 0) { abrirModal(); return; }
     if (textos.length > disponiveis) {
-      if (!confirm(`Você tem ${disponiveis} áudio(s) disponíveis. Serão gerados apenas os primeiros ${disponiveis}. Continuar?`)) return;
+      toast(`Você tem ${disponiveis} áudio(s) disponíveis. Gerando apenas os primeiros.`, 'warning');
       textos.splice(disponiveis);
     }
   }
@@ -1667,6 +2072,8 @@ async function iniciarGeracao() {
   document.getElementById('logArea').innerHTML = '';
   document.getElementById('progressCard').classList.add('visible');
   document.getElementById('btnDownload').classList.remove('visible');
+  const playerContainer = document.getElementById('audioPlayerContainer');
+  if (playerContainer) playerContainer.innerHTML = '';
   audioFiles = []; zipInstance = new JSZip();
 
   log(`Iniciando geração de ${textos.length} áudios...`, 'info');
@@ -1680,8 +2087,13 @@ async function iniciarGeracao() {
     document.getElementById('progressLabel').textContent = `Gerando ${num} de ${textos.length}...`;
 
     try {
-      const reg = await callApi('registrar-audio', { user_id: user.id });
-      if (!reg.ok) { log(`[${num}] ✗ Limite atingido.`, 'warn'); abrirModal(); break; }
+      const reg = await callApiAuth('registrar-audio', {});
+      if (!reg.ok) {
+        log(`[${num}] ✗ Limite atingido.`, 'warn');
+        toast('Limite de áudios atingido. Faça upgrade!', 'warning');
+        abrirModal();
+        break;
+      }
 
       log(`[${num}] Gerando: ${nomeArquivo}`);
 
@@ -1691,7 +2103,10 @@ async function iniciarGeracao() {
         body: JSON.stringify({ text: textos[i], model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
       });
 
-      if (!resp.ok) { const err = await resp.json().catch(() => ({})); throw new Error(err?.detail?.message || `HTTP ${resp.status}`); }
+      if (!resp.ok) {
+        const errData = await resp.json().catch(() => ({}));
+        throw new Error(errData?.detail?.message || `HTTP ${resp.status}`);
+      }
 
       const blob = await resp.blob();
       audioFiles.push({ name: nomeArquivo, blob });
@@ -1701,7 +2116,20 @@ async function iniciarGeracao() {
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       atualizarUI();
       log(`[${num}] ✓ ${nomeArquivo}`, 'ok');
-    } catch (e) { erros++; log(`[${num}] ✗ Erro: ${e.message}`, 'err'); }
+
+      // Adiciona ao player inline
+      if (playerContainer) {
+        const url = URL.createObjectURL(blob);
+        const item = document.createElement('div');
+        item.className = 'audio-player-item';
+        item.innerHTML = `<span class="audio-player-name" title="${nomeArquivo}">${nomeArquivo}</span><audio controls src="${url}" preload="none"></audio>`;
+        playerContainer.appendChild(item);
+      }
+
+    } catch (e) {
+      erros++;
+      log(`[${num}] ✗ ${e.message}`, 'err');
+    }
 
     setProgress(i + 1, textos.length);
     await sleep(300);
@@ -1709,7 +2137,19 @@ async function iniciarGeracao() {
 
   document.getElementById('progressLabel').textContent = 'Concluído!';
   log(`\nFinalizado: ${ok} gerados, ${erros} erros.`, ok > 0 ? 'info' : 'err');
-  if (ok > 0) { const btn = document.getElementById('btnDownload'); btn.classList.add('visible'); btn.textContent = `⬇️ Baixar ZIP — ${ok} áudios (${zipName}.zip)`; }
+
+  if (ok > 0) {
+    const btn = document.getElementById('btnDownload');
+    btn.classList.add('visible');
+    btn.textContent = `⬇️ Baixar ZIP — ${ok} áudios (${zipName}.zip)`;
+    toast(`${ok} áudio${ok > 1 ? 's' : ''} gerado${ok > 1 ? 's' : ''} com sucesso!`, 'success');
+
+    // Salva no histórico
+    const vozNome = document.getElementById('vozSelecionadaLabel')?.textContent || 'Voz padrão';
+    salvarHistorico(ok, zipName, vozNome);
+  }
+
+  if (erros > 0) toast(`${erros} erro${erros > 1 ? 's' : ''} durante a geração.`, 'error');
   document.getElementById('btnGerar').disabled = false;
 }
 
@@ -1728,39 +2168,156 @@ async function callApi(endpoint, body) {
   return r.json();
 }
 
+// Chamada autenticada (envia o token de sessão); use para qualquer rota protegida
+async function callApiAuth(endpoint, body, method = 'POST') {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const headers = { 'Authorization': `Bearer ${token}` };
+  const opts = { method, headers };
+  if (method !== 'GET') {
+    headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body || {});
+  }
+  const r = await fetch(`${API}/${endpoint}`, opts);
+  return r.json();
+}
+
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ══════════════════════════════════════════════════════════
+// TOAST NOTIFICATIONS
 // ══════════════════════════════════════════════════════════
-// VIDEOMIX
+function toast(msg, tipo = 'info', duracao = 3500) {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${tipo}`;
+  const icons = { success: '✓', error: '✕', info: 'ℹ', warning: '⚠' };
+  el.innerHTML = `<span style="font-size:14px;flex-shrink:0">${icons[tipo] || 'ℹ'}</span><span>${msg}</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'toastOut .25s ease forwards';
+    setTimeout(() => el.remove(), 250);
+  }, duracao);
+}
+
 // ══════════════════════════════════════════════════════════
-let vmClipes = [];
-let vmSequencia = [];
-let vmAudios = [];
-let vmClipeSelecionado = null;
+// CACHE API KEY E VOZ
+// ══════════════════════════════════════════════════════════
+function carregarCacheApiKey() {
+  const cached = localStorage.getItem(API_KEY_CACHE);
+  if (cached) {
+    const el = document.getElementById('apiKey');
+    if (el) el.value = cached;
+  }
+}
+
+function salvarCacheApiKey(key) {
+  if (key) localStorage.setItem(API_KEY_CACHE, key);
+}
+
+function carregarCacheVoz() {
+  const cached = localStorage.getItem(VOZ_CACHE);
+  if (!cached) return;
+  try {
+    const { id, nome, flag } = JSON.parse(cached);
+    selectedVoiceId = id;
+    const label = document.getElementById('vozSelecionadaLabel');
+    if (label) label.textContent = `${flag} ${nome}`;
+  } catch {}
+}
+
+// ══════════════════════════════════════════════════════════
+// HISTÓRICO DE ÁUDIOS
+// ══════════════════════════════════════════════════════════
+function salvarHistorico(qtd, zipName, voz) {
+  let hist = JSON.parse(localStorage.getItem(HISTORICO_KEY) || '[]');
+  hist.unshift({
+    data: new Date().toLocaleDateString('pt-BR'),
+    hora: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    qtd,
+    zipName,
+    voz,
+  });
+  hist = hist.slice(0, 20); // máximo 20 entradas
+  localStorage.setItem(HISTORICO_KEY, JSON.stringify(hist));
+}
+
+function renderHistorico() {
+  const hist = JSON.parse(localStorage.getItem(HISTORICO_KEY) || '[]');
+  const el = document.getElementById('historicoLista');
+  if (!el) return;
+  if (!hist.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--muted2);text-align:center;padding:12px 0">Nenhum áudio gerado ainda</div>';
+    return;
+  }
+  el.innerHTML = hist.map(h => `
+    <div class="historico-item">
+      <div>
+        <div style="font-weight:500;font-size:12px">${h.zipName} · ${h.qtd} áudio${h.qtd > 1 ? 's' : ''}</div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:2px">${h.voz}</div>
+      </div>
+      <div class="historico-data">${h.data} ${h.hora}</div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// PLAYER INLINE DE ÁUDIO
+// ══════════════════════════════════════════════════════════
+function renderPlayerAudios(audios) {
+  const container = document.getElementById('audioPlayerContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!audios.length) return;
+
+  audios.forEach(({ name, blob }) => {
+    const url = URL.createObjectURL(blob);
+    const item = document.createElement('div');
+    item.className = 'audio-player-item';
+    item.innerHTML = `
+      <span class="audio-player-name" title="${name}">${name}</span>
+      <audio controls src="${url}" preload="none"></audio>
+    `;
+    container.appendChild(item);
+  });
+}
+
+// ══════════════════════════════════════════════════════════
+// CONTADOR DE CARACTERES
+// ══════════════════════════════════════════════════════════
+function atualizarContadorChars() {
+  const textarea = document.getElementById('textoInput');
+  const counter = document.getElementById('charCounter');
+  if (!textarea || !counter) return;
+  const raw = textarea.value.trim();
+  let textos = [];
+  if (raw.includes('---')) textos = raw.split(/\n\s*---\s*\n/).map(t => t.trim()).filter(Boolean);
+  else if (raw.includes('\n\n')) textos = raw.split(/\n\n+/).map(t => t.trim().replace(/\n/g, ' ')).filter(Boolean);
+  else textos = raw.split(/\n/).map(t => t.trim()).filter(Boolean);
+  const maxLen = textos.length ? Math.max(...textos.map(t => t.length)) : 0;
+  counter.textContent = `${textos.length} texto${textos.length !== 1 ? 's' : ''} · Maior: ${maxLen} / ${CHAR_LIMITE} chars`;
+  counter.className = 'char-counter ' + (maxLen > CHAR_LIMITE ? 'over' : maxLen > CHAR_LIMITE * 0.8 ? 'warn' : 'ok');
+}
+
+
+
+// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+// VIDEOMIX — Lógica simplificada
+// ══════════════════════════════════════════════════════════
+let vmClipes = [];       // { id, nome, file, url, dur, start, end, pinned, pinPos }
+let vmSequencia = [];    // IDs na ordem atual
+let vmAudios = [];       // arquivos de áudio
+let vmSel = null;        // clipe selecionado
 let vmPreviewIdx = 0;
+let vmFullPlaying = false;
+let vmFullTimer = null;
 let vmFfmpeg = null;
 let vmFfmpegOk = false;
-let vmDragHandle = null; // { clipId, tipo: 'left'|'right', startX, startVal }
-let vmPlayheadPos = 0;
+let vmDragId = null;
+const VM_PPS = 36; // pixels por segundo na timeline
 
-function toggleSection(bodyId, arrowId) {
-  const body = document.getElementById(bodyId);
-  const arrow = document.getElementById(arrowId);
-  if (!body) return;
-  const aberto = body.style.display !== 'none';
-  body.style.display = aberto ? 'none' : 'block';
-  if (arrow) arrow.style.transform = aberto ? 'rotate(0deg)' : 'rotate(180deg)';
-}
-
-function irParaVideoMix() {
-  ['screenHome','screenApp','screenAdmin'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById('screenVideoMix').classList.add('active');
-}
-
+// ── Status ────────────────────────────────────────────────
 function vmSetStatus(msg) {
   const el = document.getElementById('vmStatus');
   if (el) el.textContent = msg;
@@ -1768,11 +2325,10 @@ function vmSetStatus(msg) {
 
 function vmFmt(s) {
   if (!s && s !== 0) return '0s';
-  if (s < 60) return s.toFixed(1) + 's';
-  return Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
+  return s < 60 ? s.toFixed(1) + 's' : Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
 }
 
-// ── FFMPEG ────────────────────────────────────────────────
+// ── FFmpeg ────────────────────────────────────────────────
 async function vmCarregarFFmpeg() {
   if (vmFfmpegOk) return true;
   vmSetStatus('Carregando FFmpeg...');
@@ -1791,7 +2347,7 @@ async function vmCarregarFFmpeg() {
       document.getElementById('vmProgressFill').style.width = (progress * 100) + '%';
     });
     vmFfmpeg.on('log', ({ message }) => {
-      document.getElementById('vmProgressText').textContent = message.substring(0, 60);
+      document.getElementById('vmProgressText').textContent = message.substring(0, 70);
     });
     await vmFfmpeg.load({ coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js' });
     vmFfmpegOk = true;
@@ -1803,14 +2359,14 @@ async function vmCarregarFFmpeg() {
   }
 }
 
-// ── CLIPES ────────────────────────────────────────────────
-async function vmAdicionarClipes(files) {
-  for (const f of files) {
-    if (!f.type.includes('video')) continue;
+// ── Adicionar clipes ──────────────────────────────────────
+async function vmAddClipes(files) {
+  for (const f of Array.from(files)) {
+    if (!f.type.startsWith('video')) continue;
     const id = Date.now() + Math.random();
     const url = URL.createObjectURL(f);
     const dur = await vmGetDur(url);
-    vmClipes.push({ id, nome: f.name.replace(/\.mp4$/i,''), file: f, url, dur, start: 0, end: dur, pinned: false, pinPos: null });
+    vmClipes.push({ id, nome: f.name.replace(/\.[^.]+$/, ''), file: f, url, dur, start: 0, end: dur, pinned: false, pinPos: null });
     vmSequencia.push(id);
   }
   vmRenderClipes();
@@ -1828,249 +2384,289 @@ function vmGetDur(url) {
   });
 }
 
-// ── ÁUDIOS ────────────────────────────────────────────────
-function vmAdicionarAudios(files) {
-  vmAudios = Array.from(files).filter(f => f.type.includes('audio'));
+// ── Adicionar áudios ──────────────────────────────────────
+function vmAddAudios(files) {
+  vmAudios = Array.from(files).filter(f => f.type.startsWith('audio'));
   const el = document.getElementById('vmAudioCount');
-  el.textContent = `${vmAudios.length} áudio(s) carregado(s)`;
-  el.style.display = 'block';
+  el.textContent = vmAudios.length + ' arquivo' + (vmAudios.length !== 1 ? 's' : '');
   vmRenderAudioTrack();
 }
 
 function vmRenderAudioTrack() {
   const track = document.getElementById('vmAudioTrack');
   if (!vmAudios.length) {
-    track.innerHTML = '<div style="color:var(--muted);font-size:10px;padding:4px">Selecione áudios na pasta acima</div>';
+    track.innerHTML = '<span style="font-size:10px;color:var(--muted2)">Nenhum áudio selecionado</span>';
     return;
   }
-  track.innerHTML = vmAudios.map((a, i) => `
-    <div class="vm-audio-slot" style="background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--success);min-width:80px">
-      🎵 ${a.name.replace(/\.(mp3|wav)$/i,'').substring(0,12)}
-    </div>
-  `).join('');
+  track.innerHTML = vmAudios.slice(0, 5).map(a =>
+    `<span style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);border-radius:4px;padding:2px 7px;font-size:10px;color:var(--success);margin-right:3px;white-space:nowrap">${a.name.replace(/\.[^.]+$/, '').substring(0,14)}</span>`
+  ).join('') + (vmAudios.length > 5 ? `<span style="font-size:10px;color:var(--muted2)">+${vmAudios.length-5}</span>` : '');
 }
 
-// ── RENDER CLIPES LISTA ───────────────────────────────────
+// ── Render lista de clipes ────────────────────────────────
 function vmRenderClipes() {
-  const lista = document.getElementById('vmClipsList');
+  const el = document.getElementById('vmClipesList');
   if (!vmClipes.length) {
-    lista.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px">Adicione clipes .mp4</div>';
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted2);font-size:11px">Adicione clipes .mp4</div>';
     return;
   }
-  lista.innerHTML = vmClipes.map(c => {
-    const sel = vmClipeSelecionado && String(vmClipeSelecionado.id) === String(c.id);
-    return `<div class="vm-clip-item ${sel ? 'vm-selected' : ''}" style="border:1px solid ${c.pinned ? 'var(--warning)' : sel ? 'var(--accent)' : 'var(--border)'}" onclick="vmSelecionarClipe('${c.id}')">
-      ${c.pinned ? `<span style="position:absolute;top:-3px;right:-3px;background:var(--warning);color:#000;font-size:9px;font-weight:700;padding:1px 4px;border-radius:999px">P${c.pinPos||'?'}</span>` : ''}
-      <div style="width:28px;height:42px;background:var(--border);border-radius:4px;overflow:hidden;flex-shrink:0">
-        <video src="${c.url}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover"></video>
-      </div>
+  el.innerHTML = vmClipes.map(c => {
+    const isSel = vmSel && String(vmSel.id) === String(c.id);
+    return `<div class="vm-clip ${isSel ? 'selected' : ''}" onclick="vmSelectClipe('${c.id}')">
+      ${c.pinned ? `<span style="position:absolute;top:-3px;right:-3px;background:var(--gold);color:#000;font-size:8px;font-weight:700;padding:1px 4px;border-radius:999px">P${c.pinPos||'?'}</span>` : ''}
+      <div class="vm-clip-thumb"><video src="${c.url}" muted preload="metadata"></video></div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:11px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.nome}</div>
-        <div style="font-size:10px;color:var(--muted2);margin-top:2px;font-family:'JetBrains Mono',monospace">${vmFmt(c.start)}→${vmFmt(c.end)}</div>
+        <div style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nome}</div>
+        <div style="font-size:10px;color:var(--muted2);margin-top:2px;font-family:'JetBrains Mono',monospace">${vmFmt(c.start)} → ${vmFmt(c.end)}</div>
       </div>
     </div>`;
   }).join('');
 }
 
-// ── TIMELINE COM HANDLES ──────────────────────────────────
-const VM_PX_PER_SEC = 40; // pixels por segundo
-
+// ── Timeline ──────────────────────────────────────────────
 function vmRenderTimeline() {
   const track = document.getElementById('vmTlTrack');
-  const playhead = document.getElementById('vmPlayhead');
-
   if (!vmSequencia.length) {
-    track.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:8px">Adicione clipes</div>';
-    playhead.style.display = 'none';
-    document.getElementById('vmTotalDur').textContent = '0s total';
+    track.innerHTML = '<div style="color:var(--muted2);font-size:10px;padding:12px;display:flex;align-items:center">Adicione clipes → arraste para reordenar</div>';
+    document.getElementById('vmTotalDur').textContent = '0s';
     return;
   }
 
-  playhead.style.display = 'block';
-
   let total = 0;
   let html = '';
-  for (let i = 0; i < vmSequencia.length; i++) {
-    const c = vmClipes.find(x => String(x.id) === String(vmSequencia[i]));
+  for (const id of vmSequencia) {
+    const c = vmClipes.find(x => String(x.id) === String(id));
     if (!c) continue;
     const dur = c.end - c.start;
-    const w = Math.max(48, dur * VM_PX_PER_SEC);
+    const w = Math.max(44, dur * VM_PPS);
     total += dur;
-    const sel = vmClipeSelecionado && String(vmClipeSelecionado.id) === String(c.id);
-    const bgColor = c.pinned ? 'rgba(245,158,11,.18)' : 'rgba(124,92,252,.22)';
-    const borderColor = sel ? 'var(--accent)' : c.pinned ? 'var(--warning)' : 'rgba(124,92,252,.5)';
-    const textColor = c.pinned ? 'var(--warning)' : 'var(--accent2)';
-
-    html += `<div class="vm-tl-clip ${sel ? 'vm-tl-selected' : ''} ${c.pinned ? 'vm-tl-pinned' : ''}"
+    const isSel = vmSel && String(vmSel.id) === String(c.id);
+    html += `<div class="vm-tl-clip ${isSel ? 'vm-tl-selected' : ''} ${c.pinned ? 'pinned' : ''}"
       data-id="${c.id}"
-      style="width:${w}px;background:${bgColor};border:1px solid ${borderColor};color:${textColor}"
-      onclick="vmSelecionarClipe('${c.id}')">
-      ${c.pinned ? `<span style="position:absolute;top:2px;right:4px;font-size:9px">📌</span>` : ''}
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 12px;font-size:10px">${c.nome.substring(0,10)}</span>
-      <div class="vm-handle vm-handle-left" onmousedown="vmStartHandle(event,'${c.id}','left')" ontouchstart="vmStartHandleTouch(event,'${c.id}','left')"></div>
-      <div class="vm-handle vm-handle-right" onmousedown="vmStartHandle(event,'${c.id}','right')" ontouchstart="vmStartHandleTouch(event,'${c.id}','right')"></div>
+      style="width:${w}px"
+      draggable="true"
+      onclick="vmSelectClipe('${c.id}')"
+      ondragstart="vmDragStart(event,'${c.id}')"
+      ondragover="vmDragOver(event,'${c.id}')"
+      ondrop="vmDrop(event,'${c.id}')"
+      ondragend="vmDragEnd()">
+      ${c.pinned ? `<span style="position:absolute;top:2px;right:3px;font-size:8px">📌</span>` : ''}
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 10px;font-size:10px;pointer-events:none">${c.nome.substring(0,10)}</span>
+      <div class="vm-handle vm-handle-l" onmousedown="vmHandleStart(event,'${c.id}','l')"></div>
+      <div class="vm-handle vm-handle-r" onmousedown="vmHandleStart(event,'${c.id}','r')"></div>
     </div>`;
   }
 
   track.innerHTML = html;
   document.getElementById('vmTotalDur').textContent = vmFmt(total) + ' total';
-  vmRenderRuler(total);
-  vmAtualizarPlayhead();
 }
 
-function vmRenderRuler(total) {
-  const ruler = document.getElementById('vmRuler');
-  let html = '';
-  const step = total > 30 ? 10 : total > 10 ? 5 : 2;
-  for (let t = 0; t <= total; t += step) {
-    const left = 6 + t * VM_PX_PER_SEC;
-    html += `<div class="vm-tl-ruler-mark" style="left:${left}px">${t}s</div>`;
-  }
-  ruler.innerHTML = html;
+// ── Drag & drop na timeline ───────────────────────────────
+function vmDragStart(e, id) {
+  vmDragId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => {
+    const el = document.querySelector(`.vm-tl-clip[data-id="${id}"]`);
+    if (el) el.style.opacity = '.3';
+  }, 0);
 }
 
-function vmAtualizarPlayhead() {
-  const ph = document.getElementById('vmPlayhead');
-  ph.style.left = (6 + vmPlayheadPos * VM_PX_PER_SEC) + 'px';
+function vmDragOver(e, id) {
+  e.preventDefault();
+  document.querySelectorAll('.vm-tl-clip').forEach(el => el.classList.remove('vm-tl-drop-target'));
+  const el = document.querySelector(`.vm-tl-clip[data-id="${id}"]`);
+  if (el) el.classList.add('vm-tl-drop-target');
 }
 
-// ── HANDLES DE CORTE ──────────────────────────────────────
-function vmStartHandle(e, id, tipo) {
+function vmDrop(e, targetId) {
+  e.preventDefault();
+  document.querySelectorAll('.vm-tl-clip').forEach(el => { el.classList.remove('vm-tl-drop-target'); el.style.opacity = '1'; });
+  if (!vmDragId || vmDragId === targetId) { vmDragId = null; return; }
+  const fi = vmSequencia.findIndex(s => String(s) === String(vmDragId));
+  const ti = vmSequencia.findIndex(s => String(s) === String(targetId));
+  if (fi === -1 || ti === -1) { vmDragId = null; return; }
+  vmSequencia.splice(fi, 1);
+  vmSequencia.splice(ti, 0, vmDragId);
+  vmDragId = null;
+  vmRenderTimeline();
+}
+
+function vmDragEnd() {
+  document.querySelectorAll('.vm-tl-clip').forEach(el => { el.classList.remove('vm-tl-drop-target'); el.style.opacity = '1'; });
+  vmDragId = null;
+}
+
+// ── Handles de corte ──────────────────────────────────────
+let vmHandleDrag = null;
+
+function vmHandleStart(e, id, lado) {
   e.stopPropagation();
   e.preventDefault();
   const c = vmClipes.find(x => String(x.id) === String(id));
   if (!c) return;
-  vmClipeSelecionado = c;
-  vmDragHandle = { clipId: id, tipo, startX: e.clientX, startVal: tipo === 'left' ? c.start : c.end };
+  vmSel = c;
+  vmHandleDrag = { id, lado, startX: e.clientX, startVal: lado === 'l' ? c.start : c.end };
   vmRenderClipes();
-  vmRenderTimeline();
   vmMostrarProps();
 }
 
-function vmStartHandleTouch(e, id, tipo) {
-  e.stopPropagation();
-  const touch = e.touches[0];
-  const c = vmClipes.find(x => String(x.id) === String(id));
+document.addEventListener('mousemove', e => {
+  if (!vmHandleDrag) return;
+  const c = vmClipes.find(x => String(x.id) === String(vmHandleDrag.id));
   if (!c) return;
-  vmClipeSelecionado = c;
-  vmDragHandle = { clipId: id, tipo, startX: touch.clientX, startVal: tipo === 'left' ? c.start : c.end };
-  vmRenderClipes();
-  vmRenderTimeline();
-  vmMostrarProps();
-}
-
-document.addEventListener('mousemove', (e) => {
-  if (!vmDragHandle) return;
-  vmMoverHandle(e.clientX);
-});
-
-document.addEventListener('touchmove', (e) => {
-  if (!vmDragHandle) return;
-  vmMoverHandle(e.touches[0].clientX);
-}, { passive: true });
-
-document.addEventListener('mouseup', () => { vmDragHandle = null; });
-document.addEventListener('touchend', () => { vmDragHandle = null; });
-
-function vmMoverHandle(clientX) {
-  const { clipId, tipo, startX, startVal } = vmDragHandle;
-  const c = vmClipes.find(x => String(x.id) === String(clipId));
-  if (!c) return;
-
-  const delta = (clientX - startX) / VM_PX_PER_SEC;
-  const MINIMO = 0.5;
-
-  if (tipo === 'left') {
-    c.start = Math.max(0, Math.min(startVal + delta, c.end - MINIMO));
+  const delta = (e.clientX - vmHandleDrag.startX) / VM_PPS;
+  const MIN = 0.3;
+  if (vmHandleDrag.lado === 'l') {
+    c.start = Math.max(0, Math.min(vmHandleDrag.startVal + delta, c.end - MIN));
   } else {
-    c.end = Math.min(c.dur, Math.max(startVal + delta, c.start + MINIMO));
+    c.end = Math.min(c.dur, Math.max(vmHandleDrag.startVal + delta, c.start + MIN));
   }
-
   vmRenderTimeline();
   vmAtualizarProps();
-}
+});
 
-// ── SELEÇÃO E PROPRIEDADES ────────────────────────────────
-function vmSelecionarClipe(id) {
-  vmClipeSelecionado = vmClipes.find(c => String(c.id) === String(id));
-  if (!vmClipeSelecionado) return;
-  vmPreviewClipe(vmClipeSelecionado);
+document.addEventListener('mouseup', () => { vmHandleDrag = null; });
+
+// ── Seleção e props ───────────────────────────────────────
+function vmSelectClipe(id) {
+  vmSel = vmClipes.find(c => String(c.id) === String(id));
+  if (!vmSel) return;
+  vmPreviewClipe(vmSel);
   vmMostrarProps();
   vmRenderClipes();
   vmRenderTimeline();
 }
 
 function vmMostrarProps() {
-  document.getElementById('vmPropEmpty').style.display = 'none';
-  document.getElementById('vmPropControls').style.display = 'block';
-  document.getElementById('vmCheckPin').checked = vmClipeSelecionado.pinned;
-  document.getElementById('vmInputPinPos').disabled = !vmClipeSelecionado.pinned;
-  document.getElementById('vmInputPinPos').value = vmClipeSelecionado.pinPos || '';
+  document.getElementById('vmPropVazio').style.display = 'none';
+  document.getElementById('vmPropBody').style.display = 'block';
+  document.getElementById('vmPropNome').textContent = vmSel.nome;
+  const rs = document.getElementById('vmRangeStart');
+  const re = document.getElementById('vmRangeEnd');
+  rs.max = vmSel.dur; re.max = vmSel.dur;
+  rs.value = vmSel.start; re.value = vmSel.end;
+  document.getElementById('vmPinCheck').checked = vmSel.pinned;
+  document.getElementById('vmPinPos').disabled = !vmSel.pinned;
+  document.getElementById('vmPinPos').value = vmSel.pinPos || '';
   vmAtualizarProps();
 }
 
 function vmAtualizarProps() {
-  if (!vmClipeSelecionado) return;
-  document.getElementById('vmPropNome').textContent = vmClipeSelecionado.nome;
-  document.getElementById('vmPropDurTotal').textContent = vmFmt(vmClipeSelecionado.dur);
-  document.getElementById('vmPropCorte').textContent = vmFmt(vmClipeSelecionado.end - vmClipeSelecionado.start);
+  if (!vmSel) return;
+  document.getElementById('vmPropStart').textContent = vmSel.start.toFixed(2) + 's';
+  document.getElementById('vmPropEnd').textContent = vmSel.end.toFixed(2) + 's';
+  document.getElementById('vmPropDur').textContent = '⏱ ' + vmFmt(vmSel.end - vmSel.start);
+}
+
+function vmUpdateCorte() {
+  if (!vmSel) return;
+  let s = parseFloat(document.getElementById('vmRangeStart').value);
+  let e = parseFloat(document.getElementById('vmRangeEnd').value);
+  if (s >= e) { s = e - 0.3; document.getElementById('vmRangeStart').value = s; }
+  vmSel.start = s; vmSel.end = e;
+  vmAtualizarProps();
+  vmRenderClipes();
+  vmRenderTimeline();
 }
 
 function vmTogglePin() {
-  if (!vmClipeSelecionado) return;
-  vmClipeSelecionado.pinned = document.getElementById('vmCheckPin').checked;
-  document.getElementById('vmInputPinPos').disabled = !vmClipeSelecionado.pinned;
-  if (!vmClipeSelecionado.pinned) vmClipeSelecionado.pinPos = null;
+  if (!vmSel) return;
+  vmSel.pinned = document.getElementById('vmPinCheck').checked;
+  document.getElementById('vmPinPos').disabled = !vmSel.pinned;
+  if (!vmSel.pinned) vmSel.pinPos = null;
   vmRenderClipes(); vmRenderTimeline();
 }
 
-function vmAtualizarPinPos() {
-  if (!vmClipeSelecionado) return;
-  vmClipeSelecionado.pinPos = parseInt(document.getElementById('vmInputPinPos').value) || null;
+function vmUpdatePin() {
+  if (!vmSel) return;
+  vmSel.pinPos = parseInt(document.getElementById('vmPinPos').value) || null;
   vmRenderClipes(); vmRenderTimeline();
 }
 
-function vmRemoverClipeSelecionado() {
-  if (!vmClipeSelecionado) return;
-  const id = vmClipeSelecionado.id;
+function vmRemoverSelecionado() {
+  if (!vmSel) return;
+  const id = vmSel.id;
   vmClipes = vmClipes.filter(c => String(c.id) !== String(id));
   vmSequencia = vmSequencia.filter(s => String(s) !== String(id));
-  vmClipeSelecionado = null;
-  document.getElementById('vmPropEmpty').style.display = 'block';
-  document.getElementById('vmPropControls').style.display = 'none';
+  vmSel = null;
+  document.getElementById('vmPropVazio').style.display = 'block';
+  document.getElementById('vmPropBody').style.display = 'none';
   vmRenderClipes(); vmRenderTimeline(); vmAtualizarBotoes();
   document.getElementById('vmClipCount').textContent = vmClipes.length;
 }
 
-// ── PREVIEW ───────────────────────────────────────────────
+// ── Preview ───────────────────────────────────────────────
 function vmPreviewClipe(c) {
-  const v = document.getElementById('vmPreviewVideo');
-  const ph = document.getElementById('vmPreviewPlaceholder');
+  const v = document.getElementById('vmVideo');
+  const ph = document.getElementById('vmPh');
   v.src = c.url; v.currentTime = c.start;
   v.style.display = 'block'; ph.style.display = 'none';
 }
 
 function vmTogglePlay() {
-  const v = document.getElementById('vmPreviewVideo');
-  if (v.paused) { v.play(); document.getElementById('vmBtnPlay').textContent = '⏸'; }
-  else { v.pause(); document.getElementById('vmBtnPlay').textContent = '▶️'; }
+  const v = document.getElementById('vmVideo');
+  const btn = document.getElementById('vmPlayBtn');
+  if (vmFullPlaying) { vmPararFull(); return; }
+  if (v.paused) { v.play(); btn.textContent = '⏸'; }
+  else { v.pause(); btn.textContent = '▶️'; }
 }
 
-function vmPreviewAnterior() {
+function vmPrevClipe() {
   if (!vmSequencia.length) return;
+  vmPararFull();
   vmPreviewIdx = (vmPreviewIdx - 1 + vmSequencia.length) % vmSequencia.length;
   const c = vmClipes.find(x => String(x.id) === String(vmSequencia[vmPreviewIdx]));
-  if (c) vmPreviewClipe(c);
+  if (c) { vmSel = c; vmPreviewClipe(c); vmMostrarProps(); vmRenderClipes(); vmRenderTimeline(); }
 }
 
-function vmPreviewProximo() {
+function vmNextClipe() {
   if (!vmSequencia.length) return;
+  vmPararFull();
   vmPreviewIdx = (vmPreviewIdx + 1) % vmSequencia.length;
   const c = vmClipes.find(x => String(x.id) === String(vmSequencia[vmPreviewIdx]));
-  if (c) vmPreviewClipe(c);
+  if (c) { vmSel = c; vmPreviewClipe(c); vmMostrarProps(); vmRenderClipes(); vmRenderTimeline(); }
 }
 
-// ── RANDOMIZAR ────────────────────────────────────────────
+function vmPlayFull() {
+  if (!vmSequencia.length) return;
+  if (vmFullPlaying) { vmPararFull(); return; }
+  vmFullPlaying = true;
+  document.getElementById('vmPlayBtn').textContent = '⏸';
+  vmSetStatus('Preview completo...');
+  vmPlayarIdx(0);
+}
+
+function vmPlayarIdx(idx) {
+  if (idx >= vmSequencia.length) { vmPararFull(); vmSetStatus('Preview concluído'); return; }
+  const c = vmClipes.find(x => String(x.id) === String(vmSequencia[idx]));
+  if (!c) { vmPlayarIdx(idx + 1); return; }
+  vmPreviewIdx = idx;
+  vmPreviewClipe(c);
+  const v = document.getElementById('vmVideo');
+  v.play().catch(() => {});
+  // Destaca na timeline
+  document.querySelectorAll('.vm-tl-clip').forEach(el => el.classList.remove('vm-tl-playing'));
+  const tlEl = document.querySelector(`.vm-tl-clip[data-id="${c.id}"]`);
+  if (tlEl) tlEl.classList.add('vm-tl-playing');
+  const durMs = (c.end - c.start) * 1000;
+  if (vmFullTimer) clearTimeout(vmFullTimer);
+  vmFullTimer = setTimeout(() => {
+    v.pause();
+    vmPlayarIdx(idx + 1);
+  }, durMs);
+}
+
+function vmPararFull() {
+  vmFullPlaying = false;
+  if (vmFullTimer) clearTimeout(vmFullTimer);
+  const v = document.getElementById('vmVideo');
+  v.pause();
+  document.getElementById('vmPlayBtn').textContent = '▶️';
+  document.querySelectorAll('.vm-tl-clip').forEach(el => el.classList.remove('vm-tl-playing'));
+  vmSetStatus('Pronto');
+}
+
+// ── Randomizar ────────────────────────────────────────────
 function vmRandomizar() {
   const fixados = vmClipes.filter(c => c.pinned && c.pinPos);
   const livres = vmSequencia.filter(id => {
@@ -2082,122 +2678,194 @@ function vmRandomizar() {
     [livres[i], livres[j]] = [livres[j], livres[i]];
   }
   const nova = [...livres];
-  fixados.sort((a,b) => (a.pinPos||0) - (b.pinPos||0)).forEach(c => {
+  fixados.sort((a, b) => (a.pinPos || 0) - (b.pinPos || 0)).forEach(c => {
     const pos = Math.min((c.pinPos || 1) - 1, nova.length);
     nova.splice(pos, 0, c.id);
   });
   vmSequencia = nova;
   vmRenderTimeline();
-  vmSetStatus('Randomizado!');
+  vmSetStatus('Embaralhado!');
+  toast('Ordem randomizada!', 'info', 1500);
 }
 
-// ── GERAR VÍDEOS ──────────────────────────────────────────
-async function vmGerarVideos() {
-  if (!vmSequencia.length) { alert('Adicione clipes primeiro.'); return; }
+// ── Gerar vídeos ──────────────────────────────────────────
+async function vmGerar() {
+  if (!vmSequencia.length) { toast('Adicione clipes primeiro.', 'error'); return; }
+  if (!vmAudios.length) { toast('Adicione pelo menos um áudio.', 'error'); return; }
+
   const ok = await vmCarregarFFmpeg();
-  if (!ok) { alert('Erro ao carregar FFmpeg. Use Chrome e tente novamente.'); return; }
+  if (!ok) { toast('Erro ao carregar FFmpeg. Use Chrome.', 'error'); return; }
 
   const qtd = parseInt(document.getElementById('vmQtd').value) || 1;
   const nomeBase = document.getElementById('vmNomeBase').value.trim() || 'criativo';
 
   document.getElementById('vmProgressWrap').style.display = 'block';
   document.getElementById('vmBtnGerar').disabled = true;
-  document.getElementById('vmBtnRandomizar').disabled = true;
+  document.getElementById('vmBtnRand').disabled = true;
   document.getElementById('vmOutputList').innerHTML = '';
 
-  // Embaralha áudios se houver
+  // Embaralha lista de áudios
   const audiosEmbaralhados = [...vmAudios].sort(() => Math.random() - 0.5);
 
   for (let v = 0; v < qtd; v++) {
     if (v > 0) vmRandomizar();
-    const nomeArquivo = `${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
-    const audioAtual = audiosEmbaralhados[v % Math.max(audiosEmbaralhados.length, 1)] || null;
-    vmSetStatus(`Gerando ${v+1}/${qtd}...`);
-    document.getElementById('vmProgressText').textContent = `Vídeo ${v+1} de ${qtd}`;
+    const nomeArq = `${nomeBase}_${String(v + 1).padStart(3, '0')}.mp4`;
+    const audioAtual = audiosEmbaralhados[v % audiosEmbaralhados.length];
+    vmSetStatus(`Gerando ${v + 1}/${qtd}...`);
+    document.getElementById('vmProgressText').textContent = `Vídeo ${v + 1} de ${qtd} · ${nomeArq}`;
+
     try {
-      const blob = await vmProcessar(nomeArquivo, audioAtual);
-      vmAdicionarOutput(nomeArquivo, blob, true);
+      const blob = await vmProcessar(nomeArq, audioAtual);
+      vmAddOutput(nomeArq, blob, true);
     } catch(e) {
       console.error(e);
-      vmAdicionarOutput(nomeArquivo, null, false, e.message);
+      vmAddOutput(nomeArq, null, false, e.message);
     }
-    document.getElementById('vmProgressFill').style.width = ((v+1)/qtd*100) + '%';
+
+    document.getElementById('vmProgressFill').style.width = ((v + 1) / qtd * 100) + '%';
   }
 
   vmSetStatus(`Concluído! ${qtd} vídeo(s) gerado(s).`);
   document.getElementById('vmProgressText').textContent = 'Concluído!';
   document.getElementById('vmBtnGerar').disabled = false;
-  document.getElementById('vmBtnRandomizar').disabled = false;
+  document.getElementById('vmBtnRand').disabled = false;
   vmAtualizarBotoes();
+  toast(`${qtd} vídeo${qtd > 1 ? 's' : ''} gerado${qtd > 1 ? 's' : ''}!`, 'success');
 }
 
 async function vmProcessar(nomeOut, audioFile) {
-  const toUint8 = async (file) => new Uint8Array(await file.arrayBuffer());
+  const toU8 = async f => new Uint8Array(await f.arrayBuffer());
 
+  // Calcula duração total do áudio
+  const audioDur = await vmGetDur(URL.createObjectURL(audioFile));
+
+  // Monta lista de clipes na sequência atual
+  const clipes = vmSequencia
+    .map(id => vmClipes.find(x => String(x.id) === String(id)))
+    .filter(Boolean);
+
+  // Calcula duração total dos clipes
+  let totalClipes = clipes.reduce((acc, c) => acc + (c.end - c.start), 0);
+
+  // Ajusta o último clipe para encaixar no áudio
+  const clipesAjustados = clipes.map((c, i) => ({ ...c }));
+  if (clipesAjustados.length > 0) {
+    const ultimo = clipesAjustados[clipesAjustados.length - 1];
+    const outros = clipesAjustados.slice(0, -1).reduce((acc, c) => acc + (c.end - c.start), 0);
+    const restante = audioDur - outros;
+    if (restante > 0.3) {
+      // Precisa de mais tempo — expande o fim do último clipe
+      const novoEnd = Math.min(ultimo.dur, ultimo.start + restante);
+      ultimo.end = novoEnd;
+    } else if (restante < 0) {
+      // Áudio mais curto — corta o último clipe
+      const novoEnd = Math.max(ultimo.start + 0.3, ultimo.start + (ultimo.end - ultimo.start) + restante);
+      ultimo.end = novoEnd;
+    }
+  }
+
+  // Escreve clipes no FS do FFmpeg
   const partes = [];
-  for (let i = 0; i < vmSequencia.length; i++) {
-    const c = vmClipes.find(x => String(x.id) === String(vmSequencia[i]));
-    if (!c) continue;
-    const fname = `c${i}.mp4`;
-    await vmFfmpeg.writeFile(fname, await toUint8(c.file));
+  for (let i = 0; i < clipesAjustados.length; i++) {
+    const c = clipesAjustados[i];
+    const fname = `cl${i}.mp4`;
+    await vmFfmpeg.writeFile(fname, await toU8(c.file));
     partes.push({ fname, start: c.start, end: c.end });
   }
 
+  // Escreve áudio
+  await vmFfmpeg.writeFile('aud.mp3', await toU8(audioFile));
+
+  // Monta filter_complex: trim cada clipe + concat + muda áudio
   let fc = '';
-  let ci = '';
+  let vConcat = '';
   const inputArgs = [];
+
   for (let i = 0; i < partes.length; i++) {
     const p = partes[i];
-    fc += `[${i}:v]trim=start=${p.start.toFixed(3)}:end=${p.end.toFixed(3)},setpts=PTS-STARTPTS,scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,setsar=1[v${i}];`;
-    fc += `[${i}:a]atrim=start=${p.start.toFixed(3)}:end=${p.end.toFixed(3)},asetpts=PTS-STARTPTS[a${i}];`;
-    ci += `[v${i}][a${i}]`;
+    // Scale para 1080x1920 (9:16) mantendo aspecto com pad preto
+    fc += `[${i}:v]trim=start=${p.start.toFixed(3)}:end=${p.end.toFixed(3)},setpts=PTS-STARTPTS,` +
+      `scale=1080:1920:force_original_aspect_ratio=decrease,` +
+      `pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1[v${i}];`;
+    vConcat += `[v${i}]`;
     inputArgs.push('-i', p.fname);
   }
-  fc += `${ci}concat=n=${partes.length}:v=1:a=1[outv][outa]`;
 
-  const args = [...inputArgs];
-  if (audioFile) {
-    await vmFfmpeg.writeFile('aud.mp3', await toUint8(audioFile));
-    args.push('-i', 'aud.mp3');
-    fc += `;[outa]volume=0[silv];[${partes.length}:a]volume=1[audout]`;
-    args.push('-filter_complex', fc, '-map', '[outv]', '-map', '[audout]', '-shortest', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26', '-c:a', 'aac', '-b:a', '128k', nomeOut);
-  } else {
-    args.push('-filter_complex', fc, '-map', '[outv]', '-map', '[outa]', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '26', '-c:a', 'aac', '-b:a', '128k', nomeOut);
-  }
+  // Concat só vídeo (sem áudio dos clipes — todos no mudo)
+  fc += `${vConcat}concat=n=${partes.length}:v=1:a=0[outv]`;
+
+  // Input do áudio separado
+  inputArgs.push('-i', 'aud.mp3');
+
+  const args = [
+    ...inputArgs,
+    '-filter_complex', fc,
+    '-map', '[outv]',
+    '-map', `${partes.length}:a`,
+    '-shortest',                    // corta no menor (garante encaixe)
+    '-c:v', 'libx264',
+    '-preset', 'ultrafast',
+    '-crf', '26',
+    '-c:a', 'aac',
+    '-b:a', '128k',
+    '-movflags', '+faststart',
+    nomeOut
+  ];
 
   await vmFfmpeg.exec(args);
   const data = await vmFfmpeg.readFile(nomeOut);
   const blob = new Blob([data.buffer], { type: 'video/mp4' });
 
+  // Limpa FS
   for (const p of partes) { try { await vmFfmpeg.deleteFile(p.fname); } catch {} }
+  try { await vmFfmpeg.deleteFile('aud.mp3'); } catch {}
   try { await vmFfmpeg.deleteFile(nomeOut); } catch {}
-  if (audioFile) { try { await vmFfmpeg.deleteFile('aud.mp3'); } catch {} }
 
   return blob;
 }
 
-function vmAdicionarOutput(nome, blob, ok, errMsg) {
+function vmAddOutput(nome, blob, ok, errMsg) {
   const list = document.getElementById('vmOutputList');
   const empty = list.querySelector('div[style*="text-align:center"]');
   if (empty) empty.remove();
   const item = document.createElement('div');
-  item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:5px';
+  item.className = 'vm-out';
   if (ok && blob) {
     const url = URL.createObjectURL(blob);
-    item.innerHTML = `<div><div style="font-size:11px;font-weight:500">${nome}</div><div style="font-size:10px;color:var(--success)">✓ Pronto</div></div><a href="${url}" download="${nome}"><button style="background:none;border:none;color:var(--accent2);cursor:pointer;font-size:18px">⬇️</button></a>`;
+    item.innerHTML = `<div><div class="vm-out-name" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn">⬇️</button></a>`;
   } else {
-    item.innerHTML = `<div><div style="font-size:11px;font-weight:500">${nome}</div><div style="font-size:10px;color:var(--error)">✗ ${(errMsg||'Erro').substring(0,40)}</div></div>`;
+    item.innerHTML = `<div><div class="vm-out-name">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,40)}</div></div>`;
   }
   list.appendChild(item);
 }
 
+// ── Atalhos de teclado ────────────────────────────────────
+document.addEventListener('keydown', e => {
+  const vm = document.getElementById('screenVideoMix');
+  if (!vm || !vm.classList.contains('active')) return;
+  if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+  switch(e.key) {
+    case ' ': e.preventDefault(); vmTogglePlay(); break;
+    case 'p': case 'P': vmPlayFull(); break;
+    case 'ArrowLeft': e.preventDefault(); vmPrevClipe(); break;
+    case 'ArrowRight': e.preventDefault(); vmNextClipe(); break;
+    case 'Delete': case 'Backspace':
+      if (vmSel) { vmRemoverSelecionado(); toast('Clipe removido', 'info', 1500); }
+      break;
+    case 'r': case 'R': vmRandomizar(); break;
+    case 'Escape': vmPararFull(); break;
+  }
+});
+
+// ── Botões ────────────────────────────────────────────────
 function vmAtualizarBotoes() {
   const tem = vmClipes.length > 0;
-  const br = document.getElementById('vmBtnRandomizar');
+  const br = document.getElementById('vmBtnRand');
   const bg = document.getElementById('vmBtnGerar');
-  if (br) { br.disabled = !tem; br.style.opacity = tem ? '1' : '.4'; }
-  if (bg) { bg.disabled = !tem; bg.style.opacity = tem ? '1' : '.4'; }
+  if (br) { br.disabled = !tem; br.style.opacity = tem ? '1' : '.35'; }
+  if (bg) { bg.disabled = !tem; bg.style.opacity = tem ? '1' : '.35'; }
 }
+
 </script>
 </body>
 </html>
