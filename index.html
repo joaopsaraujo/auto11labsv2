@@ -1113,56 +1113,66 @@ tr:hover td{background:var(--surface2)}
 <!-- VIDEOMIX -->
 <div id="screenVideoMix" class="screen" style="flex-direction:column">
   <style>
-  /* VideoMix estilos */
-  .vm-wrap{display:grid;grid-template-columns:280px 1fr 220px;height:calc(100vh - 57px);overflow:hidden}
+  /* ===== VideoMix 2.0 — editor multi-camadas estilo CapCut ===== */
+  .vm-wrap{display:grid;grid-template-columns:230px 1fr 250px;height:calc(100vh - 57px);overflow:hidden}
   .vm-col{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid rgba(255,255,255,.04)}
-  .vm-col:last-child{border-right:none;border-left:1px solid rgba(255,255,255,.04)}
-  .vm-col-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);padding:16px 16px 10px;display:flex;justify-content:space-between;align-items:center}
-  .vm-scroll{flex:1;overflow-y:auto;padding:0 12px 12px}
+  .vm-col:last-child{border-right:none;border-left:1px solid rgba(255,255,255,.04);overflow-y:auto}
+  .vm-col-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);padding:14px 14px 8px;display:flex;justify-content:space-between;align-items:center}
+  .vm-scroll{flex:1;overflow-y:auto;padding:0 10px 10px}
 
   /* Upload zone */
-  .vm-drop{border:1px dashed rgba(255,255,255,.1);border-radius:10px;padding:20px;text-align:center;cursor:pointer;position:relative;transition:all .2s;margin:0 12px 12px}
+  .vm-drop{border:1px dashed rgba(255,255,255,.1);border-radius:10px;padding:16px;text-align:center;cursor:pointer;position:relative;transition:all .2s;margin:0 10px 10px}
   .vm-drop:hover{border-color:var(--accent2);background:rgba(29,78,216,.04)}
   .vm-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 
-  /* Clipe item */
-  .vm-clip{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:10px;display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;transition:all .15s;position:relative}
+  /* Item da biblioteca de mídia */
+  .vm-clip{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.05);border-radius:8px;padding:8px;display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:grab;transition:all .15s;position:relative}
   .vm-clip:hover{border-color:rgba(59,130,246,.3);background:rgba(29,78,216,.05)}
-  .vm-clip.selected{border-color:var(--accent2);background:rgba(29,78,216,.08)}
-  .vm-clip-thumb{width:32px;height:48px;background:var(--border);border-radius:4px;overflow:hidden;flex-shrink:0}
+  .vm-clip-thumb{width:30px;height:44px;background:var(--border);border-radius:4px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:15px}
   .vm-clip-thumb video{width:100%;height:100%;object-fit:cover}
 
-  /* Timeline */
-  .vm-tl{background:rgba(0,0,0,.3);border-top:1px solid rgba(255,255,255,.04);padding:12px}
-  .vm-tl-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);margin-bottom:8px;display:flex;justify-content:space-between}
-  .vm-tl-track{display:flex;gap:3px;min-height:52px;align-items:stretch;overflow-x:auto;background:rgba(0,0,0,.2);border-radius:6px;padding:4px}
-  .vm-tl-clip{height:44px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;cursor:grab;position:relative;flex-shrink:0;overflow:hidden;transition:box-shadow .15s;color:var(--accent2);background:rgba(29,78,216,.2);border:1px solid rgba(59,130,246,.35)}
-  .vm-tl-clip:hover{box-shadow:0 0 0 1px var(--accent2)}
-  .vm-tl-clip.vm-tl-selected{box-shadow:0 0 0 2px var(--accent2)}
-  .vm-tl-clip.vm-tl-playing{box-shadow:0 0 0 2px var(--success);background:rgba(16,185,129,.15);border-color:var(--success)}
-  .vm-tl-clip.vm-tl-drop-target{box-shadow:0 0 0 2px #fff;background:rgba(255,255,255,.1)}
-  .vm-tl-clip.pinned{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.4);color:var(--gold)}
-
-  /* Handles de corte */
-  .vm-handle{position:absolute;top:0;bottom:0;width:7px;background:rgba(255,255,255,.85);cursor:col-resize;z-index:5;display:flex;align-items:center;justify-content:center;border-radius:2px}
-  .vm-handle-l{left:0;border-radius:3px 0 0 3px}
-  .vm-handle-r{right:0;border-radius:0 3px 3px 0}
-  .vm-handle::after{content:'';width:2px;height:12px;background:rgba(0,0,0,.35);border-radius:1px}
-
-  /* Preview */
-  .vm-preview{flex:1;display:flex;align-items:center;justify-content:center;background:#020408;position:relative}
-  .vm-phone{width:150px;height:266px;background:#080f1c;border-radius:18px;border:1px solid rgba(255,255,255,.08);overflow:hidden;box-shadow:0 0 40px rgba(29,78,216,.12)}
-  .vm-phone video{width:100%;height:100%;object-fit:cover;display:none}
-  .vm-phone-ph{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted2);gap:6px;font-size:11px}
-  .vm-ctrl{display:flex;gap:8px;margin-top:12px}
-  .vm-ctrl-btn{width:34px;height:34px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:50%;color:var(--text);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+  /* Centro: preview + timeline */
+  .vm-center{display:flex;flex-direction:column;overflow:hidden}
+  .vm-preview{flex:1;display:flex;align-items:center;justify-content:center;background:#020408;position:relative;min-height:0}
+  .vm-stage{position:relative;height:88%;max-height:520px;aspect-ratio:9/16;background:#000;border-radius:14px;border:1px solid rgba(255,255,255,.08);overflow:hidden;box-shadow:0 0 40px rgba(29,78,216,.12)}
+  .vm-stage video{position:absolute;display:none}
+  .vm-stage .vm-ph{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted2);gap:6px;font-size:11px}
+  .vm-transport{display:flex;align-items:center;gap:8px;justify-content:center;padding:8px 0}
+  .vm-ctrl-btn{width:32px;height:32px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:50%;color:var(--text);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
   .vm-ctrl-btn:hover{background:rgba(29,78,216,.2);border-color:var(--accent2)}
+  .vm-tc{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);min-width:96px;text-align:center}
+
+  /* Timeline multi-trilha */
+  .vm-tl-panel{height:286px;display:flex;flex-direction:column;background:rgba(0,0,0,.32);border-top:1px solid rgba(255,255,255,.06)}
+  .vm-tl-toolbar{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-size:11px;color:var(--muted2);flex-wrap:wrap}
+  .vm-tbtn{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:var(--text);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s}
+  .vm-tbtn:hover{background:rgba(29,78,216,.2);border-color:var(--accent2)}
+  .vm-tl-scroll{flex:1;overflow:auto;position:relative}
+  .vm-tl-inner{position:relative;min-width:100%;min-height:100%}
+  .vm-ruler{height:22px;position:sticky;top:0;z-index:6;background:#06101f;border-bottom:1px solid rgba(255,255,255,.06);cursor:pointer}
+  .vm-ruler-tick{position:absolute;top:0;bottom:0;border-left:1px solid rgba(255,255,255,.08);font-size:9px;color:var(--muted2);padding-left:3px;font-family:'JetBrains Mono',monospace;pointer-events:none}
+  .vm-track{position:relative;border-bottom:1px solid rgba(255,255,255,.04);background:rgba(255,255,255,.012)}
+  .vm-track.video{height:54px}
+  .vm-track.audio{height:38px}
+  .vm-track.vm-drop-row{background:rgba(29,78,216,.1);box-shadow:inset 0 0 0 1px rgba(59,130,246,.4)}
+  .vm-track-tag{position:absolute;left:4px;top:3px;z-index:2;font-size:8px;font-weight:700;letter-spacing:.5px;color:var(--muted2);background:rgba(0,0,0,.45);padding:1px 5px;border-radius:4px;pointer-events:none;text-transform:uppercase}
+  .vm-block{position:absolute;top:4px;bottom:4px;border-radius:6px;overflow:hidden;cursor:grab;display:flex;align-items:center;background:rgba(29,78,216,.3);border:1px solid rgba(59,130,246,.45);color:#cfe0ff;font-size:10px;user-select:none}
+  .vm-block.audio{background:rgba(16,185,129,.22);border-color:rgba(16,185,129,.45);color:#a7f3d0}
+  .vm-block.sel{box-shadow:0 0 0 2px var(--accent2);z-index:3}
+  .vm-block.playing{box-shadow:0 0 0 2px var(--success)}
+  .vm-block .lbl{padding:0 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;font-weight:500}
+  .vm-bh{position:absolute;top:0;bottom:0;width:8px;cursor:col-resize;background:rgba(255,255,255,.65);z-index:4}
+  .vm-bh.l{left:0;border-radius:6px 0 0 6px}
+  .vm-bh.r{right:0;border-radius:0 6px 6px 0}
+  .vm-playhead{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;z-index:8;pointer-events:none}
+  .vm-playhead::before{content:'';position:absolute;top:0;left:-5px;border:6px solid transparent;border-top:7px solid #ef4444}
 
   /* Painel direito */
   .vm-prop{padding:14px;border-bottom:1px solid rgba(255,255,255,.04)}
   .vm-prop-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);margin-bottom:10px}
   .vm-range{width:100%;-webkit-appearance:none;height:3px;background:rgba(255,255,255,.08);border-radius:999px;outline:none;cursor:pointer;margin:6px 0}
   .vm-range::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;background:var(--accent2);border-radius:50%;cursor:pointer}
+  .vm-num{width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;font-family:'JetBrains Mono',monospace}
   .vm-btn{width:100%;padding:10px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
   .vm-btn-blue{background:var(--accent);color:#fff}.vm-btn-blue:hover:not(:disabled){background:#1e40af}
   .vm-btn-green{background:var(--success);color:#fff}.vm-btn-green:hover:not(:disabled){background:#059669}
@@ -1174,9 +1184,10 @@ tr:hover td{background:var(--surface2)}
   .vm-out-ok{color:var(--success)}.vm-out-err{color:var(--error)}
   .vm-dl-btn{background:none;border:none;color:var(--accent2);cursor:pointer;font-size:16px;flex-shrink:0}
 
-  /* Keyboard hints */
-  .vm-keys{display:flex;flex-wrap:wrap;gap:4px;padding:10px 12px;border-top:1px solid rgba(255,255,255,.04)}
-  .vm-key{padding:2px 6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:4px;font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace}
+  /* Atalhos */
+  .vm-keys{display:grid;grid-template-columns:auto 1fr;gap:3px 8px;align-items:center}
+  .vm-key{padding:2px 6px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:4px;font-size:9px;color:var(--text);font-family:'JetBrains Mono',monospace;white-space:nowrap;text-align:center}
+  .vm-key-desc{font-size:10px;color:var(--muted2)}
   </style>
 
   <!-- Topbar -->
@@ -1194,100 +1205,105 @@ tr:hover td{background:var(--surface2)}
 
   <div class="vm-wrap">
 
-    <!-- COL ESQUERDA: Clipes + Áudios -->
+    <!-- COL ESQUERDA: Biblioteca de mídia -->
     <div class="vm-col">
-      <div class="vm-col-title">🎥 Clipes <span id="vmClipCount" style="font-weight:400;font-size:10px">0</span></div>
+      <div class="vm-col-title">🎥 Vídeos <span id="vmClipCount" style="font-weight:400;font-size:10px">0</span></div>
       <div class="vm-drop">
         <input type="file" id="vmInputClipes" accept="video/mp4,video/*" multiple onchange="vmAddClipes(this.files)">
         <div style="font-size:18px;margin-bottom:4px">📁</div>
-        <div style="font-size:11px;color:var(--muted2)">Arraste <strong style="color:var(--accent2)">.mp4</strong> aqui</div>
+        <div style="font-size:11px;color:var(--muted2)">Adicione <strong style="color:var(--accent2)">.mp4</strong></div>
       </div>
       <div class="vm-scroll" id="vmClipesList">
-        <div style="text-align:center;padding:16px;color:var(--muted2);font-size:11px">Adicione clipes</div>
+        <div style="text-align:center;padding:16px;color:var(--muted2);font-size:11px">Adicione vídeos</div>
       </div>
 
       <!-- Áudios -->
-      <div style="border-top:1px solid rgba(255,255,255,.04);padding:12px">
+      <div style="border-top:1px solid rgba(255,255,255,.04);padding:12px;max-height:42%;overflow-y:auto">
         <div class="vm-col-title" style="padding:0 0 8px">🎵 Áudios <span id="vmAudioCount" style="font-weight:400;font-size:10px"></span></div>
-        <div class="vm-drop" style="margin:0 0 0">
+        <div class="vm-drop" style="margin:0 0 10px">
           <input type="file" id="vmInputAudios" accept="audio/*" multiple onchange="vmAddAudios(this.files)">
-          <div style="font-size:11px;color:var(--muted2)">📂 Selecionar .mp3 (pasta ou vários)</div>
+          <div style="font-size:11px;color:var(--muted2)">📂 Adicionar .mp3</div>
         </div>
+        <div id="vmAudiosList"></div>
       </div>
     </div>
 
     <!-- COL CENTRO: Preview + Timeline -->
-    <div style="display:flex;flex-direction:column;overflow:hidden">
+    <div class="vm-center">
       <!-- Preview -->
       <div class="vm-preview">
-        <div style="display:flex;flex-direction:column;align-items:center">
-          <div class="vm-phone">
-            <video id="vmVideo" playsinline muted style="width:100%;height:100%;object-fit:cover;display:none"></video>
-            <div class="vm-phone-ph" id="vmPh"><span style="font-size:24px">📱</span><span>Preview 9:16</span></div>
+        <div style="display:flex;flex-direction:column;align-items:center;height:100%;justify-content:center;width:100%">
+          <div class="vm-stage" id="vmStage">
+            <div class="vm-ph" id="vmPh"><span style="font-size:24px">📱</span><span>Preview 9:16</span></div>
           </div>
-          <div class="vm-ctrl">
-            <button class="vm-ctrl-btn" onclick="vmPrevClipe()" title="Anterior (←)">⏮</button>
+          <div class="vm-transport">
+            <button class="vm-ctrl-btn" onclick="vmGoStart()" title="Início (Home)">⏮</button>
+            <button class="vm-ctrl-btn" onclick="vmStep(-1)" title="-1 frame (←)">◀</button>
             <button class="vm-ctrl-btn" id="vmPlayBtn" onclick="vmTogglePlay()" title="Play/Pause (Espaço)">▶️</button>
-            <button class="vm-ctrl-btn" onclick="vmNextClipe()" title="Próximo (→)">⏭</button>
-            <button class="vm-ctrl-btn" onclick="vmPlayFull()" title="Preview completo (P)" style="width:auto;padding:0 10px;border-radius:17px;font-size:11px;font-weight:600">▶ Full</button>
+            <button class="vm-ctrl-btn" onclick="vmStep(1)" title="+1 frame (→)">▶</button>
+            <button class="vm-ctrl-btn" onclick="vmGoEnd()" title="Fim (End)">⏭</button>
+            <span class="vm-tc" id="vmTimecode">0.00 / 0.00s</span>
           </div>
         </div>
       </div>
 
-      <!-- Timeline -->
-      <div class="vm-tl">
-        <div class="vm-tl-title">
-          🎞 Timeline
-          <span id="vmTotalDur" style="font-weight:400;color:var(--muted2)">0s</span>
+      <!-- Timeline multi-trilha -->
+      <div class="vm-tl-panel">
+        <div class="vm-tl-toolbar">
+          <span style="font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:9px">🎞 Timeline</span>
+          <button class="vm-tbtn" onclick="vmZoom(-1)" title="Zoom out (-)">➖</button>
+          <button class="vm-tbtn" onclick="vmZoom(1)" title="Zoom in (=)">➕</button>
+          <button class="vm-tbtn" onclick="vmZoomFit()" title="Ajustar (F)">⤢ Fit</button>
+          <span style="width:1px;height:16px;background:rgba(255,255,255,.1)"></span>
+          <button class="vm-tbtn" onclick="vmAddVideoLayer()" title="Nova camada de vídeo">➕ Camada vídeo</button>
+          <button class="vm-tbtn" onclick="vmAddAudioLayer()" title="Nova camada de áudio">➕ Camada áudio</button>
+          <button class="vm-tbtn" onclick="vmSplit()" title="Dividir no playhead (S)">✂️ Dividir</button>
+          <span id="vmTotalDur" style="margin-left:auto;font-weight:400;color:var(--muted2);font-family:'JetBrains Mono',monospace">0s</span>
         </div>
-        <!-- Clipes track -->
-        <div class="vm-tl-track" id="vmTlTrack">
-          <div style="color:var(--muted2);font-size:10px;padding:12px;display:flex;align-items:center">Adicione clipes → arraste para reordenar</div>
-        </div>
-        <!-- Áudio track -->
-        <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
-          <span style="font-size:10px;color:var(--muted2);min-width:30px;flex-shrink:0">🎵</span>
-          <div id="vmAudioTrack" style="flex:1;height:26px;background:rgba(0,0,0,.2);border:1px dashed rgba(255,255,255,.06);border-radius:5px;display:flex;align-items:center;padding:0 8px;font-size:10px;color:var(--muted2)">
-            Nenhum áudio selecionado
+        <div class="vm-tl-scroll" id="vmTlScroll">
+          <div class="vm-tl-inner" id="vmTlInner">
+            <div class="vm-ruler" id="vmRuler"></div>
+            <div id="vmTracks"></div>
+            <div class="vm-playhead" id="vmPlayheadEl" style="left:0"></div>
           </div>
-        </div>
-        <!-- Atalhos -->
-        <div class="vm-keys">
-          <span class="vm-key">Espaço</span><span style="font-size:10px;color:var(--muted2)">play</span>
-          <span class="vm-key">P</span><span style="font-size:10px;color:var(--muted2)">full preview</span>
-          <span class="vm-key">Del</span><span style="font-size:10px;color:var(--muted2)">remover</span>
-          <span class="vm-key">← →</span><span style="font-size:10px;color:var(--muted2)">navegar</span>
-          <span class="vm-key">R</span><span style="font-size:10px;color:var(--muted2)">randomizar</span>
         </div>
       </div>
     </div>
 
     <!-- COL DIREITA: Props + Geração -->
-    <div class="vm-col" style="overflow-y:auto">
+    <div class="vm-col">
 
       <!-- Editar clipe -->
       <div class="vm-prop">
         <div class="vm-prop-title">✂️ Editar Clipe</div>
-        <div id="vmPropVazio" style="font-size:11px;color:var(--muted2);text-align:center;padding:8px 0">Clique num clipe</div>
+        <div id="vmPropVazio" style="font-size:11px;color:var(--muted2);text-align:center;padding:8px 0">Clique num clipe na timeline</div>
         <div id="vmPropBody" style="display:none">
           <div style="font-size:12px;font-weight:600;color:var(--accent2);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="vmPropNome"></div>
           <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">
-            Início <span id="vmPropStart" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
+            Corte início <span id="vmPropStart" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
           </div>
           <input type="range" class="vm-range" id="vmRangeStart" min="0" max="60" value="0" step="0.05" oninput="vmUpdateCorte()">
           <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">
-            Fim <span id="vmPropEnd" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
+            Corte fim <span id="vmPropEnd" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
           </div>
           <input type="range" class="vm-range" id="vmRangeEnd" min="0" max="60" value="60" step="0.05" oninput="vmUpdateCorte()">
           <div style="font-size:11px;color:var(--success);margin:6px 0 10px;font-family:'JetBrains Mono',monospace" id="vmPropDur"></div>
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <span style="font-size:11px;color:var(--muted2)">📌 Fixar posição</span>
-            <input type="checkbox" id="vmPinCheck" onchange="vmTogglePin()">
+
+          <!-- Posição/escala (só camadas de overlay) -->
+          <div id="vmTransformBox" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
+            <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Sobreposição (PIP)</div>
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Escala <span id="vmPropScale" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
+            <input type="range" class="vm-range" id="vmRangeScale" min="0.1" max="1" value="0.5" step="0.01" oninput="vmUpdateTransform()">
+            <div style="display:flex;gap:6px;margin-top:6px">
+              <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">X (%)</div><input type="number" class="vm-num" id="vmPropX" min="0" max="100" value="25" onchange="vmUpdateTransform()"></div>
+              <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">Y (%)</div><input type="number" class="vm-num" id="vmPropY" min="0" max="100" value="25" onchange="vmUpdateTransform()"></div>
+            </div>
           </div>
-          <input type="number" id="vmPinPos" min="1" placeholder="Posição (1, 2, 3...)" disabled
-            style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:6px 8px;color:var(--text);font-size:11px;outline:none;font-family:'Inter',sans-serif"
-            onchange="vmUpdatePin()">
-          <button onclick="vmRemoverSelecionado()" style="width:100%;padding:7px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:6px;color:#fca5a5;font-size:11px;cursor:pointer;margin-top:10px;font-family:'Inter',sans-serif">🗑 Remover</button>
+
+          <div style="display:flex;gap:6px;margin-top:10px">
+            <button onclick="vmDuplicarSelecionado()" style="flex:1;padding:7px;background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);border-radius:6px;color:var(--accent3);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif">⧉ Duplicar</button>
+            <button onclick="vmRemoverSelecionado()" style="flex:1;padding:7px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:6px;color:#fca5a5;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif">🗑 Remover</button>
+          </div>
         </div>
       </div>
 
@@ -1295,13 +1311,14 @@ tr:hover td{background:var(--surface2)}
       <div class="vm-prop">
         <div class="vm-prop-title">⚙️ Geração</div>
         <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Qtd. de vídeos</div>
-        <input type="number" id="vmQtd" value="5" min="1" max="30"
-          style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:7px 10px;color:var(--text);font-size:13px;outline:none;font-family:'JetBrains Mono',monospace;margin-bottom:10px">
+        <input type="number" id="vmQtd" value="1" min="1" max="30" class="vm-num" style="font-size:13px;margin-bottom:10px">
         <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Nome base</div>
-        <input type="text" id="vmNomeBase" value="criativo"
-          style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;padding:7px 10px;color:var(--text);font-size:12px;outline:none;font-family:'Inter',sans-serif;margin-bottom:10px">
+        <input type="text" id="vmNomeBase" value="criativo" class="vm-num" style="font-family:'Inter',sans-serif;margin-bottom:10px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="vmRandMain" checked> Embaralhar trilha principal a cada vídeo
+        </label>
         <div style="font-size:10px;color:var(--muted2);margin-bottom:12px;padding:8px;background:rgba(59,130,246,.05);border-radius:6px;border-left:2px solid rgba(59,130,246,.2);line-height:1.5">
-          Cada vídeo usa a sequência dos clipes embaralhada + um áudio da pasta. O áudio determina a duração — o último clipe é ajustado para encaixar.
+          As camadas de vídeo se sobrepõem (a de cima por cima). As camadas de áudio se mixam. A trilha principal (inferior) preenche a tela; as de cima são PIP.
         </div>
         <button class="vm-btn vm-btn-blue" onclick="vmRandomizar()" id="vmBtnRand" disabled style="margin-bottom:8px">🔀 Randomizar</button>
         <button class="vm-btn vm-btn-green" onclick="vmGerar()" id="vmBtnGerar" disabled>⚡ Gerar Vídeos</button>
@@ -1316,9 +1333,29 @@ tr:hover td{background:var(--surface2)}
       </div>
 
       <!-- Outputs -->
-      <div class="vm-prop" style="flex:1">
+      <div class="vm-prop">
         <div class="vm-prop-title">📦 Gerados</div>
         <div id="vmOutputList"><div style="font-size:11px;color:var(--muted2);text-align:center">Aparecerão aqui</div></div>
+      </div>
+
+      <!-- Atalhos (estilo After Effects) -->
+      <div class="vm-prop" style="border-bottom:none">
+        <div class="vm-prop-title">⌨️ Atalhos (After Effects)</div>
+        <div class="vm-keys">
+          <span class="vm-key">Espaço</span><span class="vm-key-desc">play / pause</span>
+          <span class="vm-key">= / -</span><span class="vm-key-desc">zoom + / -</span>
+          <span class="vm-key">F</span><span class="vm-key-desc">ajustar zoom</span>
+          <span class="vm-key">← / →</span><span class="vm-key-desc">1 frame</span>
+          <span class="vm-key">⇧ ← →</span><span class="vm-key-desc">1 segundo</span>
+          <span class="vm-key">Home / End</span><span class="vm-key-desc">início / fim</span>
+          <span class="vm-key">I / O</span><span class="vm-key-desc">ir p/ corte in/out</span>
+          <span class="vm-key">[ / ]</span><span class="vm-key-desc">mover clipe p/ playhead</span>
+          <span class="vm-key">⌥[ / ⌥]</span><span class="vm-key-desc">cortar in/out no playhead</span>
+          <span class="vm-key">S</span><span class="vm-key-desc">dividir no playhead</span>
+          <span class="vm-key">D</span><span class="vm-key-desc">duplicar</span>
+          <span class="vm-key">Del</span><span class="vm-key-desc">remover clipe</span>
+          <span class="vm-key">R</span><span class="vm-key-desc">randomizar</span>
+        </div>
       </div>
     </div>
   </div>
@@ -2301,32 +2338,41 @@ function atualizarContadorChars() {
 
 
 // ══════════════════════════════════════════════════════════
+// VIDEOMIX 2.0 — Editor multi-camadas (estilo CapCut)
 // ══════════════════════════════════════════════════════════
-// ══════════════════════════════════════════════════════════
-// VIDEOMIX — Lógica simplificada
-// ══════════════════════════════════════════════════════════
-let vmClipes = [];       // { id, nome, file, url, dur, start, end, pinned, pinPos }
-let vmSequencia = [];    // IDs na ordem atual
-let vmAudios = [];       // arquivos de áudio
-let vmSel = null;        // clipe selecionado
-let vmPreviewIdx = 0;
-let vmFullPlaying = false;
-let vmFullTimer = null;
-let vmFfmpeg = null;
-let vmFfmpegOk = false;
-let vmDragId = null;
-const VM_PPS = 36; // pixels por segundo na timeline
+// vmVLayers: camadas de vídeo, índice 0 = inferior (principal, preenche a tela).
+//   Camadas acima (índice 1+) são sobreposições (PIP) compostas por cima.
+// vmALayers: camadas de áudio (mixadas).
+// clipe: { id, mediaId, nome, file, url, dur, in, out, t, scale, x, y, kind }
+//   in/out = corte dentro da mídia (s); t = posição na timeline (s); dur = duração total da mídia.
+//   scale = fração da largura (PIP); x,y = posição em fração 0..1 (PIP).
+let vmMedia = [];        // biblioteca: { id, kind, file, url, dur, nome }
+let vmVLayers = [];
+let vmALayers = [];
+let vmPps = 40;          // pixels por segundo (zoom)
+let vmPlayhead = 0;      // tempo atual (s)
+let vmPlaying = false;
+let vmRaf = null, vmLastTs = 0;
+let vmSel = null;        // { lt:'v'|'a', layerId, clipId }
+let vmFfmpeg = null, vmFfmpegOk = false;
+let vmDrag = null, vmBinDragId = null;
+const VM_FPS = 30, VM_W = 1080, VM_H = 1920;
 
-// ── Status ────────────────────────────────────────────────
-function vmSetStatus(msg) {
-  const el = document.getElementById('vmStatus');
-  if (el) el.textContent = msg;
-}
+function vmUid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function vmSetStatus(m){ const el=document.getElementById('vmStatus'); if(el) el.textContent=m; }
+function vmFmt(s){ if(!s && s!==0) return '0s'; return s<60 ? s.toFixed(1)+'s' : Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0'); }
 
-function vmFmt(s) {
-  if (!s && s !== 0) return '0s';
-  return s < 60 ? s.toFixed(1) + 's' : Math.floor(s/60) + ':' + String(Math.round(s%60)).padStart(2,'0');
+// ── Helpers de modelo ─────────────────────────────────────
+function vmFindClip(layerId, clipId){
+  const layer=[...vmVLayers,...vmALayers].find(l=>l.id===layerId);
+  return layer ? (layer.clips.find(c=>c.id===clipId)||null) : null;
 }
+function vmSelClip(){ return vmSel ? vmFindClip(vmSel.layerId, vmSel.clipId) : null; }
+function vmClipLen(c){ return Math.max(0.05, c.out - c.in); }
+function vmClipEnd(c){ return c.t + vmClipLen(c); }
+function vmDuracao(){ let d=0; [...vmVLayers,...vmALayers].forEach(l=>l.clips.forEach(c=>{ d=Math.max(d, vmClipEnd(c)); })); return d; }
+function vmTemConteudo(){ return vmVLayers.some(l=>l.clips.length); }
+function vmGarantirLayers(){ if(!vmVLayers.length) vmVLayers.push({id:vmUid(),clips:[]}); if(!vmALayers.length) vmALayers.push({id:vmUid(),clips:[]}); }
 
 // ── FFmpeg ────────────────────────────────────────────────
 async function vmCarregarFFmpeg() {
@@ -2359,512 +2405,482 @@ async function vmCarregarFFmpeg() {
   }
 }
 
-// ── Adicionar clipes ──────────────────────────────────────
-async function vmAddClipes(files) {
-  for (const f of Array.from(files)) {
-    if (!f.type.startsWith('video')) continue;
-    const id = Date.now() + Math.random();
-    const url = URL.createObjectURL(f);
-    const dur = await vmGetDur(url);
-    vmClipes.push({ id, nome: f.name.replace(/\.[^.]+$/, ''), file: f, url, dur, start: 0, end: dur, pinned: false, pinPos: null });
-    vmSequencia.push(id);
+function vmGetDur(url){ return new Promise(res=>{ const v=document.createElement('video'); v.preload='metadata'; v.src=url; v.onloadedmetadata=()=>res(v.duration||30); v.onerror=()=>res(30); }); }
+
+// ── Adicionar mídia ───────────────────────────────────────
+async function vmAddClipes(files){
+  vmGarantirLayers();
+  for(const f of Array.from(files)){
+    if(!f.type.startsWith('video')) continue;
+    const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
+    const mid=vmUid();
+    vmMedia.push({id:mid, kind:'video', file:f, url, dur, nome});
+    const layer=vmVLayers[0];
+    const t=layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
+    layer.clips.push({id:vmUid(), mediaId:mid, nome, file:f, url, dur, in:0, out:dur, t, scale:1, x:0, y:0, kind:'video'});
   }
-  vmRenderClipes();
-  vmRenderTimeline();
-  vmAtualizarBotoes();
-  document.getElementById('vmClipCount').textContent = vmClipes.length;
+  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
+  document.getElementById('vmClipCount').textContent = vmMedia.filter(m=>m.kind==='video').length;
 }
 
-function vmGetDur(url) {
-  return new Promise(res => {
-    const v = document.createElement('video');
-    v.src = url;
-    v.onloadedmetadata = () => res(v.duration);
-    v.onerror = () => res(30);
-  });
-}
-
-// ── Adicionar áudios ──────────────────────────────────────
-function vmAddAudios(files) {
-  vmAudios = Array.from(files).filter(f => f.type.startsWith('audio'));
-  const el = document.getElementById('vmAudioCount');
-  el.textContent = vmAudios.length + ' arquivo' + (vmAudios.length !== 1 ? 's' : '');
-  vmRenderAudioTrack();
-}
-
-function vmRenderAudioTrack() {
-  const track = document.getElementById('vmAudioTrack');
-  if (!vmAudios.length) {
-    track.innerHTML = '<span style="font-size:10px;color:var(--muted2)">Nenhum áudio selecionado</span>';
-    return;
+async function vmAddAudios(files){
+  vmGarantirLayers();
+  for(const f of Array.from(files)){
+    if(!f.type.startsWith('audio')) continue;
+    const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
+    const mid=vmUid();
+    vmMedia.push({id:mid, kind:'audio', file:f, url, dur, nome});
+    const layer=vmALayers[0];
+    const t=layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
+    layer.clips.push({id:vmUid(), mediaId:mid, nome, file:f, url, dur, in:0, out:dur, t, kind:'audio'});
   }
-  track.innerHTML = vmAudios.slice(0, 5).map(a =>
-    `<span style="background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.25);border-radius:4px;padding:2px 7px;font-size:10px;color:var(--success);margin-right:3px;white-space:nowrap">${a.name.replace(/\.[^.]+$/, '').substring(0,14)}</span>`
-  ).join('') + (vmAudios.length > 5 ? `<span style="font-size:10px;color:var(--muted2)">+${vmAudios.length-5}</span>` : '');
+  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
+  document.getElementById('vmAudioCount').textContent = vmMedia.filter(m=>m.kind==='audio').length + ' arq.';
 }
 
-// ── Render lista de clipes ────────────────────────────────
-function vmRenderClipes() {
-  const el = document.getElementById('vmClipesList');
-  if (!vmClipes.length) {
-    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted2);font-size:11px">Adicione clipes .mp4</div>';
-    return;
+// ── Biblioteca (coluna esquerda) ──────────────────────────
+function vmRenderBin(){
+  const el=document.getElementById('vmClipesList');
+  const vids=vmMedia.filter(m=>m.kind==='video');
+  el.innerHTML = vids.length ? vids.map(m=>`<div class="vm-clip" draggable="true" ondragstart="vmBinDrag(event,'${m.id}')" title="${m.nome}">
+    <div class="vm-clip-thumb"><video src="${m.url}#t=0.1" muted preload="metadata"></video></div>
+    <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.nome}</div>
+    <div style="font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace">${vmFmt(m.dur)}</div></div>
+    <button onclick="vmBinAdd('${m.id}')" title="Adicionar à timeline" style="background:rgba(59,130,246,.15);border:none;color:var(--accent3);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:14px;flex-shrink:0">+</button>
+  </div>`).join('') : '<div style="text-align:center;padding:16px;color:var(--muted2);font-size:11px">Adicione vídeos</div>';
+  const ael=document.getElementById('vmAudiosList');
+  if(ael){ const auds=vmMedia.filter(m=>m.kind==='audio');
+    ael.innerHTML = auds.map(m=>`<div class="vm-clip" draggable="true" ondragstart="vmBinDrag(event,'${m.id}')" title="${m.nome}">
+      <div class="vm-clip-thumb" style="height:30px">🎵</div>
+      <div style="flex:1;min-width:0"><div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.nome}</div>
+      <div style="font-size:10px;color:var(--muted2);font-family:'JetBrains Mono',monospace">${vmFmt(m.dur)}</div></div>
+      <button onclick="vmBinAdd('${m.id}')" style="background:rgba(16,185,129,.15);border:none;color:var(--success);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:14px;flex-shrink:0">+</button>
+    </div>`).join('');
   }
-  el.innerHTML = vmClipes.map(c => {
-    const isSel = vmSel && String(vmSel.id) === String(c.id);
-    return `<div class="vm-clip ${isSel ? 'selected' : ''}" onclick="vmSelectClipe('${c.id}')">
-      ${c.pinned ? `<span style="position:absolute;top:-3px;right:-3px;background:var(--gold);color:#000;font-size:8px;font-weight:700;padding:1px 4px;border-radius:999px">P${c.pinPos||'?'}</span>` : ''}
-      <div class="vm-clip-thumb"><video src="${c.url}" muted preload="metadata"></video></div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:11px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nome}</div>
-        <div style="font-size:10px;color:var(--muted2);margin-top:2px;font-family:'JetBrains Mono',monospace">${vmFmt(c.start)} → ${vmFmt(c.end)}</div>
-      </div>
-    </div>`;
-  }).join('');
 }
-
-// ── Timeline ──────────────────────────────────────────────
-function vmRenderTimeline() {
-  const track = document.getElementById('vmTlTrack');
-  if (!vmSequencia.length) {
-    track.innerHTML = '<div style="color:var(--muted2);font-size:10px;padding:12px;display:flex;align-items:center">Adicione clipes → arraste para reordenar</div>';
-    document.getElementById('vmTotalDur').textContent = '0s';
-    return;
-  }
-
-  let total = 0;
-  let html = '';
-  for (const id of vmSequencia) {
-    const c = vmClipes.find(x => String(x.id) === String(id));
-    if (!c) continue;
-    const dur = c.end - c.start;
-    const w = Math.max(44, dur * VM_PPS);
-    total += dur;
-    const isSel = vmSel && String(vmSel.id) === String(c.id);
-    html += `<div class="vm-tl-clip ${isSel ? 'vm-tl-selected' : ''} ${c.pinned ? 'pinned' : ''}"
-      data-id="${c.id}"
-      style="width:${w}px"
-      draggable="true"
-      onclick="vmSelectClipe('${c.id}')"
-      ondragstart="vmDragStart(event,'${c.id}')"
-      ondragover="vmDragOver(event,'${c.id}')"
-      ondrop="vmDrop(event,'${c.id}')"
-      ondragend="vmDragEnd()">
-      ${c.pinned ? `<span style="position:absolute;top:2px;right:3px;font-size:8px">📌</span>` : ''}
-      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 10px;font-size:10px;pointer-events:none">${c.nome.substring(0,10)}</span>
-      <div class="vm-handle vm-handle-l" onmousedown="vmHandleStart(event,'${c.id}','l')"></div>
-      <div class="vm-handle vm-handle-r" onmousedown="vmHandleStart(event,'${c.id}','r')"></div>
-    </div>`;
-  }
-
-  track.innerHTML = html;
-  document.getElementById('vmTotalDur').textContent = vmFmt(total) + ' total';
-}
-
-// ── Drag & drop na timeline ───────────────────────────────
-function vmDragStart(e, id) {
-  vmDragId = id;
-  e.dataTransfer.effectAllowed = 'move';
-  setTimeout(() => {
-    const el = document.querySelector(`.vm-tl-clip[data-id="${id}"]`);
-    if (el) el.style.opacity = '.3';
-  }, 0);
-}
-
-function vmDragOver(e, id) {
-  e.preventDefault();
-  document.querySelectorAll('.vm-tl-clip').forEach(el => el.classList.remove('vm-tl-drop-target'));
-  const el = document.querySelector(`.vm-tl-clip[data-id="${id}"]`);
-  if (el) el.classList.add('vm-tl-drop-target');
-}
-
-function vmDrop(e, targetId) {
-  e.preventDefault();
-  document.querySelectorAll('.vm-tl-clip').forEach(el => { el.classList.remove('vm-tl-drop-target'); el.style.opacity = '1'; });
-  if (!vmDragId || vmDragId === targetId) { vmDragId = null; return; }
-  const fi = vmSequencia.findIndex(s => String(s) === String(vmDragId));
-  const ti = vmSequencia.findIndex(s => String(s) === String(targetId));
-  if (fi === -1 || ti === -1) { vmDragId = null; return; }
-  vmSequencia.splice(fi, 1);
-  vmSequencia.splice(ti, 0, vmDragId);
-  vmDragId = null;
-  vmRenderTimeline();
-}
-
-function vmDragEnd() {
-  document.querySelectorAll('.vm-tl-clip').forEach(el => { el.classList.remove('vm-tl-drop-target'); el.style.opacity = '1'; });
-  vmDragId = null;
-}
-
-// ── Handles de corte ──────────────────────────────────────
-let vmHandleDrag = null;
-
-function vmHandleStart(e, id, lado) {
-  e.stopPropagation();
-  e.preventDefault();
-  const c = vmClipes.find(x => String(x.id) === String(id));
-  if (!c) return;
-  vmSel = c;
-  vmHandleDrag = { id, lado, startX: e.clientX, startVal: lado === 'l' ? c.start : c.end };
-  vmRenderClipes();
-  vmMostrarProps();
-}
-
-document.addEventListener('mousemove', e => {
-  if (!vmHandleDrag) return;
-  const c = vmClipes.find(x => String(x.id) === String(vmHandleDrag.id));
-  if (!c) return;
-  const delta = (e.clientX - vmHandleDrag.startX) / VM_PPS;
-  const MIN = 0.3;
-  if (vmHandleDrag.lado === 'l') {
-    c.start = Math.max(0, Math.min(vmHandleDrag.startVal + delta, c.end - MIN));
+function vmBinDrag(e, mediaId){ vmBinDragId=mediaId; e.dataTransfer.effectAllowed='copy'; e.dataTransfer.setData('text/plain', mediaId); }
+function vmBinAdd(mediaId, layerId, t){
+  const m=vmMedia.find(x=>x.id===mediaId); if(!m) return;
+  vmGarantirLayers();
+  if(m.kind==='video'){
+    const layer=vmVLayers.find(l=>l.id===layerId)||vmVLayers[0];
+    const pos=(t!=null)?t:layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
+    const overlay=vmVLayers.indexOf(layer)!==0;
+    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), scale:overlay?0.5:1, x:overlay?0.25:0, y:overlay?0.25:0, kind:'video'});
   } else {
-    c.end = Math.min(c.dur, Math.max(vmHandleDrag.startVal + delta, c.start + MIN));
+    const layer=vmALayers.find(l=>l.id===layerId)||vmALayers[0];
+    const pos=(t!=null)?t:layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
+    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), kind:'audio'});
   }
-  vmRenderTimeline();
-  vmAtualizarProps();
-});
-
-document.addEventListener('mouseup', () => { vmHandleDrag = null; });
-
-// ── Seleção e props ───────────────────────────────────────
-function vmSelectClipe(id) {
-  vmSel = vmClipes.find(c => String(c.id) === String(id));
-  if (!vmSel) return;
-  vmPreviewClipe(vmSel);
-  vmMostrarProps();
-  vmRenderClipes();
-  vmRenderTimeline();
+  vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
 }
 
-function vmMostrarProps() {
-  document.getElementById('vmPropVazio').style.display = 'none';
-  document.getElementById('vmPropBody').style.display = 'block';
-  document.getElementById('vmPropNome').textContent = vmSel.nome;
-  const rs = document.getElementById('vmRangeStart');
-  const re = document.getElementById('vmRangeEnd');
-  rs.max = vmSel.dur; re.max = vmSel.dur;
-  rs.value = vmSel.start; re.value = vmSel.end;
-  document.getElementById('vmPinCheck').checked = vmSel.pinned;
-  document.getElementById('vmPinPos').disabled = !vmSel.pinned;
-  document.getElementById('vmPinPos').value = vmSel.pinPos || '';
-  vmAtualizarProps();
-}
-
-function vmAtualizarProps() {
-  if (!vmSel) return;
-  document.getElementById('vmPropStart').textContent = vmSel.start.toFixed(2) + 's';
-  document.getElementById('vmPropEnd').textContent = vmSel.end.toFixed(2) + 's';
-  document.getElementById('vmPropDur').textContent = '⏱ ' + vmFmt(vmSel.end - vmSel.start);
-}
-
-function vmUpdateCorte() {
-  if (!vmSel) return;
-  let s = parseFloat(document.getElementById('vmRangeStart').value);
-  let e = parseFloat(document.getElementById('vmRangeEnd').value);
-  if (s >= e) { s = e - 0.3; document.getElementById('vmRangeStart').value = s; }
-  vmSel.start = s; vmSel.end = e;
-  vmAtualizarProps();
-  vmRenderClipes();
-  vmRenderTimeline();
-}
-
-function vmTogglePin() {
-  if (!vmSel) return;
-  vmSel.pinned = document.getElementById('vmPinCheck').checked;
-  document.getElementById('vmPinPos').disabled = !vmSel.pinned;
-  if (!vmSel.pinned) vmSel.pinPos = null;
-  vmRenderClipes(); vmRenderTimeline();
-}
-
-function vmUpdatePin() {
-  if (!vmSel) return;
-  vmSel.pinPos = parseInt(document.getElementById('vmPinPos').value) || null;
-  vmRenderClipes(); vmRenderTimeline();
-}
-
-function vmRemoverSelecionado() {
-  if (!vmSel) return;
-  const id = vmSel.id;
-  vmClipes = vmClipes.filter(c => String(c.id) !== String(id));
-  vmSequencia = vmSequencia.filter(s => String(s) !== String(id));
-  vmSel = null;
-  document.getElementById('vmPropVazio').style.display = 'block';
-  document.getElementById('vmPropBody').style.display = 'none';
-  vmRenderClipes(); vmRenderTimeline(); vmAtualizarBotoes();
-  document.getElementById('vmClipCount').textContent = vmClipes.length;
-}
-
-// ── Preview ───────────────────────────────────────────────
-function vmPreviewClipe(c) {
-  const v = document.getElementById('vmVideo');
-  const ph = document.getElementById('vmPh');
-  v.src = c.url; v.currentTime = c.start;
-  v.style.display = 'block'; ph.style.display = 'none';
-}
-
-function vmTogglePlay() {
-  const v = document.getElementById('vmVideo');
-  const btn = document.getElementById('vmPlayBtn');
-  if (vmFullPlaying) { vmPararFull(); return; }
-  if (v.paused) { v.play(); btn.textContent = '⏸'; }
-  else { v.pause(); btn.textContent = '▶️'; }
-}
-
-function vmPrevClipe() {
-  if (!vmSequencia.length) return;
-  vmPararFull();
-  vmPreviewIdx = (vmPreviewIdx - 1 + vmSequencia.length) % vmSequencia.length;
-  const c = vmClipes.find(x => String(x.id) === String(vmSequencia[vmPreviewIdx]));
-  if (c) { vmSel = c; vmPreviewClipe(c); vmMostrarProps(); vmRenderClipes(); vmRenderTimeline(); }
-}
-
-function vmNextClipe() {
-  if (!vmSequencia.length) return;
-  vmPararFull();
-  vmPreviewIdx = (vmPreviewIdx + 1) % vmSequencia.length;
-  const c = vmClipes.find(x => String(x.id) === String(vmSequencia[vmPreviewIdx]));
-  if (c) { vmSel = c; vmPreviewClipe(c); vmMostrarProps(); vmRenderClipes(); vmRenderTimeline(); }
-}
-
-function vmPlayFull() {
-  if (!vmSequencia.length) return;
-  if (vmFullPlaying) { vmPararFull(); return; }
-  vmFullPlaying = true;
-  document.getElementById('vmPlayBtn').textContent = '⏸';
-  vmSetStatus('Preview completo...');
-  vmPlayarIdx(0);
-}
-
-function vmPlayarIdx(idx) {
-  if (idx >= vmSequencia.length) { vmPararFull(); vmSetStatus('Preview concluído'); return; }
-  const c = vmClipes.find(x => String(x.id) === String(vmSequencia[idx]));
-  if (!c) { vmPlayarIdx(idx + 1); return; }
-  vmPreviewIdx = idx;
-  vmPreviewClipe(c);
-  const v = document.getElementById('vmVideo');
-  v.play().catch(() => {});
-  // Destaca na timeline
-  document.querySelectorAll('.vm-tl-clip').forEach(el => el.classList.remove('vm-tl-playing'));
-  const tlEl = document.querySelector(`.vm-tl-clip[data-id="${c.id}"]`);
-  if (tlEl) tlEl.classList.add('vm-tl-playing');
-  const durMs = (c.end - c.start) * 1000;
-  if (vmFullTimer) clearTimeout(vmFullTimer);
-  vmFullTimer = setTimeout(() => {
-    v.pause();
-    vmPlayarIdx(idx + 1);
-  }, durMs);
-}
-
-function vmPararFull() {
-  vmFullPlaying = false;
-  if (vmFullTimer) clearTimeout(vmFullTimer);
-  const v = document.getElementById('vmVideo');
-  v.pause();
-  document.getElementById('vmPlayBtn').textContent = '▶️';
-  document.querySelectorAll('.vm-tl-clip').forEach(el => el.classList.remove('vm-tl-playing'));
-  vmSetStatus('Pronto');
-}
-
-// ── Randomizar ────────────────────────────────────────────
-function vmRandomizar() {
-  const fixados = vmClipes.filter(c => c.pinned && c.pinPos);
-  const livres = vmSequencia.filter(id => {
-    const c = vmClipes.find(x => String(x.id) === String(id));
-    return !c?.pinned;
+// ── Timeline multi-trilha ─────────────────────────────────
+function vmRenderTimeline(){
+  vmGarantirLayers();
+  const inner=document.getElementById('vmTlInner');
+  const tracksEl=document.getElementById('vmTracks');
+  const ruler=document.getElementById('vmRuler');
+  const dur=Math.max(vmDuracao(), 10);
+  inner.style.width=(dur*vmPps + 60)+'px';
+  const step = vmPps<20?5:(vmPps<55?2:1);
+  let rh=''; for(let s=0; s<=dur+0.001; s+=step){ rh+=`<div class="vm-ruler-tick" style="left:${(s*vmPps).toFixed(1)}px">${s}s</div>`; }
+  ruler.innerHTML=rh;
+  let html='';
+  [...vmVLayers].reverse().forEach(layer=>{
+    const idx=vmVLayers.indexOf(layer);
+    html+=vmTrackHtml(layer,'v', idx===0?'V1 · principal':'V'+(idx+1), 'video');
   });
-  for (let i = livres.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [livres[i], livres[j]] = [livres[j], livres[i]];
+  vmALayers.forEach((layer,i)=>{ html+=vmTrackHtml(layer,'a','A'+(i+1),'audio'); });
+  tracksEl.innerHTML=html;
+  document.getElementById('vmTotalDur').textContent = vmFmt(vmDuracao())+' total';
+  vmRenderPlayhead();
+}
+function vmTrackHtml(layer, lt, tag, cls){
+  let blocks='';
+  for(const c of layer.clips){
+    const left=(c.t*vmPps).toFixed(1), w=Math.max(8, vmClipLen(c)*vmPps).toFixed(1);
+    const sel=vmSel && vmSel.clipId===c.id;
+    blocks+=`<div class="vm-block ${cls} ${sel?'sel':''}" data-clip="${c.id}" data-layer="${layer.id}" data-lt="${lt}" style="left:${left}px;width:${w}px" onmousedown="vmBlockDown(event,'${layer.id}','${c.id}','${lt}')">
+      <div class="vm-bh l" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','l')"></div>
+      <span class="lbl">${c.nome}</span>
+      <div class="vm-bh r" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','r')"></div>
+    </div>`;
   }
-  const nova = [...livres];
-  fixados.sort((a, b) => (a.pinPos || 0) - (b.pinPos || 0)).forEach(c => {
-    const pos = Math.min((c.pinPos || 1) - 1, nova.length);
-    nova.splice(pos, 0, c.id);
-  });
-  vmSequencia = nova;
-  vmRenderTimeline();
-  vmSetStatus('Embaralhado!');
-  toast('Ordem randomizada!', 'info', 1500);
+  return `<div class="vm-track ${cls}" data-layer="${layer.id}" data-lt="${lt}" ondragover="vmRowDragOver(event)" ondragleave="vmRowDragLeave(event)" ondrop="vmRowDrop(event,'${layer.id}','${lt}')"><span class="vm-track-tag">${tag}</span>${blocks}</div>`;
+}
+function vmRenderPlayhead(){
+  const ph=document.getElementById('vmPlayheadEl'); if(ph) ph.style.left=(vmPlayhead*vmPps)+'px';
+  const tc=document.getElementById('vmTimecode'); if(tc) tc.textContent=vmPlayhead.toFixed(2)+' / '+vmDuracao().toFixed(2)+'s';
 }
 
-// ── Gerar vídeos ──────────────────────────────────────────
-async function vmGerar() {
-  if (!vmSequencia.length) { toast('Adicione clipes primeiro.', 'error'); return; }
-  if (!vmAudios.length) { toast('Adicione pelo menos um áudio.', 'error'); return; }
+// ── Drop da biblioteca numa trilha ────────────────────────
+function vmRowDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('vm-drop-row'); }
+function vmRowDragLeave(e){ e.currentTarget.classList.remove('vm-drop-row'); }
+function vmRowDrop(e, layerId, lt){
+  e.preventDefault(); e.currentTarget.classList.remove('vm-drop-row');
+  const mediaId=vmBinDragId||e.dataTransfer.getData('text/plain'); vmBinDragId=null;
+  const m=vmMedia.find(x=>x.id===mediaId); if(!m) return;
+  if((m.kind==='video')!==(lt==='v')){ toast('Tipo de mídia não combina com a trilha.','warning'); return; }
+  const rect=e.currentTarget.getBoundingClientRect();
+  const t=Math.max(0,(e.clientX-rect.left)/vmPps);
+  vmBinAdd(mediaId, layerId, t);
+}
 
-  const ok = await vmCarregarFFmpeg();
-  if (!ok) { toast('Erro ao carregar FFmpeg. Use Chrome.', 'error'); return; }
-
-  const qtd = parseInt(document.getElementById('vmQtd').value) || 1;
-  const nomeBase = document.getElementById('vmNomeBase').value.trim() || 'criativo';
-
-  document.getElementById('vmProgressWrap').style.display = 'block';
-  document.getElementById('vmBtnGerar').disabled = true;
-  document.getElementById('vmBtnRand').disabled = true;
-  document.getElementById('vmOutputList').innerHTML = '';
-
-  // Embaralha lista de áudios
-  const audiosEmbaralhados = [...vmAudios].sort(() => Math.random() - 0.5);
-
-  for (let v = 0; v < qtd; v++) {
-    if (v > 0) vmRandomizar();
-    const nomeArq = `${nomeBase}_${String(v + 1).padStart(3, '0')}.mp4`;
-    const audioAtual = audiosEmbaralhados[v % audiosEmbaralhados.length];
-    vmSetStatus(`Gerando ${v + 1}/${qtd}...`);
-    document.getElementById('vmProgressText').textContent = `Vídeo ${v + 1} de ${qtd} · ${nomeArq}`;
-
-    try {
-      const blob = await vmProcessar(nomeArq, audioAtual);
-      vmAddOutput(nomeArq, blob, true);
-    } catch(e) {
-      console.error(e);
-      vmAddOutput(nomeArq, null, false, e.message);
+// ── Arrastar/aparar blocos na timeline ────────────────────
+function vmBlockDown(e, layerId, clipId, lt){
+  if(e.target.classList.contains('vm-bh')) return;
+  e.stopPropagation();
+  vmSelecionar(layerId, clipId, lt);
+  const c=vmFindClip(layerId, clipId); if(!c) return;
+  vmDrag={mode:'move', layerId, clipId, lt, startX:e.clientX, startY:e.clientY, origT:c.t};
+  document.body.style.cursor='grabbing';
+}
+function vmTrimDown(e, layerId, clipId, lt, side){
+  e.stopPropagation(); e.preventDefault();
+  vmSelecionar(layerId, clipId, lt);
+  const c=vmFindClip(layerId, clipId); if(!c) return;
+  vmDrag={mode:'trim', side, layerId, clipId, lt, startX:e.clientX, origIn:c.in, origOut:c.out, origT:c.t};
+}
+function vmDragMove(e){
+  if(!vmDrag) return;
+  const c=vmFindClip(vmDrag.layerId, vmDrag.clipId); if(!c) return;
+  const dx=(e.clientX-vmDrag.startX)/vmPps;
+  if(vmDrag.mode==='move'){
+    c.t=Math.max(0, vmDrag.origT+dx);
+    const el=document.elementFromPoint(e.clientX, e.clientY);
+    const row=el && el.closest ? el.closest('.vm-track') : null;
+    if(row && row.dataset.lt===vmDrag.lt && row.dataset.layer!==vmDrag.layerId){
+      vmMoverClipParaLayer(vmDrag.layerId, vmDrag.clipId, row.dataset.layer, vmDrag.lt);
+      vmDrag.layerId=row.dataset.layer; if(vmSel) vmSel.layerId=row.dataset.layer;
     }
-
-    document.getElementById('vmProgressFill').style.width = ((v + 1) / qtd * 100) + '%';
+    vmRenderTimeline();
+  } else {
+    if(vmDrag.side==='l'){
+      const ni=Math.min(vmDrag.origOut-0.05, Math.max(0, vmDrag.origIn+dx));
+      c.t=Math.max(0, vmDrag.origT+(ni-vmDrag.origIn)); c.in=ni;
+    } else {
+      c.out=Math.max(c.in+0.05, Math.min(c.dur, vmDrag.origOut+dx));
+    }
+    vmRenderTimeline(); vmMostrarProps(); vmSyncPreview(true);
   }
+}
+function vmDragUp(){ if(vmDrag){ vmDrag=null; document.body.style.cursor=''; vmRebuildStage(); vmSyncPreview(true); } }
+function vmMoverClipParaLayer(fromId, clipId, toId, lt){
+  const layers=lt==='v'?vmVLayers:vmALayers;
+  const from=layers.find(l=>l.id===fromId), to=layers.find(l=>l.id===toId);
+  if(!from||!to) return;
+  const i=from.clips.findIndex(c=>c.id===clipId); if(i<0) return;
+  const [c]=from.clips.splice(i,1); to.clips.push(c);
+}
 
-  vmSetStatus(`Concluído! ${qtd} vídeo(s) gerado(s).`);
-  document.getElementById('vmProgressText').textContent = 'Concluído!';
-  document.getElementById('vmBtnGerar').disabled = false;
-  document.getElementById('vmBtnRand').disabled = false;
+// ── Seleção / propriedades ────────────────────────────────
+function vmSelecionar(layerId, clipId, lt){ vmSel={lt, layerId, clipId}; vmRenderTimeline(); vmMostrarProps(); }
+function vmMostrarProps(){
+  const c=vmSelClip();
+  if(!c){ document.getElementById('vmPropVazio').style.display='block'; document.getElementById('vmPropBody').style.display='none'; return; }
+  document.getElementById('vmPropVazio').style.display='none';
+  document.getElementById('vmPropBody').style.display='block';
+  document.getElementById('vmPropNome').textContent=c.nome;
+  const rs=document.getElementById('vmRangeStart'), re=document.getElementById('vmRangeEnd');
+  rs.max=c.dur; re.max=c.dur; rs.value=c.in; re.value=c.out;
+  vmAtualizarProps();
+  const layerIdx = vmSel.lt==='v' ? vmVLayers.findIndex(l=>l.id===vmSel.layerId) : -1;
+  const showT = vmSel.lt==='v' && layerIdx>0;
+  document.getElementById('vmTransformBox').style.display = showT?'block':'none';
+  if(showT){
+    document.getElementById('vmRangeScale').value=c.scale;
+    document.getElementById('vmPropScale').textContent=Math.round(c.scale*100)+'%';
+    document.getElementById('vmPropX').value=Math.round(c.x*100);
+    document.getElementById('vmPropY').value=Math.round(c.y*100);
+  }
+}
+function vmAtualizarProps(){
+  const c=vmSelClip(); if(!c) return;
+  document.getElementById('vmPropStart').textContent=c.in.toFixed(2)+'s';
+  document.getElementById('vmPropEnd').textContent=c.out.toFixed(2)+'s';
+  document.getElementById('vmPropDur').textContent='⏱ '+vmFmt(vmClipLen(c));
+}
+function vmUpdateCorte(){
+  const c=vmSelClip(); if(!c) return;
+  let s=parseFloat(document.getElementById('vmRangeStart').value);
+  let e=parseFloat(document.getElementById('vmRangeEnd').value);
+  if(s>=e) s=e-0.05;
+  c.in=Math.max(0,s); c.out=Math.min(c.dur,e);
+  vmAtualizarProps(); vmRenderTimeline(); vmSyncPreview(true);
+}
+function vmUpdateTransform(){
+  const c=vmSelClip(); if(!c) return;
+  c.scale=parseFloat(document.getElementById('vmRangeScale').value)||0.5;
+  c.x=(parseFloat(document.getElementById('vmPropX').value)||0)/100;
+  c.y=(parseFloat(document.getElementById('vmPropY').value)||0)/100;
+  document.getElementById('vmPropScale').textContent=Math.round(c.scale*100)+'%';
+  vmRebuildStage(); vmSyncPreview(true);
+}
+function vmRemoverSelecionado(){
+  const c=vmSelClip(); if(!c) return;
+  const layer=(vmSel.lt==='v'?vmVLayers:vmALayers).find(l=>l.id===vmSel.layerId); if(!layer) return;
+  layer.clips=layer.clips.filter(x=>x.id!==c.id);
+  vmSel=null; vmMostrarProps(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
+}
+function vmDuplicarSelecionado(){
+  const c=vmSelClip(); if(!c) return;
+  const layer=(vmSel.lt==='v'?vmVLayers:vmALayers).find(l=>l.id===vmSel.layerId); if(!layer) return;
+  layer.clips.push({...c, id:vmUid(), t:vmClipEnd(c)});
+  vmRenderTimeline(); vmRebuildStage();
+}
+
+// ── Camadas / divisão / zoom ──────────────────────────────
+function vmAddVideoLayer(){ vmVLayers.push({id:vmUid(),clips:[]}); vmRenderTimeline(); vmRebuildStage(); toast('Camada de vídeo adicionada','info',1400); }
+function vmAddAudioLayer(){ vmALayers.push({id:vmUid(),clips:[]}); vmRenderTimeline(); vmRebuildStage(); toast('Camada de áudio adicionada','info',1400); }
+function vmSplit(){
+  const c=vmSelClip(); if(!c){ toast('Selecione um clipe','warning',1500); return; }
+  if(vmPlayhead<=c.t+0.05 || vmPlayhead>=vmClipEnd(c)-0.05){ toast('Posicione o playhead sobre o clipe','warning',1800); return; }
+  const layer=(vmSel.lt==='v'?vmVLayers:vmALayers).find(l=>l.id===vmSel.layerId); if(!layer) return;
+  const cutIn=c.in+(vmPlayhead-c.t);
+  layer.clips.push({...c, id:vmUid(), in:cutIn, t:vmPlayhead});
+  c.out=cutIn;
+  vmRenderTimeline(); vmRebuildStage();
+}
+function vmZoom(dir){ vmPps=Math.max(8, Math.min(220, vmPps*(dir>0?1.25:0.8))); vmRenderTimeline(); }
+function vmZoomFit(){ const sc=document.getElementById('vmTlScroll'); const dur=Math.max(vmDuracao(),5); vmPps=Math.max(8,(sc.clientWidth-70)/dur); vmRenderTimeline(); }
+function vmRulerDown(e){
+  const inner=document.getElementById('vmTlInner'); const rect=inner.getBoundingClientRect();
+  const set=cx=>{ vmPlayhead=Math.max(0, Math.min(vmDuracao(),(cx-rect.left)/vmPps)); vmRenderPlayhead(); vmSyncPreview(true); };
+  set(e.clientX);
+  const mv=ev=>set(ev.clientX);
+  const up=()=>{ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); };
+  document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+}
+
+// ── Preview ao vivo (multi-camada) ────────────────────────
+function vmRebuildStage(){
+  const stage=document.getElementById('vmStage'); if(!stage) return;
+  stage.querySelectorAll('video,audio').forEach(m=>m.remove());
+  vmVLayers.forEach((layer,idx)=>{ const v=document.createElement('video'); v.playsInline=true; v.muted=true; v.preload='auto'; v.dataset.layer=layer.id; stage.appendChild(v); });
+  vmALayers.forEach(layer=>{ const a=document.createElement('audio'); a.preload='auto'; a.dataset.layer=layer.id; stage.appendChild(a); });
+  const has=vmVLayers.some(l=>l.clips.length)||vmALayers.some(l=>l.clips.length);
+  const ph=document.getElementById('vmPh'); if(ph) ph.style.display=has?'none':'flex';
+  vmSyncPreview(true);
+}
+function vmActiveClip(layer){ return layer.clips.find(c=>vmPlayhead>=c.t-1e-3 && vmPlayhead<vmClipEnd(c)-1e-3)||null; }
+function vmSyncPreview(seek){
+  const stage=document.getElementById('vmStage'); if(!stage) return;
+  vmVLayers.forEach((layer,idx)=>{
+    const v=stage.querySelector(`video[data-layer="${layer.id}"]`); if(!v) return;
+    const c=vmActiveClip(layer);
+    if(!c){ v.style.display='none'; try{v.pause();}catch{} return; }
+    if(idx===0){ v.style.cssText=`position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1`; }
+    else { v.style.cssText=`position:absolute;display:block;object-fit:contain;left:${(c.x*100).toFixed(1)}%;top:${(c.y*100).toFixed(1)}%;width:${(c.scale*100).toFixed(1)}%;z-index:${idx+1}`; }
+    if(v.dataset.cur!==c.id){ v.src=c.url; v.dataset.cur=c.id; }
+    const target=Math.min(c.dur, Math.max(0, c.in+(vmPlayhead-c.t)));
+    if(seek || !vmPlaying){ try{v.currentTime=target;}catch{} if(!vmPlaying){ try{v.pause();}catch{} } }
+    else { if(Math.abs(v.currentTime-target)>0.3){ try{v.currentTime=target;}catch{} } if(v.paused) v.play().catch(()=>{}); }
+  });
+  vmALayers.forEach(layer=>{
+    const a=stage.querySelector(`audio[data-layer="${layer.id}"]`); if(!a) return;
+    const c=vmActiveClip(layer);
+    if(!c){ try{a.pause();}catch{} return; }
+    if(a.dataset.cur!==c.id){ a.src=c.url; a.dataset.cur=c.id; }
+    const target=Math.min(c.dur, Math.max(0, c.in+(vmPlayhead-c.t)));
+    if(seek || !vmPlaying){ try{a.currentTime=target;}catch{} if(!vmPlaying){ try{a.pause();}catch{} } }
+    else { if(Math.abs(a.currentTime-target)>0.3){ try{a.currentTime=target;}catch{} } if(a.paused) a.play().catch(()=>{}); }
+  });
+}
+
+// ── Transporte ────────────────────────────────────────────
+function vmTogglePlay(){ vmPlaying?vmPause():vmPlay(); }
+function vmPlay(){
+  if(vmDuracao()<=0) return;
+  if(vmPlayhead>=vmDuracao()-0.02) vmPlayhead=0;
+  vmPlaying=true; document.getElementById('vmPlayBtn').textContent='⏸';
+  vmLastTs=performance.now(); vmSyncPreview(false);
+  vmRaf=requestAnimationFrame(vmLoop);
+}
+function vmPause(){
+  vmPlaying=false; const b=document.getElementById('vmPlayBtn'); if(b) b.textContent='▶️';
+  if(vmRaf) cancelAnimationFrame(vmRaf);
+  const stage=document.getElementById('vmStage'); if(stage) stage.querySelectorAll('video,audio').forEach(m=>{try{m.pause();}catch{}});
+}
+function vmLoop(ts){
+  if(!vmPlaying) return;
+  vmPlayhead+=(ts-vmLastTs)/1000; vmLastTs=ts;
+  if(vmPlayhead>=vmDuracao()){ vmPlayhead=vmDuracao(); vmRenderPlayhead(); vmPause(); return; }
+  vmRenderPlayhead(); vmSyncPreview(false);
+  vmRaf=requestAnimationFrame(vmLoop);
+}
+function vmStep(frames){ vmPause(); vmPlayhead=Math.max(0,Math.min(vmDuracao(), vmPlayhead+frames/VM_FPS)); vmRenderPlayhead(); vmSyncPreview(true); }
+function vmGoStart(){ vmPause(); vmPlayhead=0; vmRenderPlayhead(); vmSyncPreview(true); }
+function vmGoEnd(){ vmPause(); vmPlayhead=vmDuracao(); vmRenderPlayhead(); vmSyncPreview(true); }
+
+// ── Atalhos rápidos (After Effects) ───────────────────────
+function vmMoveStartTo(c,t){ c.t=Math.max(0,t); vmRenderTimeline(); vmRebuildStage(); }
+function vmMoveEndTo(c,t){ c.t=Math.max(0,t-vmClipLen(c)); vmRenderTimeline(); vmRebuildStage(); }
+function vmTrimInPlayhead(c){ const off=vmPlayhead-c.t; if(off<=0||off>=vmClipLen(c)) return; c.in+=off; c.t=vmPlayhead; vmRenderTimeline(); vmMostrarProps(); vmSyncPreview(true); }
+function vmTrimOutPlayhead(c){ const off=vmPlayhead-c.t; if(off<=0.05||off>=vmClipLen(c)) return; c.out=c.in+off; vmRenderTimeline(); vmMostrarProps(); vmSyncPreview(true); }
+
+
+// ── Randomizar trilha principal ───────────────────────────
+function vmRandomizar(){
+  const layer=vmVLayers[0];
+  if(!layer || !layer.clips.length){ toast('Sem clipes na trilha principal','warning',1500); return; }
+  const arr=[...layer.clips];
+  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  let t=0; arr.forEach(c=>{ c.t=t; t+=vmClipLen(c); });
+  layer.clips=arr;
+  vmRenderTimeline(); vmRebuildStage();
+  vmSetStatus('Trilha principal embaralhada'); toast('Embaralhado!','info',1400);
+}
+
+// ── Gerar vídeos (compositing multi-camada) ───────────────
+async function vmGerar(){
+  if(!vmTemConteudo()){ toast('Adicione clipes de vídeo.','error'); return; }
+  const okf=await vmCarregarFFmpeg(); if(!okf){ toast('Erro ao carregar FFmpeg. Use Chrome.','error'); return; }
+  const qtd=parseInt(document.getElementById('vmQtd').value)||1;
+  const nomeBase=document.getElementById('vmNomeBase').value.trim()||'criativo';
+  const randMain=document.getElementById('vmRandMain').checked;
+  document.getElementById('vmProgressWrap').style.display='block';
+  document.getElementById('vmBtnGerar').disabled=true; document.getElementById('vmBtnRand').disabled=true;
+  document.getElementById('vmOutputList').innerHTML='';
+  for(let v=0; v<qtd; v++){
+    if(randMain && v>0) vmRandomizar();
+    const nomeArq=`${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
+    vmSetStatus(`Gerando ${v+1}/${qtd}...`);
+    document.getElementById('vmProgressText').textContent=`Vídeo ${v+1} de ${qtd} · ${nomeArq}`;
+    try{ const blob=await vmProcessar(nomeArq); vmAddOutput(nomeArq, blob, true); }
+    catch(e){ console.error(e); vmAddOutput(nomeArq, null, false, e.message); }
+    document.getElementById('vmProgressFill').style.width=((v+1)/qtd*100)+'%';
+  }
+  vmSetStatus(`Concluído! ${qtd} vídeo(s).`); document.getElementById('vmProgressText').textContent='Concluído!';
+  document.getElementById('vmBtnGerar').disabled=false; document.getElementById('vmBtnRand').disabled=false;
   vmAtualizarBotoes();
-  toast(`${qtd} vídeo${qtd > 1 ? 's' : ''} gerado${qtd > 1 ? 's' : ''}!`, 'success');
+  toast(`${qtd} vídeo${qtd>1?'s':''} gerado${qtd>1?'s':''}!`,'success');
 }
 
-async function vmProcessar(nomeOut, audioFile) {
-  const toU8 = async f => new Uint8Array(await f.arrayBuffer());
+async function vmProcessar(nomeOut){
+  const toU8=async f=>new Uint8Array(await f.arrayBuffer());
+  const D=vmDuracao();
+  if(D<=0) throw new Error('Timeline vazia');
 
-  // Calcula duração total do áudio
-  const audioDur = await vmGetDur(URL.createObjectURL(audioFile));
+  // Clipes de vídeo na ordem bottom->top (principal primeiro)
+  const vclips=[]; vmVLayers.forEach((layer,idx)=>layer.clips.forEach(c=>vclips.push({...c, layerIdx:idx})));
+  const aclips=[]; vmALayers.forEach(layer=>layer.clips.forEach(c=>aclips.push({...c})));
 
-  // Monta lista de clipes na sequência atual
-  const clipes = vmSequencia
-    .map(id => vmClipes.find(x => String(x.id) === String(id)))
-    .filter(Boolean);
+  // Escreve inputs no FS do FFmpeg
+  const inputArgs=[]; let inIdx=0; const vmeta=[]; const ameta=[];
+  for(const c of vclips){ const fn=`v${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); vmeta.push({...c, idx:inIdx, fn}); inputArgs.push('-i', fn); inIdx++; }
+  for(const c of aclips){ const ext=(c.file.name.split('.').pop()||'mp3'); const fn=`a${inIdx}.${ext}`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); ameta.push({...c, idx:inIdx, fn}); inputArgs.push('-i', fn); inIdx++; }
 
-  // Calcula duração total dos clipes
-  let totalClipes = clipes.reduce((acc, c) => acc + (c.end - c.start), 0);
+  let fc=`color=c=black:s=${VM_W}x${VM_H}:r=${VM_FPS}:d=${D.toFixed(3)}[base];`;
 
-  // Ajusta o último clipe para encaixar no áudio
-  const clipesAjustados = clipes.map((c, i) => ({ ...c }));
-  if (clipesAjustados.length > 0) {
-    const ultimo = clipesAjustados[clipesAjustados.length - 1];
-    const outros = clipesAjustados.slice(0, -1).reduce((acc, c) => acc + (c.end - c.start), 0);
-    const restante = audioDur - outros;
-    if (restante > 0.3) {
-      // Precisa de mais tempo — expande o fim do último clipe
-      const novoEnd = Math.min(ultimo.dur, ultimo.start + restante);
-      ultimo.end = novoEnd;
-    } else if (restante < 0) {
-      // Áudio mais curto — corta o último clipe
-      const novoEnd = Math.max(ultimo.start + 0.3, ultimo.start + (ultimo.end - ultimo.start) + restante);
-      ultimo.end = novoEnd;
+  // Prepara cada vídeo: corta, desloca PTS p/ posição t, escala/posiciona
+  vmeta.forEach((c,i)=>{
+    if(c.layerIdx===0){
+      fc+=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,`+
+          `scale=${VM_W}:${VM_H}:force_original_aspect_ratio=increase,crop=${VM_W}:${VM_H},setsar=1[v${i}];`;
+    } else {
+      const w=Math.max(2, Math.round(c.scale*VM_W));
+      fc+=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,`+
+          `scale=${w}:-2,setsar=1[v${i}];`;
     }
+  });
+
+  // Encadeia overlays (camadas de cima por último = ficam por cima)
+  let last='base';
+  vmeta.forEach((c,i)=>{
+    const isLast = i===vmeta.length-1;
+    const out = isLast ? '[outv]' : `[ov${i}]`;
+    const x = c.layerIdx===0 ? '0' : Math.round(c.x*VM_W).toString();
+    const y = c.layerIdx===0 ? '0' : Math.round(c.y*VM_H).toString();
+    const t1=(c.t+vmClipLen(c)).toFixed(3);
+    fc+=`[${last}][v${i}]overlay=${x}:${y}:enable='between(t,${c.t.toFixed(3)},${t1})':eof_action=pass${out};`;
+    last = isLast ? 'outv' : `ov${i}`;
+  });
+  const videoOut = vmeta.length ? '[outv]' : '[base]';
+
+  // Áudios: corta + atrasa p/ posição + mixa
+  let audioOut=null;
+  if(ameta.length){
+    ameta.forEach((c,i)=>{
+      const d=Math.round(c.t*1000);
+      fc+=`[${c.idx}:a]atrim=${c.in.toFixed(3)}:${c.out.toFixed(3)},asetpts=PTS-STARTPTS,adelay=${d}|${d}[a${i}];`;
+    });
+    if(ameta.length===1) fc+=`[a0]aresample=async=1[outa];`;
+    else fc+=ameta.map((_,i)=>`[a${i}]`).join('')+`amix=inputs=${ameta.length}:normalize=0[outa];`;
+    audioOut='[outa]';
   }
+  if(fc.endsWith(';')) fc=fc.slice(0,-1);
 
-  // Escreve clipes no FS do FFmpeg
-  const partes = [];
-  for (let i = 0; i < clipesAjustados.length; i++) {
-    const c = clipesAjustados[i];
-    const fname = `cl${i}.mp4`;
-    await vmFfmpeg.writeFile(fname, await toU8(c.file));
-    partes.push({ fname, start: c.start, end: c.end });
-  }
-
-  // Escreve áudio
-  await vmFfmpeg.writeFile('aud.mp3', await toU8(audioFile));
-
-  // Monta filter_complex: trim cada clipe + concat + muda áudio
-  let fc = '';
-  let vConcat = '';
-  const inputArgs = [];
-
-  for (let i = 0; i < partes.length; i++) {
-    const p = partes[i];
-    // Scale para 1080x1920 (9:16) mantendo aspecto com pad preto
-    fc += `[${i}:v]trim=start=${p.start.toFixed(3)}:end=${p.end.toFixed(3)},setpts=PTS-STARTPTS,` +
-      `scale=1080:1920:force_original_aspect_ratio=decrease,` +
-      `pad=1080:1920:(ow-iw)/2:(oh-ih)/2:black,setsar=1[v${i}];`;
-    vConcat += `[v${i}]`;
-    inputArgs.push('-i', p.fname);
-  }
-
-  // Concat só vídeo (sem áudio dos clipes — todos no mudo)
-  fc += `${vConcat}concat=n=${partes.length}:v=1:a=0[outv]`;
-
-  // Input do áudio separado
-  inputArgs.push('-i', 'aud.mp3');
-
-  const args = [
-    ...inputArgs,
-    '-filter_complex', fc,
-    '-map', '[outv]',
-    '-map', `${partes.length}:a`,
-    '-shortest',                    // corta no menor (garante encaixe)
-    '-c:v', 'libx264',
-    '-preset', 'ultrafast',
-    '-crf', '26',
-    '-c:a', 'aac',
-    '-b:a', '128k',
-    '-movflags', '+faststart',
-    nomeOut
-  ];
+  const args=['-y', ...inputArgs, '-filter_complex', fc, '-map', videoOut];
+  if(audioOut) args.push('-map', audioOut);
+  args.push('-t', D.toFixed(3), '-r', String(VM_FPS), '-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p','-crf','26');
+  if(audioOut) args.push('-c:a','aac','-b:a','160k');
+  args.push('-movflags','+faststart', nomeOut);
 
   await vmFfmpeg.exec(args);
-  const data = await vmFfmpeg.readFile(nomeOut);
-  const blob = new Blob([data.buffer], { type: 'video/mp4' });
-
-  // Limpa FS
-  for (const p of partes) { try { await vmFfmpeg.deleteFile(p.fname); } catch {} }
-  try { await vmFfmpeg.deleteFile('aud.mp3'); } catch {}
-  try { await vmFfmpeg.deleteFile(nomeOut); } catch {}
-
+  const data=await vmFfmpeg.readFile(nomeOut);
+  const blob=new Blob([data.buffer], { type:'video/mp4' });
+  for(const m of vmeta){ try{ await vmFfmpeg.deleteFile(m.fn); }catch{} }
+  for(const m of ameta){ try{ await vmFfmpeg.deleteFile(m.fn); }catch{} }
+  try{ await vmFfmpeg.deleteFile(nomeOut); }catch{}
   return blob;
 }
 
-function vmAddOutput(nome, blob, ok, errMsg) {
-  const list = document.getElementById('vmOutputList');
-  const empty = list.querySelector('div[style*="text-align:center"]');
-  if (empty) empty.remove();
-  const item = document.createElement('div');
-  item.className = 'vm-out';
-  if (ok && blob) {
-    const url = URL.createObjectURL(blob);
-    item.innerHTML = `<div><div class="vm-out-name" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn">⬇️</button></a>`;
+function vmAddOutput(nome, blob, ok, errMsg){
+  const list=document.getElementById('vmOutputList');
+  const empty=list.querySelector('div[style*="text-align:center"]'); if(empty) empty.remove();
+  const item=document.createElement('div'); item.className='vm-out';
+  if(ok && blob){
+    const url=URL.createObjectURL(blob);
+    item.innerHTML=`<div><div class="vm-out-name" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn">⬇️</button></a>`;
   } else {
-    item.innerHTML = `<div><div class="vm-out-name">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,40)}</div></div>`;
+    item.innerHTML=`<div><div class="vm-out-name">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,40)}</div></div>`;
   }
   list.appendChild(item);
 }
 
-// ── Atalhos de teclado ────────────────────────────────────
-document.addEventListener('keydown', e => {
-  const vm = document.getElementById('screenVideoMix');
-  if (!vm || !vm.classList.contains('active')) return;
-  if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
-  switch(e.key) {
+function vmAtualizarBotoes(){
+  const tem=vmTemConteudo();
+  const br=document.getElementById('vmBtnRand'), bg=document.getElementById('vmBtnGerar');
+  if(br){ br.disabled=!tem; br.style.opacity=tem?'1':'.35'; }
+  if(bg){ bg.disabled=!tem; bg.style.opacity=tem?'1':'.35'; }
+}
+
+// ── Atalhos de teclado (estilo After Effects) ─────────────
+document.addEventListener('keydown', e=>{
+  const vm=document.getElementById('screenVideoMix');
+  if(!vm || !vm.classList.contains('active')) return;
+  if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  const c=vmSelClip();
+  switch(e.key){
     case ' ': e.preventDefault(); vmTogglePlay(); break;
-    case 'p': case 'P': vmPlayFull(); break;
-    case 'ArrowLeft': e.preventDefault(); vmPrevClipe(); break;
-    case 'ArrowRight': e.preventDefault(); vmNextClipe(); break;
-    case 'Delete': case 'Backspace':
-      if (vmSel) { vmRemoverSelecionado(); toast('Clipe removido', 'info', 1500); }
-      break;
+    case '=': case '+': e.preventDefault(); vmZoom(1); break;
+    case '-': case '_': e.preventDefault(); vmZoom(-1); break;
+    case 'f': case 'F': vmZoomFit(); break;
+    case 'ArrowLeft': e.preventDefault(); vmStep(e.shiftKey?-VM_FPS:-1); break;
+    case 'ArrowRight': e.preventDefault(); vmStep(e.shiftKey?VM_FPS:1); break;
+    case 'Home': e.preventDefault(); vmGoStart(); break;
+    case 'End': e.preventDefault(); vmGoEnd(); break;
+    case 'i': case 'I': if(c){ vmPlayhead=c.t; vmRenderPlayhead(); vmSyncPreview(true); } break;
+    case 'o': case 'O': if(c){ vmPlayhead=vmClipEnd(c); vmRenderPlayhead(); vmSyncPreview(true); } break;
+    case '[': if(c){ e.altKey?vmTrimInPlayhead(c):vmMoveStartTo(c, vmPlayhead); } break;
+    case ']': if(c){ e.altKey?vmTrimOutPlayhead(c):vmMoveEndTo(c, vmPlayhead); } break;
+    case 's': case 'S': vmSplit(); break;
+    case 'd': case 'D': vmDuplicarSelecionado(); break;
     case 'r': case 'R': vmRandomizar(); break;
-    case 'Escape': vmPararFull(); break;
+    case 'Delete': case 'Backspace': if(c){ vmRemoverSelecionado(); toast('Clipe removido','info',1200); } break;
   }
 });
 
-// ── Botões ────────────────────────────────────────────────
-function vmAtualizarBotoes() {
-  const tem = vmClipes.length > 0;
-  const br = document.getElementById('vmBtnRand');
-  const bg = document.getElementById('vmBtnGerar');
-  if (br) { br.disabled = !tem; br.style.opacity = tem ? '1' : '.35'; }
-  if (bg) { bg.disabled = !tem; bg.style.opacity = tem ? '1' : '.35'; }
+// ── Init ──────────────────────────────────────────────────
+function vmInit(){
+  const ruler=document.getElementById('vmRuler');
+  if(ruler) ruler.addEventListener('mousedown', vmRulerDown);
+  document.addEventListener('mousemove', vmDragMove);
+  document.addEventListener('mouseup', vmDragUp);
+  vmGarantirLayers(); vmRenderBin(); vmRenderTimeline(); vmRebuildStage();
 }
+vmInit();
 
 </script>
 </body>
