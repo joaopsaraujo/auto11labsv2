@@ -2475,23 +2475,29 @@ function vmTemConteudo(){ return vmVLayers.some(l=>l.clips.length); }
 function vmGarantirLayers(){ if(!vmVLayers.length) vmVLayers.push({id:vmUid(),clips:[]}); if(!vmALayers.length) vmALayers.push({id:vmUid(),clips:[]}); }
 
 // ── FFmpeg ────────────────────────────────────────────────
-// Converte um recurso remoto em blob URL (same-origin) — evita falhas de
-// cross-origin do worker/wasm do FFmpeg.wasm 0.12 carregado via CDN.
+// Baixa um recurso e devolve um blob URL same-origin (com retry).
+// Evita o erro de Worker cross-origin do FFmpeg.wasm 0.12 carregado via CDN.
 async function vmToBlobURL(url, type){
-  const r = await fetch(url);
-  if(!r.ok) throw new Error('Falha ao baixar '+url+' ('+r.status+')');
-  const buf = await r.arrayBuffer();
-  return URL.createObjectURL(new Blob([buf], { type }));
+  let err;
+  for(let i=0;i<3;i++){
+    try{
+      const r = await fetch(url);
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const buf = await r.arrayBuffer();
+      return URL.createObjectURL(new Blob([buf], { type }));
+    }catch(e){ err=e; await new Promise(res=>setTimeout(res,600)); }
+  }
+  throw new Error('Falha ao baixar '+url.split('/').pop()+' ('+((err&&err.message)||err)+')');
 }
 async function vmCarregarFFmpeg() {
   if (vmFfmpegOk) return true;
   vmSetStatus('Carregando FFmpeg...');
   try {
-    const V = '0.12.6';
+    const FF = '0.12.10', CORE = '0.12.6';
     if (!window.FFmpegWASM) {
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = `https://unpkg.com/@ffmpeg/ffmpeg@${V}/dist/umd/ffmpeg.js`;
+        s.src = `https://unpkg.com/@ffmpeg/ffmpeg@${FF}/dist/umd/ffmpeg.js`;
         s.onload = res; s.onerror = () => rej(new Error('Não foi possível baixar ffmpeg.js'));
         document.head.appendChild(s);
       });
@@ -2499,17 +2505,16 @@ async function vmCarregarFFmpeg() {
     const { FFmpeg } = window.FFmpegWASM;
     vmFfmpeg = new FFmpeg();
     vmFfmpeg.on('progress', ({ progress }) => { const el=document.getElementById('vmProgressFill'); if(el) el.style.width=(progress*100)+'%'; });
-    vmFfmpeg.on('log', ({ message }) => { const el=document.getElementById('vmProgressText'); if(el) el.textContent=message.substring(0,70); });
+    vmFfmpeg.on('log', ({ message }) => { const el=document.getElementById('vmProgressText'); if(el) el.textContent=(message||'').substring(0,70); });
 
-    const core = `https://unpkg.com/@ffmpeg/core@${V}/dist/umd`;
-    const cfg = {
+    // Worker (UMD 0.12.10) + core em ESM (necessário pois o worker importa via import())
+    const ffu = `https://unpkg.com/@ffmpeg/ffmpeg@${FF}/dist/umd`;
+    const core = `https://unpkg.com/@ffmpeg/core@${CORE}/dist/esm`;
+    await vmFfmpeg.load({
+      classWorkerURL: await vmToBlobURL(`${ffu}/814.ffmpeg.js`, 'text/javascript'),
       coreURL: await vmToBlobURL(`${core}/ffmpeg-core.js`, 'text/javascript'),
       wasmURL: await vmToBlobURL(`${core}/ffmpeg-core.wasm`, 'application/wasm'),
-    };
-    // O worker do FFmpeg 0.12 precisa de URL explícita quando carregado por CDN
-    try { cfg.classWorkerURL = await vmToBlobURL(`https://unpkg.com/@ffmpeg/ffmpeg@${V}/dist/umd/814.ffmpeg.js`, 'text/javascript'); } catch(e) {}
-
-    await vmFfmpeg.load(cfg);
+    });
     vmFfmpegOk = true;
     vmSetStatus('Pronto');
     return true;
