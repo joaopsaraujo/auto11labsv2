@@ -10,6 +10,11 @@ const SITE_URL = process.env.SITE_URL || `https://${process.env.VERCEL_URL}` || 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "jjoaopedrojp27@gmail.com";
 const LIMITE_GRATUITO = 10;
 const LIMITE_CONTAS_POR_IP = 2;
+// Preço da legenda automática cobrado do cliente (R$/min) = custo real × margem.
+// Ajuste via env: LEGENDA_CUSTO_MIN (custo real da API por min) e LEGENDA_MARGEM (multiplicador).
+const LEGENDA_CUSTO_MIN = Number(process.env.LEGENDA_CUSTO_MIN || 0.02);
+const LEGENDA_MARGEM = Number(process.env.LEGENDA_MARGEM || 2);
+const PRECO_LEGENDA_MIN = LEGENDA_CUSTO_MIN * LEGENDA_MARGEM;
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
 
 if (!SESSION_SECRET) {
@@ -126,7 +131,7 @@ module.exports = async (req, res) => {
   }
 
   function publicUser(user) {
-    return { id: user.id, email: user.email, plano: user.plano, audios_mes: user.audios_mes, is_admin: user.is_admin };
+    return { id: user.id, email: user.email, plano: user.plano, audios_mes: user.audios_mes, is_admin: user.is_admin, saldo: Number(user.saldo || 0) };
   }
 
   // ── POST /cadastrar ───────────────────────────────────
@@ -280,10 +285,25 @@ module.exports = async (req, res) => {
 
       if (pagamento.status !== "approved") return ok({ ok: true });
 
-      const userId = pagamento.metadata?.user_id;
-      const plano = pagamento.metadata?.plano;
-      if (!userId || !plano) {
+      const meta = pagamento.metadata || {};
+      const userId = meta.user_id;
+      if (!userId) {
         await logPagamento("webhook_sem_metadata", { payment_id: data.id });
+        return ok({ ok: true });
+      }
+
+      // Recarga de saldo (avulsa, sem relação com plano)
+      if (meta.tipo === "recarga") {
+        const { data: us } = await sb("GET", `users?id=eq.${userId}&select=saldo`);
+        const atual = us && us[0] ? Number(us[0].saldo || 0) : 0;
+        await sb("PATCH", `users?id=eq.${userId}`, { saldo: atual + Number(meta.valor || 0) });
+        await logPagamento("recarga_creditada", { user_id: userId, valor: meta.valor, payment_id: data.id });
+        return ok({ ok: true });
+      }
+
+      const plano = meta.plano;
+      if (!plano) {
+        await logPagamento("webhook_sem_plano", { payment_id: data.id });
         return ok({ ok: true });
       }
 
@@ -347,29 +367,77 @@ module.exports = async (req, res) => {
     return ok({ ok: true });
   }
 
-  // ── POST /transcrever — legenda automática via OpenAI Whisper ──
+  // ── GET /saldo — saldo (R$) e preço da legenda por minuto ──
+  if (path === "saldo" && req.method === "GET") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    return ok({ ok: true, saldo: Number(user.saldo || 0), precoLegendaMin: PRECO_LEGENDA_MIN });
+  }
+
+  // ── POST /recarregar — cria pagamento de recarga de saldo (avulso) ──
+  if (path === "recarregar" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    const valor = Math.round(Math.max(5, Math.min(500, Number(body.valor) || 0)) * 100) / 100;
+    if (!valor) return err(400, "Valor inválido");
+    try {
+      const mpRes = await fetch("https://api.mercadopago.com/checkout/preferences", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${MP_ACCESS_TOKEN}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: [{ title: "Recarga de saldo — Auto11Labs", quantity: 1, unit_price: valor }],
+          payer: { email: user.email },
+          back_urls: { success: `${SITE_URL}/?recarga=sucesso`, failure: `${SITE_URL}/?recarga=falha` },
+          auto_return: "approved",
+          notification_url: `${SITE_URL}/api/webhook-mp`,
+          metadata: { tipo: "recarga", user_id: user.id, valor },
+        }),
+      });
+      const pref = await mpRes.json();
+      if (!mpRes.ok) { await logPagamento("recarga_erro", { user_id: user.id, valor, resposta: pref }); return err(500, "Erro ao criar recarga"); }
+      await logPagamento("recarga_criada", { user_id: user.id, valor, preference_id: pref.id });
+      return ok({ ok: true, url: pref.init_point });
+    } catch (e) {
+      await logPagamento("recarga_excecao", { user_id: user.id, valor }, e.message);
+      return err(500, "Erro interno ao criar recarga");
+    }
+  }
+
+  // ── POST /transcrever — legenda automática (Groq Whisper, com tempo por palavra) ──
   if (path === "transcrever" && req.method === "POST") {
     const user = await usuarioAutenticado();
     if (!user) return err(401, "Não autorizado");
-    if (!process.env.OPENAI_API_KEY) return err(503, "Transcrição não configurada (OPENAI_API_KEY ausente)");
-    const { audioB64, filename, lang } = body;
+    const GKEY = process.env.GROQ_API_KEY, OKEY = process.env.OPENAI_API_KEY;
+    if (!GKEY && !OKEY) return err(503, "Transcrição não configurada (defina GROQ_API_KEY)");
+    const { audioB64, filename, lang, estDur } = body;
     if (!audioB64) return err(400, "Áudio ausente");
+
+    // Saldo: precisa de saldo para gerar legenda (independente do plano)
+    const saldo = Number(user.saldo || 0);
+    const custoEst = ((Number(estDur) || 0) / 60) * PRECO_LEGENDA_MIN;
+    if (saldo <= 0 || saldo < custoEst) return err(402, "Saldo insuficiente. Recarregue para usar a legenda automática.");
+
     try {
       const buf = Buffer.from(audioB64, "base64");
       const form = new FormData();
       form.append("file", new Blob([buf]), filename || "audio.mp3");
-      form.append("model", "whisper-1");
+      form.append("model", GKEY ? "whisper-large-v3-turbo" : "whisper-1");
       form.append("response_format", "verbose_json");
+      form.append("timestamp_granularities[]", "word");
+      form.append("timestamp_granularities[]", "segment");
       if (lang && lang !== "auto") form.append("language", lang);
-      const r = await fetch("https://api.openai.com/v1/audio/transcriptions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
-        body: form,
+      const r = await fetch(GKEY ? "https://api.groq.com/openai/v1/audio/transcriptions" : "https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST", headers: { Authorization: `Bearer ${GKEY || OKEY}` }, body: form,
       });
       const data = await r.json();
       if (!r.ok) return err(502, (data.error && data.error.message) || "Erro na transcrição");
+      const dur = Number(data.duration) || Number(estDur) || 0;
+      const custo = (dur / 60) * PRECO_LEGENDA_MIN;
+      const novoSaldo = Math.max(0, saldo - custo);
+      await sb("PATCH", `users?id=eq.${user.id}`, { saldo: novoSaldo });
+      const words = (data.words || []).map((w) => ({ word: w.word, start: w.start, end: w.end }));
       const segments = (data.segments || []).map((s) => ({ start: s.start, end: s.end, text: (s.text || "").trim() }));
-      return ok({ ok: true, segments, text: data.text });
+      return ok({ ok: true, words, segments, custo, saldo: novoSaldo, dur });
     } catch (e) {
       return err(500, "Erro ao transcrever: " + e.message);
     }

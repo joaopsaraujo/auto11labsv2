@@ -1393,9 +1393,14 @@ tr:hover td{background:var(--surface2)}
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:8px;cursor:pointer">
           <input type="checkbox" id="vmRandFx"> Randomizar transições (fade/zoom) a cada vídeo
         </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
-          <input type="checkbox" id="vmLegenda"> Legenda automática (transcreve a voz)
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:6px;cursor:pointer">
+          <input type="checkbox" id="vmLegenda"> Legenda automática (animada, estilo TikTok)
         </label>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
+          <span style="font-size:11px;color:var(--muted2)">Saldo: <strong id="vmSaldoVal" style="color:var(--accent3)">R$ 0,00</strong></span>
+          <button onclick="vmAbrirRecarga()" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif">+ Recarregar</button>
+        </div>
+        <div id="vmEstCusto" style="font-size:10px;color:var(--muted2);margin-bottom:10px"></div>
         <div style="font-size:10px;color:var(--muted2);margin-bottom:10px;padding:8px;background:rgba(124,147,251,.05);border-radius:6px;border-left:2px solid rgba(124,147,251,.2);line-height:1.5">
           Monte o vídeo base na timeline (sem áudio). Selecione a pasta de áudios e clique em Iniciar — cada áudio vira um vídeo, do 1º ao último, com os clipes embaralhados e a duração encaixada no áudio.
         </div>
@@ -1500,6 +1505,25 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
+<!-- MODAL RECARGA DE SALDO -->
+<div class="modal-overlay" id="vmRecargaModal">
+  <div class="modal" style="max-width:380px;text-align:left">
+    <h2 style="font-size:18px;margin-bottom:6px">💳 Recarregar saldo</h2>
+    <p style="font-size:12px;color:var(--muted2);margin-bottom:14px">O saldo é usado só para a legenda automática (independente do plano). Pagamento via Mercado Pago.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      <button class="vm-tbtn" onclick="vmRecarregar(10)">R$ 10</button>
+      <button class="vm-tbtn" onclick="vmRecarregar(25)">R$ 25</button>
+      <button class="vm-tbtn" onclick="vmRecarregar(50)">R$ 50</button>
+      <button class="vm-tbtn" onclick="vmRecarregar(100)">R$ 100</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <input type="number" id="vmRecargaCustom" min="5" max="500" placeholder="Outro valor (R$)" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif">
+      <button class="vm-btn vm-btn-green" style="width:auto;padding:8px 14px" onclick="vmRecarregar()">Pagar</button>
+    </div>
+    <button class="btn-fechar-modal" onclick="vmFecharRecarga()">Fechar</button>
+  </div>
+</div>
+
 <!-- MENU DE CONTEXTO (botão direito na timeline) -->
 <div class="vm-ctx" id="vmCtxMenu">
   <button onclick="vmCtxAction('dup')">⧉ Duplicar</button>
@@ -1597,7 +1621,8 @@ let nomesCustom = [];
 window.onload = async () => {
   const params = new URLSearchParams(location.search);
   const pagamentoSucesso = params.get('pagamento') === 'sucesso';
-  if (params.has('pagamento')) history.replaceState({}, '', '/');
+  const recargaSucesso = params.get('recarga') === 'sucesso';
+  if (params.has('pagamento') || params.has('recarga')) history.replaceState({}, '', '/');
 
   const saved = localStorage.getItem(USER_KEY);
   const token = localStorage.getItem(TOKEN_KEY);
@@ -1617,6 +1642,9 @@ window.onload = async () => {
 
     if (pagamentoSucesso) {
       document.getElementById('modalSucesso').classList.add('visible');
+    }
+    if (recargaSucesso) {
+      setTimeout(()=>{ vmCarregarSaldo(); toast('Recarga recebida! O saldo aparece em instantes.','success',5000); }, 1500);
     }
     mostrarApp();
   }
@@ -1773,6 +1801,7 @@ function irParaVideoMix() {
   });
   document.getElementById('screenVideoMix').classList.add('active');
   setSidebarActive('videomix');
+  vmCarregarSaldo();
 }
 
 function atualizarHomeUI() {
@@ -3166,16 +3195,28 @@ async function vmFileToB64(file){
 }
 async function vmTranscrever(file){
   const audioB64=await vmFileToB64(file);
-  const r=await callApiAuth('transcrever', { audioB64, filename:file.name, lang:'auto' });
-  if(!r.ok) throw new Error(r.erro||'transcrição falhou');
-  return r.segments||[];
+  let estDur=0; try{ estDur=await vmGetDur(URL.createObjectURL(file)); }catch{}
+  const r=await callApiAuth('transcrever', { audioB64, filename:file.name, lang:'auto', estDur });
+  if(!r.ok){ const e=new Error(r.erro||'transcrição falhou'); e.semSaldo=(r.erro||'').toLowerCase().includes('saldo'); throw e; }
+  if(r.saldo!=null && user){ user.saldo=r.saldo; localStorage.setItem(USER_KEY, JSON.stringify(user)); vmAtualizarSaldo(); }
+  if(r.words && r.words.length) return r.words;
+  // fallback: sem tempo por palavra → usa segmentos como unidades
+  return (r.segments||[]).map(s=>({ word:s.text, start:s.start, end:s.end }));
 }
-function vmWrapCaption(t){
-  const words=(t||'').replace(/\s+/g,' ').trim().split(' ');
-  const lines=[]; let cur='';
-  for(const w of words){ if((cur+' '+w).trim().length>26){ if(cur) lines.push(cur.trim()); cur=w; } else cur=(cur+' '+w).trim(); }
-  if(cur) lines.push(cur.trim());
-  return lines.slice(0,3).join('\n');
+// Gera legenda ASS animada (estilo TikTok: pop + karaokê palavra a palavra)
+function vmAssTime(t){ t=Math.max(0,t||0); const cs=Math.round(t*100); const h=Math.floor(cs/360000), m=Math.floor(cs/6000)%60, s=Math.floor(cs/100)%60, c=cs%100; return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(c).padStart(2,'0')}`; }
+function vmAssEsc(t){ return (t||'').replace(/[{}\\]/g,'').replace(/\r?\n/g,' '); }
+function vmGerarAss(words){
+  const header='[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,DejaVu Sans,92,&H0000F0FF,&H00FFFFFF,&H00000000,&H64000000,1,6,2,2,80,80,520\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n';
+  const N=4; let ev='';
+  for(let i=0;i<words.length;i+=N){
+    const line=words.slice(i,i+N); if(!line.length) continue;
+    const start=line[0].start, end=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
+    let txt='{\\fad(60,60)}{\\t(0,120,\\fscx116\\fscy116)\\t(120,240,\\fscx100\\fscy100)}';
+    for(const w of line){ const kcs=Math.max(1,Math.round(((w.end||w.start)-w.start)*100)); txt+=`{\\kf${kcs}}${vmAssEsc(w.word)} `; }
+    ev+=`Dialogue: 0,${vmAssTime(start)},${vmAssTime(end)},Def,,0,0,0,,${txt.trim()}\n`;
+  }
+  return header+ev;
 }
 
 // ── Produção em lote (1 vídeo por áudio da pasta) ─────────
@@ -3188,7 +3229,7 @@ async function vmGerar(){
   const stretchSel=document.getElementById('vmStretchClip').value;
   const randMain=document.getElementById('vmRandMain').checked;
   const randFx=document.getElementById('vmRandFx').checked;
-  const legenda=document.getElementById('vmLegenda').checked;
+  let legenda=document.getElementById('vmLegenda').checked;
   const pool=vmMedia.filter(m=>m.kind==='audio');
 
   document.getElementById('vmProgressWrap').style.display='block';
@@ -3208,7 +3249,11 @@ async function vmGerar(){
       vmSetStatus(`Transcrevendo ${v+1}/${jobs.length}...`);
       document.getElementById('vmProgressText').textContent=`Transcrevendo áudio ${v+1}/${jobs.length}...`;
       try{ legendas=await vmTranscrever(audio.file); }
-      catch(e){ toast('Legenda falhou: '+e.message+' — gerando sem legenda','warning',5000); legendas=null; }
+      catch(e){
+        legendas=null;
+        if(e.semSaldo){ legenda=false; toast('Saldo insuficiente para legenda — recarregue. Gerando sem legenda.','warning',6000); }
+        else toast('Legenda falhou: '+e.message+' — gerando sem legenda','warning',5000);
+      }
     }
     vmSetStatus(`Gerando ${v+1}/${jobs.length}...`);
     document.getElementById('vmProgressText').textContent=`Vídeo ${v+1} de ${jobs.length} · ${nomeArq}`;
@@ -3296,18 +3341,12 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, 
   });
   let videoOut = pipMeta.length ? '[outv]' : '[mainv]';
 
-  // Legenda automática queimada (drawtext por segmento, com tempo do Whisper)
+  // Legenda automática animada (ASS estilo TikTok) — queimada via libass
   if(legendas && legendas.length && vmFontOk){
-    let cur=videoOut;
-    for(let i=0;i<legendas.length;i++){
-      const L=legendas[i]; const txt=vmWrapCaption(L.text); if(!txt) continue;
-      await vmFfmpeg.writeFile(`cap${i}.txt`, txt); files.push(`cap${i}.txt`);
-      const st=Math.max(0, L.start||0).toFixed(2), en=Math.max(parseFloat(st), L.end||0).toFixed(2);
-      const outL=`[cap${i}]`;
-      fc+=`${cur}drawtext=fontfile=font.ttf:textfile=cap${i}.txt:fontcolor=white:fontsize=58:borderw=5:bordercolor=black@0.9:line_spacing=8:x=(w-text_w)/2:y=h-h*0.30:enable='between(t,${st}\\,${en})'${outL};`;
-      cur=outL;
-    }
-    videoOut=cur;
+    const ass=vmGerarAss(legendas);
+    await vmFfmpeg.writeFile('cap.ass', ass); files.push('cap.ass');
+    fc+=`${videoOut}ass=cap.ass:fontsdir=.[capv];`;
+    videoOut='[capv]';
   }
 
   // Mix de áudio (pasta + fixas)
@@ -3567,6 +3606,27 @@ function vmResizeStart(e, side){
   };
   const up=()=>{ if(el) el.classList.remove('active'); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); try{ localStorage.setItem('a11_vm_cols', vmLeftW+','+vmRightW); }catch{} };
   document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+}
+
+// ── Saldo / recarga (legenda automática) ──────────────────
+let vmPrecoLegendaMin=0.04;
+async function vmCarregarSaldo(){
+  if(!user) return;
+  try{ const r=await callApiAuth('saldo', null, 'GET'); if(r.ok){ user.saldo=r.saldo; vmPrecoLegendaMin=r.precoLegendaMin||vmPrecoLegendaMin; localStorage.setItem(USER_KEY, JSON.stringify(user)); vmAtualizarSaldo(); } }catch{}
+}
+function vmAtualizarSaldo(){
+  const v=Number((user&&user.saldo)||0);
+  const el=document.getElementById('vmSaldoVal'); if(el) el.textContent='R$ '+v.toFixed(2).replace('.',',');
+  const est=document.getElementById('vmEstCusto'); if(est) est.textContent=`Legenda ~R$ ${vmPrecoLegendaMin.toFixed(3).replace('.',',')}/min · vídeo de 30s ≈ R$ ${(vmPrecoLegendaMin*0.5).toFixed(3).replace('.',',')}`;
+}
+function vmAbrirRecarga(){ if(!user){ toast('Faça login','warning'); return; } document.getElementById('vmRecargaModal').classList.add('visible'); }
+function vmFecharRecarga(){ document.getElementById('vmRecargaModal').classList.remove('visible'); }
+async function vmRecarregar(valor){
+  if(!valor){ valor=parseFloat(document.getElementById('vmRecargaCustom').value)||0; }
+  if(!valor || valor<5){ toast('Valor mínimo R$ 5','warning'); return; }
+  const r=await callApiAuth('recarregar', { valor });
+  if(r.ok && r.url) window.location.href=r.url;
+  else toast(r.erro||'Erro ao recarregar','error');
 }
 
 // ── Init ──────────────────────────────────────────────────
