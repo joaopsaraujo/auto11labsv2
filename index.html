@@ -1159,7 +1159,8 @@ tr:hover td{background:var(--surface2)}
   .vm-block.audio{background:rgba(16,185,129,.22);border-color:rgba(16,185,129,.45);color:#a7f3d0}
   .vm-block.sel{box-shadow:0 0 0 2px var(--accent2);z-index:3}
   .vm-block.playing{box-shadow:0 0 0 2px var(--success)}
-  .vm-block .lbl{padding:0 9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;font-weight:500}
+  .vm-block .lbl{padding:1px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;font-weight:600;align-self:flex-start;margin-top:3px;border-radius:0 0 5px 0;background:linear-gradient(90deg,rgba(0,0,0,.6),rgba(0,0,0,.25));text-shadow:0 1px 2px rgba(0,0,0,.9)}
+  .vm-block.video{align-items:flex-start}
   .vm-bh{position:absolute;top:0;bottom:0;width:8px;cursor:col-resize;background:rgba(255,255,255,.65);z-index:4}
   .vm-bh.l{left:0;border-radius:6px 0 0 6px}
   .vm-bh.r{right:0;border-radius:0 6px 6px 0}
@@ -1307,6 +1308,23 @@ tr:hover td{background:var(--surface2)}
             <input type="range" class="vm-range" id="vmZoomFill" min="1" max="3" value="1" step="0.05" onmousedown="vmPushUndo()" oninput="vmUpdateFill()">
           </div>
 
+          <!-- Efeitos (fade / movimento) -->
+          <div id="vmFxBox" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
+            <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Efeitos</div>
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Fade in <span id="vmFadeInVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
+            <input type="range" class="vm-range" id="vmFadeIn" min="0" max="2" value="0" step="0.1" onmousedown="vmPushUndo()" oninput="vmUpdateFx()">
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Fade out <span id="vmFadeOutVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
+            <input type="range" class="vm-range" id="vmFadeOut" min="0" max="2" value="0" step="0.1" onmousedown="vmPushUndo()" oninput="vmUpdateFx()">
+            <div id="vmMotionWrap" style="margin-top:6px">
+              <div style="font-size:11px;color:var(--muted2);margin-bottom:4px">Movimento</div>
+              <select id="vmMotion" class="vm-num" onchange="vmPushUndo();vmUpdateFx()" style="font-family:'Manrope',sans-serif">
+                <option value="none">Nenhum</option>
+                <option value="zoomin">Zoom in (aproxima)</option>
+                <option value="zoomout">Zoom out (afasta)</option>
+              </select>
+            </div>
+          </div>
+
           <!-- Posição/escala (só camadas de overlay) -->
           <div id="vmTransformBox" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
             <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Sobreposição (PIP)</div>
@@ -1339,8 +1357,11 @@ tr:hover td{background:var(--surface2)}
           <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Clipe a ajustar</div>
           <select id="vmStretchClip" class="vm-num" style="font-family:'Manrope',sans-serif"></select>
         </div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:8px;cursor:pointer">
           <input type="checkbox" id="vmRandMain" checked> Randomizar ordem dos clipes a cada áudio
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="vmRandFx"> Randomizar transições (fade/zoom) a cada vídeo
         </label>
         <div style="font-size:10px;color:var(--muted2);margin-bottom:10px;padding:8px;background:rgba(124,147,251,.05);border-radius:6px;border-left:2px solid rgba(124,147,251,.2);line-height:1.5">
           Monte o vídeo base na timeline (sem áudio). Selecione a pasta de áudios e clique em Iniciar — cada áudio vira um vídeo, do 1º ao último, com os clipes embaralhados e a duração encaixada no áudio.
@@ -2440,37 +2461,63 @@ function vmTemConteudo(){ return vmVLayers.some(l=>l.clips.length); }
 function vmGarantirLayers(){ if(!vmVLayers.length) vmVLayers.push({id:vmUid(),clips:[]}); if(!vmALayers.length) vmALayers.push({id:vmUid(),clips:[]}); }
 
 // ── FFmpeg ────────────────────────────────────────────────
+// Converte um recurso remoto em blob URL (same-origin) — evita falhas de
+// cross-origin do worker/wasm do FFmpeg.wasm 0.12 carregado via CDN.
+async function vmToBlobURL(url, type){
+  const r = await fetch(url);
+  if(!r.ok) throw new Error('Falha ao baixar '+url+' ('+r.status+')');
+  const buf = await r.arrayBuffer();
+  return URL.createObjectURL(new Blob([buf], { type }));
+}
 async function vmCarregarFFmpeg() {
   if (vmFfmpegOk) return true;
   vmSetStatus('Carregando FFmpeg...');
   try {
+    const V = '0.12.6';
     if (!window.FFmpegWASM) {
       await new Promise((res, rej) => {
         const s = document.createElement('script');
-        s.src = 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/umd/ffmpeg.js';
-        s.onload = res; s.onerror = rej;
+        s.src = `https://unpkg.com/@ffmpeg/ffmpeg@${V}/dist/umd/ffmpeg.js`;
+        s.onload = res; s.onerror = () => rej(new Error('Não foi possível baixar ffmpeg.js'));
         document.head.appendChild(s);
       });
     }
     const { FFmpeg } = window.FFmpegWASM;
     vmFfmpeg = new FFmpeg();
-    vmFfmpeg.on('progress', ({ progress }) => {
-      document.getElementById('vmProgressFill').style.width = (progress * 100) + '%';
-    });
-    vmFfmpeg.on('log', ({ message }) => {
-      document.getElementById('vmProgressText').textContent = message.substring(0, 70);
-    });
-    await vmFfmpeg.load({ coreURL: 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js' });
+    vmFfmpeg.on('progress', ({ progress }) => { const el=document.getElementById('vmProgressFill'); if(el) el.style.width=(progress*100)+'%'; });
+    vmFfmpeg.on('log', ({ message }) => { const el=document.getElementById('vmProgressText'); if(el) el.textContent=message.substring(0,70); });
+
+    const core = `https://unpkg.com/@ffmpeg/core@${V}/dist/umd`;
+    const cfg = {
+      coreURL: await vmToBlobURL(`${core}/ffmpeg-core.js`, 'text/javascript'),
+      wasmURL: await vmToBlobURL(`${core}/ffmpeg-core.wasm`, 'application/wasm'),
+    };
+    // O worker do FFmpeg 0.12 precisa de URL explícita quando carregado por CDN
+    try { cfg.classWorkerURL = await vmToBlobURL(`https://unpkg.com/@ffmpeg/ffmpeg@${V}/dist/umd/814.ffmpeg.js`, 'text/javascript'); } catch(e) {}
+
+    await vmFfmpeg.load(cfg);
     vmFfmpegOk = true;
     vmSetStatus('Pronto');
     return true;
   } catch(e) {
-    vmSetStatus('Erro FFmpeg: ' + e.message);
+    window.__vmFfErr = (e && e.message) ? e.message : String(e);
+    vmSetStatus('Erro FFmpeg: ' + window.__vmFfErr);
     return false;
   }
 }
 
 function vmGetDur(url){ return new Promise(res=>{ const v=document.createElement('video'); v.preload='metadata'; v.src=url; v.onloadedmetadata=()=>res(v.duration||30); v.onerror=()=>res(30); }); }
+// Captura um frame do vídeo como miniatura (dataURL) para mostrar na timeline
+function vmGetThumb(url){
+  return new Promise(res=>{
+    let done=false; const fin=v=>{ if(!done){ done=true; res(v); } };
+    const v=document.createElement('video'); v.muted=true; v.preload='auto'; v.src=url;
+    v.onloadeddata=()=>{ try{ v.currentTime=Math.min(0.1,(v.duration||1)/2); }catch{ fin(null); } };
+    v.onseeked=()=>{ try{ const cv=document.createElement('canvas'); cv.width=64; cv.height=114; cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height); fin(cv.toDataURL('image/jpeg',0.5)); }catch{ fin(null); } };
+    v.onerror=()=>fin(null);
+    setTimeout(()=>fin(null), 4000);
+  });
+}
 
 // ── Adicionar mídia ───────────────────────────────────────
 async function vmAddClipes(files){
@@ -2478,24 +2525,24 @@ async function vmAddClipes(files){
   const arr=Array.from(files).filter(f=>f.type.startsWith('video'));
   if(arr.length) vmPushUndo();
   for(const f of arr){
-    const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
+    const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const thumb=await vmGetThumb(url); const nome=f.name.replace(/\.[^.]+$/,'');
     const mid=vmUid();
-    vmMedia.push({id:mid, kind:'video', file:f, url, dur, nome, srcName:f.name});
+    vmMedia.push({id:mid, kind:'video', file:f, url, dur, nome, srcName:f.name, thumb});
     // Se um projeto carregado tem clipes faltando com este nome, reconecta em vez de duplicar
-    if(!vmReconectar(f, url, dur, 'video')){
+    if(!vmReconectar(f, url, dur, 'video', thumb)){
       const layer=vmVLayers[0];
       const t=layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
-      layer.clips.push({id:vmUid(), mediaId:mid, nome, srcName:f.name, file:f, url, dur, in:0, out:dur, t, scale:1, x:0, y:0, kind:'video'});
+      layer.clips.push({id:vmUid(), mediaId:mid, nome, srcName:f.name, file:f, url, dur, in:0, out:dur, t, scale:1, x:0, y:0, kind:'video', thumb});
     }
   }
   vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes(); vmPopulateStretchSelect(); vmUpdateMissing();
   document.getElementById('vmClipCount').textContent = vmMedia.filter(m=>m.kind==='video').length;
 }
 // Reconecta arquivos a clipes "faltando" (de um projeto carregado) pelo nome do arquivo
-function vmReconectar(file, url, dur, kind){
+function vmReconectar(file, url, dur, kind, thumb){
   let any=false;
   (kind==='video'?vmVLayers:vmALayers).forEach(l=>l.clips.forEach(c=>{
-    if(c.missing && c.srcName===file.name){ c.file=file; c.url=url; if(!c.dur) c.dur=dur; c.missing=false; any=true; }
+    if(c.missing && c.srcName===file.name){ c.file=file; c.url=url; if(!c.dur) c.dur=dur; if(thumb) c.thumb=thumb; c.missing=false; any=true; }
   }));
   return any;
 }
@@ -2565,7 +2612,7 @@ function vmBinAdd(mediaId, layerId, t){
     const layer=vmVLayers.find(l=>l.id===layerId)||vmVLayers[0];
     const pos=(t!=null)?t:layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
     const overlay=vmVLayers.indexOf(layer)!==0;
-    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, srcName:m.srcName||(m.file&&m.file.name), file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), scale:overlay?0.5:1, x:overlay?0.25:0, y:overlay?0.25:0, kind:'video'});
+    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, srcName:m.srcName||(m.file&&m.file.name), file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), scale:overlay?0.5:1, x:overlay?0.25:0, y:overlay?0.25:0, kind:'video', thumb:m.thumb});
   } else {
     const layer=vmALayers.find(l=>l.id===layerId)||vmALayers[0];
     const pos=(t!=null)?t:layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
@@ -2600,7 +2647,8 @@ function vmTrackHtml(layer, lt, tag, cls){
   for(const c of layer.clips){
     const left=(c.t*vmPps).toFixed(1), w=Math.max(8, vmClipLen(c)*vmPps).toFixed(1);
     const sel=vmSel && vmSel.clipId===c.id;
-    blocks+=`<div class="vm-block ${cls} ${sel?'sel':''}" data-clip="${c.id}" data-layer="${layer.id}" data-lt="${lt}" style="left:${left}px;width:${w}px" onmousedown="vmBlockDown(event,'${layer.id}','${c.id}','${lt}')" oncontextmenu="vmCtx(event,'${layer.id}','${c.id}','${lt}')">
+    const bg=(cls==='video' && c.thumb)?`background-image:url(${c.thumb});background-size:cover;background-position:center;`:'';
+    blocks+=`<div class="vm-block ${cls} ${sel?'sel':''}" data-clip="${c.id}" data-layer="${layer.id}" data-lt="${lt}" style="left:${left}px;width:${w}px;${bg}" onmousedown="vmBlockDown(event,'${layer.id}','${c.id}','${lt}')" oncontextmenu="vmCtx(event,'${layer.id}','${c.id}','${lt}')">
       <div class="vm-bh l" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','l')"></div>
       <span class="lbl">${c.nome}</span>
       <div class="vm-bh r" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','r')"></div>
@@ -2704,6 +2752,18 @@ function vmMostrarProps(){
     document.getElementById('vmZoomFill').value=z;
     document.getElementById('vmZoomFillVal').textContent=Math.round(z*100)+'%';
   }
+  // Efeitos (fade p/ todo vídeo; movimento só na trilha principal)
+  const isVideo = vmSel.lt==='v';
+  document.getElementById('vmFxBox').style.display = isVideo?'block':'none';
+  document.getElementById('vmMotionWrap').style.display = isMainVideo?'block':'none';
+  if(isVideo){
+    const fi=c.fadeIn||0, fo=c.fadeOut||0;
+    document.getElementById('vmFadeIn').value=fi;
+    document.getElementById('vmFadeOut').value=fo;
+    document.getElementById('vmFadeInVal').textContent=fi.toFixed(1)+'s';
+    document.getElementById('vmFadeOutVal').textContent=fo.toFixed(1)+'s';
+    document.getElementById('vmMotion').value=c.motion||'none';
+  }
 }
 function vmUpdateFill(){
   const c=vmSelClip(); if(!c) return;
@@ -2711,6 +2771,29 @@ function vmUpdateFill(){
   c.zoom=parseFloat(document.getElementById('vmZoomFill').value)||1;
   document.getElementById('vmZoomFillVal').textContent=Math.round(c.zoom*100)+'%';
   vmSyncPreview(true);
+}
+function vmUpdateFx(){
+  const c=vmSelClip(); if(!c) return;
+  c.fadeIn=parseFloat(document.getElementById('vmFadeIn').value)||0;
+  c.fadeOut=parseFloat(document.getElementById('vmFadeOut').value)||0;
+  c.motion=document.getElementById('vmMotion').value;
+  document.getElementById('vmFadeInVal').textContent=c.fadeIn.toFixed(1)+'s';
+  document.getElementById('vmFadeOutVal').textContent=c.fadeOut.toFixed(1)+'s';
+  vmSyncPreview(true);
+}
+function vmFadeOpacity(c, len){
+  let op=1; const fi=c.fadeIn||0, fo=c.fadeOut||0;
+  const tIn=vmPlayhead-c.t;
+  if(fi>0 && tIn<fi) op=Math.min(op, Math.max(0, tIn/fi));
+  const tOut=(c.t+len)-vmPlayhead;
+  if(fo>0 && tOut<fo) op=Math.min(op, Math.max(0, tOut/fo));
+  return op;
+}
+function vmMotionScale(c, len){
+  const p=len>0?Math.min(1,Math.max(0,(vmPlayhead-c.t)/len)):0;
+  if(c.motion==='zoomin') return 1+0.12*p;
+  if(c.motion==='zoomout') return 1.12-0.12*p;
+  return 1;
 }
 
 // ── Menu de contexto (botão direito) ──────────────────────
@@ -2815,8 +2898,14 @@ function vmSyncPreview(seek){
     const v=stage.querySelector(`video[data-layer="${layer.id}"]`); if(!v) return;
     const c=vmActiveClip(layer);
     if(!c || !c.url){ v.style.display='none'; try{v.pause();}catch{} return; }
-    if(idx===0){ const of=(c.fit==='contain'?'contain':(c.fit==='stretch'?'fill':'cover')); const z=c.zoom||1; v.style.cssText=`position:absolute;inset:0;width:100%;height:100%;object-fit:${of};display:block;z-index:1;transform:scale(${z})`; }
-    else { v.style.cssText=`position:absolute;display:block;object-fit:contain;left:${(c.x*100).toFixed(1)}%;top:${(c.y*100).toFixed(1)}%;width:${(c.scale*100).toFixed(1)}%;z-index:${idx+1}`; }
+    const len=vmClipLen(c), op=vmFadeOpacity(c,len);
+    if(idx===0){
+      const of=(c.fit==='contain'?'contain':(c.fit==='stretch'?'fill':'cover'));
+      const z=(c.zoom||1)*vmMotionScale(c,len);
+      v.style.cssText=`position:absolute;inset:0;width:100%;height:100%;object-fit:${of};display:block;z-index:1;transform:scale(${z.toFixed(3)});opacity:${op.toFixed(3)}`;
+    } else {
+      v.style.cssText=`position:absolute;display:block;object-fit:contain;left:${(c.x*100).toFixed(1)}%;top:${(c.y*100).toFixed(1)}%;width:${(c.scale*100).toFixed(1)}%;z-index:${idx+1};opacity:${op.toFixed(3)}`;
+    }
     if(v.dataset.cur!==c.id){ v.src=c.url; v.dataset.cur=c.id; }
     const target=Math.min(c.dur, Math.max(0, c.in+(vmPlayhead-c.t)));
     if(seek || !vmPlaying){ try{v.currentTime=target;}catch{} if(!vmPlaying){ try{v.pause();}catch{} } }
@@ -2915,15 +3004,26 @@ function vmPlanoMain(targetDur, fillMode, stretchSel){
   return segs;
 }
 
+// Aplica fade/movimento aleatórios aos clipes da trilha principal
+function vmAplicarFxAleatorio(){
+  const motions=['none','zoomin','zoomout'];
+  ((vmVLayers[0]&&vmVLayers[0].clips)||[]).forEach(c=>{
+    c.motion=motions[Math.floor(Math.random()*motions.length)];
+    c.fadeIn=Math.random()<0.5?0:0.3;
+    c.fadeOut=Math.random()<0.5?0:0.3;
+  });
+}
+
 // ── Produção em lote (1 vídeo por áudio da pasta) ─────────
 async function vmGerar(){
   if(!vmTemConteudo()){ toast('Monte o vídeo base (adicione clipes).','error'); return; }
   if(vmMissingCount()){ toast('Há arquivos do projeto faltando. Adicione-os antes de gerar.','error'); return; }
-  const okf=await vmCarregarFFmpeg(); if(!okf){ toast('Erro ao carregar FFmpeg. Use Chrome.','error'); return; }
+  const okf=await vmCarregarFFmpeg(); if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'tente recarregar a página'),'error',6000); return; }
   const nomeBase=document.getElementById('vmNomeBase').value.trim()||'criativo';
   const fillMode=document.getElementById('vmFitMode').value;
   const stretchSel=document.getElementById('vmStretchClip').value;
   const randMain=document.getElementById('vmRandMain').checked;
+  const randFx=document.getElementById('vmRandFx').checked;
   const pool=vmMedia.filter(m=>m.kind==='audio');
 
   document.getElementById('vmProgressWrap').style.display='block';
@@ -2935,6 +3035,7 @@ async function vmGerar(){
   for(let v=0; v<jobs.length; v++){
     const audio=jobs[v];
     if(randMain) vmRandomizar();
+    if(randFx) vmAplicarFxAleatorio();
     const targetDur = audio ? audio.dur : vmDuracao();
     const nomeArq=`${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
     vmSetStatus(`Gerando ${v+1}/${jobs.length}...`);
@@ -2959,6 +3060,13 @@ function vmScaleFilterMain(fit, zoom){
   const zw=Math.round(VM_W*z), zh=Math.round(VM_H*z);
   return `scale=${zw}:${zh}:force_original_aspect_ratio=increase,crop=${VM_W}:${VM_H},setsar=1`;
 }
+// Movimento Ken Burns (zoom in/out) via zoompan; vírgulas escapadas p/ o filtergraph
+function vmMotionFilter(motion, frames){
+  if(motion!=='zoomin' && motion!=='zoomout') return '';
+  const f=Math.max(1,frames);
+  const z = motion==='zoomin' ? `min(1+0.12*on/${f}\\,1.12)` : `max(1.12-0.12*on/${f}\\,1)`;
+  return `,zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${VM_W}x${VM_H}:fps=${VM_FPS}`;
+}
 
 async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
   const toU8=async f=>new Uint8Array(await f.arrayBuffer());
@@ -2981,9 +3089,17 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
   let fc='';
   // Trilha principal: corta, (desacelera), escala cobrindo a tela, concat
   segMeta.forEach((s,i)=>{
-    const speed = (s.speed && Math.abs(s.speed-1)>1e-4) ? `setpts=${s.speed.toFixed(5)}*PTS,` : '';
-    fc+=`[${s.idx}:v]trim=${s.in.toFixed(3)}:${s.out.toFixed(3)},setpts=PTS-STARTPTS,${speed}`+
-        `${vmScaleFilterMain(s.clip.fit, s.clip.zoom)},fps=${VM_FPS}[m${i}];`;
+    const sp=(s.speed&&Math.abs(s.speed-1)>1e-4)?s.speed:1;
+    const speed = sp!==1 ? `setpts=${sp.toFixed(5)}*PTS,` : '';
+    const segLen=(s.out-s.in)*sp;
+    const frames=Math.max(1,Math.round(segLen*VM_FPS));
+    const mot=vmMotionFilter(s.clip.motion, frames);
+    let chain=`[${s.idx}:v]trim=${s.in.toFixed(3)}:${s.out.toFixed(3)},setpts=PTS-STARTPTS,${speed}${vmScaleFilterMain(s.clip.fit, s.clip.zoom)}`;
+    chain += mot ? mot : `,fps=${VM_FPS}`;
+    const fi=s.clip.fadeIn||0, fo=s.clip.fadeOut||0;
+    if(fi>0) chain+=`,fade=t=in:st=0:d=${fi.toFixed(2)}`;
+    if(fo>0) chain+=`,fade=t=out:st=${Math.max(0,segLen-fo).toFixed(2)}:d=${fo.toFixed(2)}`;
+    fc+=chain+`[m${i}];`;
   });
   fc+=segMeta.map((_,i)=>`[m${i}]`).join('')+`concat=n=${segMeta.length}:v=1:a=0[mainv];`;
 
@@ -2991,9 +3107,13 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
   let last='mainv';
   pipMeta.forEach((c,i)=>{
     const w=Math.max(2, Math.round(c.scale*VM_W));
-    const t1=(c.t+vmClipLen(c)).toFixed(3);
+    const len=vmClipLen(c);
+    const t1=(c.t+len).toFixed(3);
     const out=(i===pipMeta.length-1)?'[outv]':`[po${i}]`;
-    fc+=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,scale=${w}:-2,setsar=1[p${i}];`;
+    const fi=c.fadeIn||0, fo=c.fadeOut||0;
+    let pchain=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,scale=${w}:-2,setsar=1`;
+    if(fi>0||fo>0){ pchain+=`,format=yuva420p`; if(fi>0) pchain+=`,fade=t=in:st=${c.t.toFixed(3)}:d=${fi.toFixed(2)}:alpha=1`; if(fo>0) pchain+=`,fade=t=out:st=${(c.t+len-fo).toFixed(3)}:d=${fo.toFixed(2)}:alpha=1`; }
+    fc+=pchain+`[p${i}];`;
     fc+=`[${last}][p${i}]overlay=${Math.round(c.x*VM_W)}:${Math.round(c.y*VM_H)}:enable='between(t,${c.t.toFixed(3)},${t1})':eof_action=pass${out};`;
     last=(i===pipMeta.length-1)?'outv':`po${i}`;
   });
@@ -3092,7 +3212,7 @@ document.addEventListener('keydown', e=>{
 // ── Projetos (estrutura salva na conta; mídia reconecta por nome) ──
 let vmProjAtual=null; // { id, nome }
 function vmSerializar(){
-  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1});
+  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none'});
   return {
     v: vmVLayers.map(l=>({clips:l.clips.map(clip)})),
     a: vmALayers.map(l=>({clips:l.clips.map(clip)})),
@@ -3102,11 +3222,11 @@ function vmSerializar(){
   };
 }
 function vmDeserializar(d){
-  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, missing:true});
+  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', missing:true});
   vmVLayers=(d.v&&d.v.length?d.v:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(mk)}));
   vmALayers=(d.a&&d.a.length?d.a:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(c=>({...mk(c), kind:'audio'}))}));
   // Reconecta clipes a mídia que já esteja no bin (mesmo nome de arquivo)
-  vmMedia.forEach(m=>{ if(m.file&&m.url) vmReconectar(m.file, m.url, m.dur, m.kind); });
+  vmMedia.forEach(m=>{ if(m.file&&m.url) vmReconectar(m.file, m.url, m.dur, m.kind, m.thumb); });
   const fm=document.getElementById('vmFitMode'); if(fm&&d.fit) fm.value=d.fit.mode||'loop';
   if(d.nomeBase!=null) document.getElementById('vmNomeBase').value=d.nomeBase;
   if(d.randMain!=null) document.getElementById('vmRandMain').checked=!!d.randMain;
