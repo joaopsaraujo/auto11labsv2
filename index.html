@@ -1415,7 +1415,10 @@ tr:hover td{background:var(--surface2)}
 
       <!-- Outputs -->
       <div class="vm-prop">
-        <div class="vm-prop-title">📦 Gerados</div>
+        <div class="vm-prop-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+          <span>📦 Gerados</span>
+          <button id="vmDriveBtn" onclick="vmDriveConectar()" title="Conectar Google Drive para gerar links" style="background:rgba(124,147,251,.12);border:1px solid rgba(124,147,251,.25);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ Conectar Drive</button>
+        </div>
         <div id="vmOutputList"><div style="font-size:11px;color:var(--muted2);text-align:center">Aparecerão aqui</div></div>
       </div>
 
@@ -3190,7 +3193,7 @@ async function vmGerar(){
 
   document.getElementById('vmProgressWrap').style.display='block';
   document.getElementById('vmBtnGerar').disabled=true; document.getElementById('vmBtnRand').disabled=true;
-  document.getElementById('vmOutputList').innerHTML='';
+  document.getElementById('vmOutputList').innerHTML=''; vmOutputs=[];
 
   // Sem áudios: renderiza o vídeo base uma vez (sem áudio), duração = timeline
   const jobs = pool.length ? pool : [null];
@@ -3336,17 +3339,73 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, 
   return blob;
 }
 
+let vmOutputs=[];
 function vmAddOutput(nome, blob, ok, errMsg){
   const list=document.getElementById('vmOutputList');
   const empty=list.querySelector('div[style*="text-align:center"]'); if(empty) empty.remove();
-  const item=document.createElement('div'); item.className='vm-out';
+  const idx=vmOutputs.length; vmOutputs.push({nome, blob, ok});
+  const item=document.createElement('div'); item.className='vm-out'; item.id='vmOut'+idx;
   if(ok && blob){
     const url=URL.createObjectURL(blob);
-    item.innerHTML=`<div><div class="vm-out-name" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn">⬇️</button></a>`;
+    item.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div>`+
+      `<a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>`+
+      `<button class="vm-dl-btn" title="Enviar ao Google Drive" onclick="vmDriveUploadIdx(${idx})">☁️</button>`;
   } else {
     item.innerHTML=`<div><div class="vm-out-name">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,40)}</div></div>`;
   }
   list.appendChild(item);
+}
+
+// ── Google Drive (envia vídeos gerados e gera link) ───────
+let vmGToken=null, vmGTokenExp=0, vmGTokenClient=null;
+async function vmDriveCarregarGis(){
+  if(window.google && google.accounts && google.accounts.oauth2) return;
+  await new Promise((res,rej)=>{ const s=document.createElement('script'); s.src='https://accounts.google.com/gsi/client'; s.onload=res; s.onerror=()=>rej(new Error('Não foi possível carregar o Google')); document.head.appendChild(s); });
+}
+function vmDriveClientId(){
+  let id=localStorage.getItem('a11_gdrive_client')||'';
+  if(!id){ id=(prompt('Cole o Client ID OAuth do Google (termina em .apps.googleusercontent.com):')||'').trim(); if(id) localStorage.setItem('a11_gdrive_client', id); }
+  return id;
+}
+function vmDriveConectado(){ return vmGToken && Date.now()<vmGTokenExp; }
+function vmDriveAtualizarBotao(){ const b=document.getElementById('vmDriveBtn'); if(b){ const c=vmDriveConectado(); b.textContent=c?'☁ Drive ✓':'☁ Conectar Drive'; b.style.color=c?'var(--success)':''; } }
+async function vmDriveConectar(){
+  try{
+    const clientId=vmDriveClientId(); if(!clientId){ toast('Client ID do Google não informado','warning'); return false; }
+    await vmDriveCarregarGis();
+    return await new Promise((resolve)=>{
+      vmGTokenClient=google.accounts.oauth2.initTokenClient({
+        client_id:clientId,
+        scope:'https://www.googleapis.com/auth/drive.file',
+        callback:(resp)=>{
+          if(resp&&resp.access_token){ vmGToken=resp.access_token; vmGTokenExp=Date.now()+((resp.expires_in||3000)-60)*1000; vmDriveAtualizarBotao(); toast('Google Drive conectado','success'); resolve(true); }
+          else { toast('Falha ao conectar ao Drive','error'); resolve(false); }
+        },
+        error_callback:(e)=>{ toast('Drive: '+(e&&e.type||'cancelado'),'warning'); resolve(false); },
+      });
+      vmGTokenClient.requestAccessToken({ prompt: vmGToken?'':'consent' });
+    });
+  }catch(e){ toast('Erro Drive: '+e.message,'error',5000); return false; }
+}
+async function vmDriveGarantirToken(){ return vmDriveConectado() ? true : await vmDriveConectar(); }
+async function vmDriveUploadIdx(idx){
+  const o=vmOutputs[idx]; if(!o||!o.blob) return;
+  if(!await vmDriveGarantirToken()) return;
+  const btn=document.querySelector(`#vmOut${idx} button[onclick*="vmDriveUploadIdx(${idx})"]`);
+  if(btn) btn.textContent='⏳';
+  try{
+    const form=new FormData();
+    form.append('metadata', new Blob([JSON.stringify({ name:o.nome, mimeType:'video/mp4' })], { type:'application/json' }));
+    form.append('file', o.blob);
+    const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,webContentLink', { method:'POST', headers:{ Authorization:'Bearer '+vmGToken }, body:form });
+    const data=await up.json();
+    if(!up.ok) throw new Error((data.error&&data.error.message)||'upload falhou');
+    await fetch(`https://www.googleapis.com/drive/v3/files/${data.id}/permissions`, { method:'POST', headers:{ Authorization:'Bearer '+vmGToken, 'Content-Type':'application/json' }, body:JSON.stringify({ role:'reader', type:'anyone' }) });
+    const link=data.webContentLink || data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`;
+    o.driveLink=link;
+    if(btn){ const a=document.createElement('a'); a.href=link; a.target='_blank'; a.className='vm-dl-btn'; a.style.textDecoration='none'; a.title='Abrir link do Drive'; a.textContent='🔗'; btn.replaceWith(a); }
+    try{ await navigator.clipboard.writeText(link); toast('Enviado ao Drive! Link copiado','success',4500); }catch{ toast('Enviado ao Drive!','success'); }
+  }catch(e){ if(btn) btn.textContent='☁️'; toast('Erro ao enviar: '+e.message,'error',5000); }
 }
 
 function vmAtualizarBotoes(){
