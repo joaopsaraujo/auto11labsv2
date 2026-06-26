@@ -1250,6 +1250,9 @@ tr:hover td{background:var(--surface2)}
       <div class="vm-tl-panel">
         <div class="vm-tl-toolbar">
           <span style="font-weight:700;text-transform:uppercase;letter-spacing:1px;font-size:9px">🎞 Timeline</span>
+          <button class="vm-tbtn" onclick="vmUndo()" title="Desfazer (Ctrl+Z)">↶</button>
+          <button class="vm-tbtn" onclick="vmRedo()" title="Refazer (Ctrl+Shift+Z)">↷</button>
+          <span style="width:1px;height:16px;background:rgba(255,255,255,.1)"></span>
           <button class="vm-tbtn" onclick="vmZoom(-1)" title="Zoom out (-)">➖</button>
           <button class="vm-tbtn" onclick="vmZoom(1)" title="Zoom in (=)">➕</button>
           <button class="vm-tbtn" onclick="vmZoomFit()" title="Ajustar (F)">⤢ Fit</button>
@@ -1281,21 +1284,21 @@ tr:hover td{background:var(--surface2)}
           <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">
             Corte início <span id="vmPropStart" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
           </div>
-          <input type="range" class="vm-range" id="vmRangeStart" min="0" max="60" value="0" step="0.05" oninput="vmUpdateCorte()">
+          <input type="range" class="vm-range" id="vmRangeStart" min="0" max="60" value="0" step="0.05" onmousedown="vmPushUndo()" oninput="vmUpdateCorte()">
           <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">
             Corte fim <span id="vmPropEnd" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span>
           </div>
-          <input type="range" class="vm-range" id="vmRangeEnd" min="0" max="60" value="60" step="0.05" oninput="vmUpdateCorte()">
+          <input type="range" class="vm-range" id="vmRangeEnd" min="0" max="60" value="60" step="0.05" onmousedown="vmPushUndo()" oninput="vmUpdateCorte()">
           <div style="font-size:11px;color:var(--success);margin:6px 0 10px;font-family:'JetBrains Mono',monospace" id="vmPropDur"></div>
 
           <!-- Posição/escala (só camadas de overlay) -->
           <div id="vmTransformBox" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
             <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Sobreposição (PIP)</div>
             <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Escala <span id="vmPropScale" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
-            <input type="range" class="vm-range" id="vmRangeScale" min="0.1" max="1" value="0.5" step="0.01" oninput="vmUpdateTransform()">
+            <input type="range" class="vm-range" id="vmRangeScale" min="0.1" max="1" value="0.5" step="0.01" onmousedown="vmPushUndo()" oninput="vmUpdateTransform()">
             <div style="display:flex;gap:6px;margin-top:6px">
-              <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">X (%)</div><input type="number" class="vm-num" id="vmPropX" min="0" max="100" value="25" onchange="vmUpdateTransform()"></div>
-              <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">Y (%)</div><input type="number" class="vm-num" id="vmPropY" min="0" max="100" value="25" onchange="vmUpdateTransform()"></div>
+              <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">X (%)</div><input type="number" class="vm-num" id="vmPropX" min="0" max="100" value="25" onfocus="vmPushUndo()" onchange="vmUpdateTransform()"></div>
+              <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">Y (%)</div><input type="number" class="vm-num" id="vmPropY" min="0" max="100" value="25" onfocus="vmPushUndo()" onchange="vmUpdateTransform()"></div>
             </div>
           </div>
 
@@ -1349,6 +1352,7 @@ tr:hover td{background:var(--surface2)}
       <div class="vm-prop" style="border-bottom:none">
         <div class="vm-prop-title">⌨️ Atalhos (After Effects)</div>
         <div class="vm-keys">
+          <span class="vm-key">Ctrl+Z</span><span class="vm-key-desc">desfazer / ⇧ refazer</span>
           <span class="vm-key">Espaço</span><span class="vm-key-desc">play / pause</span>
           <span class="vm-key">= / -</span><span class="vm-key-desc">zoom + / -</span>
           <span class="vm-key">F</span><span class="vm-key-desc">ajustar zoom</span>
@@ -2427,6 +2431,7 @@ function vmGetDur(url){ return new Promise(res=>{ const v=document.createElement
 // ── Adicionar mídia ───────────────────────────────────────
 async function vmAddClipes(files){
   vmGarantirLayers();
+  if(Array.from(files).some(f=>f.type.startsWith('video'))) vmPushUndo();
   for(const f of Array.from(files)){
     if(!f.type.startsWith('video')) continue;
     const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
@@ -2491,7 +2496,7 @@ function vmRenderBin(){
 function vmBinDrag(e, mediaId){ vmBinDragId=mediaId; e.dataTransfer.effectAllowed='copy'; e.dataTransfer.setData('text/plain', mediaId); }
 function vmBinAdd(mediaId, layerId, t){
   const m=vmMedia.find(x=>x.id===mediaId); if(!m) return;
-  vmGarantirLayers();
+  vmPushUndo(); vmGarantirLayers();
   if(m.kind==='video'){
     const layer=vmVLayers.find(l=>l.id===layerId)||vmVLayers[0];
     const pos=(t!=null)?t:layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
@@ -2563,6 +2568,7 @@ function vmBlockDown(e, layerId, clipId, lt){
   e.stopPropagation();
   vmSelecionar(layerId, clipId, lt);
   const c=vmFindClip(layerId, clipId); if(!c) return;
+  vmPushUndo();
   vmDrag={mode:'move', layerId, clipId, lt, startX:e.clientX, startY:e.clientY, origT:c.t};
   document.body.style.cursor='grabbing';
 }
@@ -2570,6 +2576,7 @@ function vmTrimDown(e, layerId, clipId, lt, side){
   e.stopPropagation(); e.preventDefault();
   vmSelecionar(layerId, clipId, lt);
   const c=vmFindClip(layerId, clipId); if(!c) return;
+  vmPushUndo();
   vmDrag={mode:'trim', side, layerId, clipId, lt, startX:e.clientX, origIn:c.in, origOut:c.out, origT:c.t};
 }
 function vmDragMove(e){
@@ -2650,23 +2657,26 @@ function vmUpdateTransform(){
 function vmRemoverSelecionado(){
   const c=vmSelClip(); if(!c) return;
   const layer=(vmSel.lt==='v'?vmVLayers:vmALayers).find(l=>l.id===vmSel.layerId); if(!layer) return;
+  vmPushUndo();
   layer.clips=layer.clips.filter(x=>x.id!==c.id);
   vmSel=null; vmMostrarProps(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
 }
 function vmDuplicarSelecionado(){
   const c=vmSelClip(); if(!c) return;
   const layer=(vmSel.lt==='v'?vmVLayers:vmALayers).find(l=>l.id===vmSel.layerId); if(!layer) return;
+  vmPushUndo();
   layer.clips.push({...c, id:vmUid(), t:vmClipEnd(c)});
   vmRenderTimeline(); vmRebuildStage();
 }
 
 // ── Camadas / divisão / zoom ──────────────────────────────
-function vmAddVideoLayer(){ vmVLayers.push({id:vmUid(),clips:[]}); vmRenderTimeline(); vmRebuildStage(); toast('Camada de vídeo adicionada','info',1400); }
-function vmAddAudioLayer(){ vmALayers.push({id:vmUid(),clips:[]}); vmRenderTimeline(); vmRebuildStage(); toast('Camada de áudio adicionada','info',1400); }
+function vmAddVideoLayer(){ vmPushUndo(); vmVLayers.push({id:vmUid(),clips:[]}); vmRenderTimeline(); vmRebuildStage(); toast('Camada de vídeo adicionada','info',1400); }
+function vmAddAudioLayer(){ vmPushUndo(); vmALayers.push({id:vmUid(),clips:[]}); vmRenderTimeline(); vmRebuildStage(); toast('Camada de áudio adicionada','info',1400); }
 function vmSplit(){
   const c=vmSelClip(); if(!c){ toast('Selecione um clipe','warning',1500); return; }
   if(vmPlayhead<=c.t+0.05 || vmPlayhead>=vmClipEnd(c)-0.05){ toast('Posicione o playhead sobre o clipe','warning',1800); return; }
   const layer=(vmSel.lt==='v'?vmVLayers:vmALayers).find(l=>l.id===vmSel.layerId); if(!layer) return;
+  vmPushUndo();
   const cutIn=c.in+(vmPlayhead-c.t);
   layer.clips.push({...c, id:vmUid(), in:cutIn, t:vmPlayhead});
   c.out=cutIn;
@@ -2754,6 +2764,7 @@ function vmTrimOutPlayhead(c){ const off=vmPlayhead-c.t; if(off<=0.05||off>=vmCl
 function vmRandomizar(){
   const layer=vmVLayers[0];
   if(!layer || !layer.clips.length){ toast('Sem clipes na trilha principal','warning',1500); return; }
+  vmPushUndo();
   const arr=[...layer.clips];
   for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
   let t=0; arr.forEach(c=>{ c.t=t; t+=vmClipLen(c); });
@@ -2907,10 +2918,39 @@ function vmAtualizarBotoes(){
   if(bg){ bg.disabled=!tem; bg.style.opacity=tem?'1':'.35'; }
 }
 
+// ── Undo / Redo (histórico da timeline) ───────────────────
+let vmUndoStack=[], vmRedoStack=[];
+const VM_UNDO_MAX=80;
+function vmSnapshot(){
+  return {
+    v: vmVLayers.map(l=>({id:l.id, clips:l.clips.map(c=>({...c}))})),
+    a: vmALayers.map(l=>({id:l.id, clips:l.clips.map(c=>({...c}))})),
+  };
+}
+function vmPushUndo(){
+  vmUndoStack.push(vmSnapshot());
+  if(vmUndoStack.length>VM_UNDO_MAX) vmUndoStack.shift();
+  vmRedoStack=[];
+}
+function vmRestore(s){
+  vmVLayers=s.v.map(l=>({id:l.id, clips:l.clips.map(c=>({...c}))}));
+  vmALayers=s.a.map(l=>({id:l.id, clips:l.clips.map(c=>({...c}))}));
+  vmSel=null;
+  vmRenderTimeline(); vmRebuildStage(); vmMostrarProps(); vmPopulateStretchSelect(); vmAtualizarBotoes();
+}
+function vmUndo(){ if(!vmUndoStack.length){ vmSetStatus('Nada para desfazer'); return; } vmRedoStack.push(vmSnapshot()); vmRestore(vmUndoStack.pop()); vmSetStatus('Desfeito'); }
+function vmRedo(){ if(!vmRedoStack.length){ vmSetStatus('Nada para refazer'); return; } vmUndoStack.push(vmSnapshot()); vmRestore(vmRedoStack.pop()); vmSetStatus('Refeito'); }
+
 // ── Atalhos de teclado (estilo After Effects) ─────────────
 document.addEventListener('keydown', e=>{
   const vm=document.getElementById('screenVideoMix');
   if(!vm || !vm.classList.contains('active')) return;
+  // Ctrl/Cmd+Z = desfazer, Ctrl/Cmd+Shift+Z ou Ctrl+Y = refazer
+  if((e.ctrlKey||e.metaKey) && (e.key==='z'||e.key==='Z')){
+    if(['INPUT','TEXTAREA'].includes(e.target.tagName)) return; // deixa o desfazer nativo do campo
+    e.preventDefault(); e.shiftKey?vmRedo():vmUndo(); return;
+  }
+  if((e.ctrlKey||e.metaKey) && (e.key==='y'||e.key==='Y')){ e.preventDefault(); vmRedo(); return; }
   if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
   const c=vmSelClip();
   switch(e.key){
