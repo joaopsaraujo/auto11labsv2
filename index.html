@@ -1165,6 +1165,9 @@ tr:hover td{background:var(--surface2)}
   .vm-bh.r{right:0;border-radius:0 6px 6px 0}
   .vm-playhead{position:absolute;top:0;bottom:0;width:2px;background:#ef4444;z-index:8;pointer-events:none}
   .vm-playhead::before{content:'';position:absolute;top:0;left:-5px;border:6px solid transparent;border-top:7px solid #ef4444}
+  .vm-ctx{position:fixed;z-index:9999;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:170px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none}
+  .vm-ctx button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12px;padding:7px 10px;border-radius:6px;cursor:pointer;font-family:'Manrope',sans-serif}
+  .vm-ctx button:hover{background:rgba(255,255,255,.06)}
 
   /* Painel direito */
   .vm-prop{padding:14px;border-bottom:1px solid rgba(255,255,255,.04)}
@@ -1291,6 +1294,18 @@ tr:hover td{background:var(--surface2)}
           </div>
           <input type="range" class="vm-range" id="vmRangeEnd" min="0" max="60" value="60" step="0.05" onmousedown="vmPushUndo()" oninput="vmUpdateCorte()">
           <div style="font-size:11px;color:var(--success);margin:6px 0 10px;font-family:'JetBrains Mono',monospace" id="vmPropDur"></div>
+
+          <!-- Preenchimento da tela (clipes da trilha principal) -->
+          <div id="vmFillBox" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
+            <div style="font-size:10px;color:var(--muted2);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Tela</div>
+            <select id="vmFitFill" class="vm-num" onchange="vmPushUndo();vmUpdateFill()" style="font-family:'Manrope',sans-serif;margin-bottom:8px">
+              <option value="cover">Cobrir (preenche, corta excesso)</option>
+              <option value="contain">Ajustar (mostra tudo, com barras)</option>
+              <option value="stretch">Esticar (preenche, distorce)</option>
+            </select>
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Zoom <span id="vmZoomFillVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
+            <input type="range" class="vm-range" id="vmZoomFill" min="1" max="3" value="1" step="0.05" onmousedown="vmPushUndo()" oninput="vmUpdateFill()">
+          </div>
 
           <!-- Posição/escala (só camadas de overlay) -->
           <div id="vmTransformBox" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
@@ -1426,6 +1441,14 @@ tr:hover td{background:var(--surface2)}
     <div style="font-size:10px;color:var(--muted2);margin:12px 0 4px;line-height:1.5">Salva a montagem (ordem, cortes, camadas, configs). Os arquivos de vídeo/áudio não são enviados — ao abrir, selecione os mesmos arquivos e eles reconectam pelo nome.</div>
     <button class="btn-fechar-modal" onclick="vmProjFechar()">Fechar</button>
   </div>
+</div>
+
+<!-- MENU DE CONTEXTO (botão direito na timeline) -->
+<div class="vm-ctx" id="vmCtxMenu">
+  <button onclick="vmCtxAction('dup')">⧉ Duplicar</button>
+  <button onclick="vmCtxAction('split')">✂️ Dividir no playhead</button>
+  <button onclick="vmCtxAction('fill')" id="vmCtxFill">⛶ Preencher tela</button>
+  <button onclick="vmCtxAction('remove')" style="color:#fca5a5">🗑 Remover</button>
 </div>
 
 <script>
@@ -2577,7 +2600,7 @@ function vmTrackHtml(layer, lt, tag, cls){
   for(const c of layer.clips){
     const left=(c.t*vmPps).toFixed(1), w=Math.max(8, vmClipLen(c)*vmPps).toFixed(1);
     const sel=vmSel && vmSel.clipId===c.id;
-    blocks+=`<div class="vm-block ${cls} ${sel?'sel':''}" data-clip="${c.id}" data-layer="${layer.id}" data-lt="${lt}" style="left:${left}px;width:${w}px" onmousedown="vmBlockDown(event,'${layer.id}','${c.id}','${lt}')">
+    blocks+=`<div class="vm-block ${cls} ${sel?'sel':''}" data-clip="${c.id}" data-layer="${layer.id}" data-lt="${lt}" style="left:${left}px;width:${w}px" onmousedown="vmBlockDown(event,'${layer.id}','${c.id}','${lt}')" oncontextmenu="vmCtx(event,'${layer.id}','${c.id}','${lt}')">
       <div class="vm-bh l" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','l')"></div>
       <span class="lbl">${c.nome}</span>
       <div class="vm-bh r" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','r')"></div>
@@ -2664,6 +2687,7 @@ function vmMostrarProps(){
   rs.max=c.dur; re.max=c.dur; rs.value=c.in; re.value=c.out;
   vmAtualizarProps();
   const layerIdx = vmSel.lt==='v' ? vmVLayers.findIndex(l=>l.id===vmSel.layerId) : -1;
+  const isMainVideo = vmSel.lt==='v' && layerIdx===0;
   const showT = vmSel.lt==='v' && layerIdx>0;
   document.getElementById('vmTransformBox').style.display = showT?'block':'none';
   if(showT){
@@ -2672,7 +2696,47 @@ function vmMostrarProps(){
     document.getElementById('vmPropX').value=Math.round(c.x*100);
     document.getElementById('vmPropY').value=Math.round(c.y*100);
   }
+  // Preenchimento de tela (trilha principal)
+  document.getElementById('vmFillBox').style.display = isMainVideo?'block':'none';
+  if(isMainVideo){
+    const z=c.zoom||1;
+    document.getElementById('vmFitFill').value=c.fit||'cover';
+    document.getElementById('vmZoomFill').value=z;
+    document.getElementById('vmZoomFillVal').textContent=Math.round(z*100)+'%';
+  }
 }
+function vmUpdateFill(){
+  const c=vmSelClip(); if(!c) return;
+  c.fit=document.getElementById('vmFitFill').value;
+  c.zoom=parseFloat(document.getElementById('vmZoomFill').value)||1;
+  document.getElementById('vmZoomFillVal').textContent=Math.round(c.zoom*100)+'%';
+  vmSyncPreview(true);
+}
+
+// ── Menu de contexto (botão direito) ──────────────────────
+function vmCtx(e, layerId, clipId, lt){
+  e.preventDefault(); e.stopPropagation();
+  vmSelecionar(layerId, clipId, lt);
+  const m=document.getElementById('vmCtxMenu');
+  // "Preencher tela" só faz sentido para vídeo da trilha principal
+  const isMain = lt==='v' && vmVLayers.findIndex(l=>l.id===layerId)===0;
+  document.getElementById('vmCtxFill').style.display = isMain?'block':'none';
+  m.style.display='block';
+  const mw=180, mh=170;
+  m.style.left=Math.min(e.clientX, window.innerWidth-mw)+'px';
+  m.style.top=Math.min(e.clientY, window.innerHeight-mh)+'px';
+}
+function vmCtxFechar(){ const m=document.getElementById('vmCtxMenu'); if(m) m.style.display='none'; }
+function vmCtxAction(a){
+  vmCtxFechar();
+  const c=vmSelClip(); if(!c) return;
+  if(a==='dup') vmDuplicarSelecionado();
+  else if(a==='split') vmSplit();
+  else if(a==='remove') vmRemoverSelecionado();
+  else if(a==='fill'){ vmPushUndo(); c.fit='cover'; c.zoom=1; vmMostrarProps(); vmRenderTimeline(); vmSyncPreview(true); toast('Preenchendo a tela','info',1300); }
+}
+document.addEventListener('click', vmCtxFechar);
+document.addEventListener('scroll', vmCtxFechar, true);
 function vmAtualizarProps(){
   const c=vmSelClip(); if(!c) return;
   document.getElementById('vmPropStart').textContent=c.in.toFixed(2)+'s';
@@ -2751,7 +2815,7 @@ function vmSyncPreview(seek){
     const v=stage.querySelector(`video[data-layer="${layer.id}"]`); if(!v) return;
     const c=vmActiveClip(layer);
     if(!c || !c.url){ v.style.display='none'; try{v.pause();}catch{} return; }
-    if(idx===0){ v.style.cssText=`position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1`; }
+    if(idx===0){ const of=(c.fit==='contain'?'contain':(c.fit==='stretch'?'fill':'cover')); const z=c.zoom||1; v.style.cssText=`position:absolute;inset:0;width:100%;height:100%;object-fit:${of};display:block;z-index:1;transform:scale(${z})`; }
     else { v.style.cssText=`position:absolute;display:block;object-fit:contain;left:${(c.x*100).toFixed(1)}%;top:${(c.y*100).toFixed(1)}%;width:${(c.scale*100).toFixed(1)}%;z-index:${idx+1}`; }
     if(v.dataset.cur!==c.id){ v.src=c.url; v.dataset.cur=c.id; }
     const target=Math.min(c.dur, Math.max(0, c.in+(vmPlayhead-c.t)));
@@ -2886,6 +2950,16 @@ async function vmGerar(){
   toast(`${jobs.length} vídeo${jobs.length>1?'s':''} gerado${jobs.length>1?'s':''}!`,'success');
 }
 
+// Filtro de escala da trilha principal conforme preenchimento + zoom
+function vmScaleFilterMain(fit, zoom){
+  const z=zoom&&zoom>0?zoom:1;
+  if(fit==='stretch') return `scale=${VM_W}:${VM_H},setsar=1`;
+  if(fit==='contain') return `scale=${VM_W}:${VM_H}:force_original_aspect_ratio=decrease,pad=${VM_W}:${VM_H}:(ow-iw)/2:(oh-ih)/2:black,setsar=1`;
+  // cover (preenche), com zoom: amplia o alvo e corta no centro
+  const zw=Math.round(VM_W*z), zh=Math.round(VM_H*z);
+  return `scale=${zw}:${zh}:force_original_aspect_ratio=increase,crop=${VM_W}:${VM_H},setsar=1`;
+}
+
 async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
   const toU8=async f=>new Uint8Array(await f.arrayBuffer());
   const segs=vmPlanoMain(targetDur, fillMode, stretchSel);
@@ -2909,7 +2983,7 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
   segMeta.forEach((s,i)=>{
     const speed = (s.speed && Math.abs(s.speed-1)>1e-4) ? `setpts=${s.speed.toFixed(5)}*PTS,` : '';
     fc+=`[${s.idx}:v]trim=${s.in.toFixed(3)}:${s.out.toFixed(3)},setpts=PTS-STARTPTS,${speed}`+
-        `scale=${VM_W}:${VM_H}:force_original_aspect_ratio=increase,crop=${VM_W}:${VM_H},setsar=1,fps=${VM_FPS}[m${i}];`;
+        `${vmScaleFilterMain(s.clip.fit, s.clip.zoom)},fps=${VM_FPS}[m${i}];`;
   });
   fc+=segMeta.map((_,i)=>`[m${i}]`).join('')+`concat=n=${segMeta.length}:v=1:a=0[mainv];`;
 
@@ -3018,7 +3092,7 @@ document.addEventListener('keydown', e=>{
 // ── Projetos (estrutura salva na conta; mídia reconecta por nome) ──
 let vmProjAtual=null; // { id, nome }
 function vmSerializar(){
-  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind});
+  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1});
   return {
     v: vmVLayers.map(l=>({clips:l.clips.map(clip)})),
     a: vmALayers.map(l=>({clips:l.clips.map(clip)})),
@@ -3028,7 +3102,7 @@ function vmSerializar(){
   };
 }
 function vmDeserializar(d){
-  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', missing:true});
+  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, missing:true});
   vmVLayers=(d.v&&d.v.length?d.v:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(mk)}));
   vmALayers=(d.a&&d.a.length?d.a:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(c=>({...mk(c), kind:'audio'}))}));
   // Reconecta clipes a mídia que já esteja no bin (mesmo nome de arquivo)
