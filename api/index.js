@@ -312,6 +312,41 @@ module.exports = async (req, res) => {
     return ok({ ok: true, plano: user.plano, plano_expira_em: user.plano_expira_em || null });
   }
 
+  // ── GET /projetos — lista os projetos do usuário (estrutura do VideoMix) ──
+  if (path === "projetos" && req.method === "GET") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    const { data } = await sb("GET", `projetos?user_id=eq.${user.id}&select=id,nome,dados,atualizado_em&order=atualizado_em.desc`);
+    return ok({ ok: true, projetos: data || [] });
+  }
+
+  // ── POST /projetos/salvar — cria ou atualiza um projeto ──
+  if (path === "projetos/salvar" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    const { id, nome, dados } = body;
+    if (!nome || !dados) return err(400, "Nome e dados obrigatórios");
+    const now = new Date().toISOString();
+    if (id) {
+      const { data: ex } = await sb("GET", `projetos?id=eq.${id}&user_id=eq.${user.id}&select=id`);
+      if (!ex || !ex.length) return err(404, "Projeto não encontrado");
+      const { data } = await sb("PATCH", `projetos?id=eq.${id}`, { nome, dados, atualizado_em: now });
+      return ok({ ok: true, projeto: data && data[0] });
+    }
+    const { data } = await sb("POST", "projetos", { user_id: user.id, nome, dados, criado_em: now, atualizado_em: now });
+    return ok({ ok: true, projeto: data && data[0] });
+  }
+
+  // ── POST /projetos/excluir ──
+  if (path === "projetos/excluir" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    const { id } = body;
+    if (!id) return err(400, "id obrigatório");
+    await sb("DELETE", `projetos?id=eq.${id}&user_id=eq.${user.id}`);
+    return ok({ ok: true });
+  }
+
   // ── GET /admin/usuarios ───────────────────────────────
   if (path === "admin/usuarios" && req.method === "GET") {
     const admin = await usuarioAutenticado();

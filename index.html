@@ -1197,6 +1197,7 @@ tr:hover td{background:var(--surface2)}
     </div>
     <div class="topbar-right">
       <span style="font-size:11px;color:var(--muted2)" id="vmStatus">Pronto</span>
+      <button class="btn-icon" onclick="vmProjAbrir()">📁 Projetos</button>
       <button class="btn-icon" onclick="irParaHome()">← Início</button>
       <button class="btn-icon" onclick="sair()">Sair</button>
     </div>
@@ -1330,6 +1331,7 @@ tr:hover td{background:var(--surface2)}
           Monte o vídeo base na timeline (sem áudio). Selecione a pasta de áudios e clique em Iniciar — cada áudio vira um vídeo, do 1º ao último, com os clipes embaralhados e a duração encaixada no áudio.
         </div>
         <div id="vmAudioPoolInfo" style="font-size:11px;color:var(--accent3);margin-bottom:8px;font-family:'JetBrains Mono',monospace">0 áudios → 0 vídeos</div>
+        <div id="vmMissingBanner" style="display:none;font-size:10px;color:var(--warning);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:8px;margin-bottom:8px"></div>
         <button class="vm-btn vm-btn-blue" onclick="vmRandomizar()" id="vmBtnRand" disabled style="margin-bottom:8px">🔀 Randomizar agora</button>
         <button class="vm-btn vm-btn-green" onclick="vmGerar()" id="vmBtnGerar" disabled>⚡ Iniciar produção</button>
       </div>
@@ -1404,6 +1406,25 @@ tr:hover td{background:var(--surface2)}
     <h2>Pagamento aprovado!</h2>
     <p style="margin-top:8px;margin-bottom:24px">Seu plano foi ativado. Aproveite a geração ilimitada!</p>
     <button class="btn-pagar" onclick="fecharModalSucesso()">Começar a usar</button>
+  </div>
+</div>
+
+<!-- MODAL PROJETOS (VideoMix) -->
+<div class="modal-overlay" id="vmProjModal">
+  <div class="modal" style="max-width:460px;text-align:left">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h2 style="font-size:18px">📁 Projetos</h2>
+      <button class="vm-tbtn" onclick="vmProjNovo()">+ Novo</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Nome do projeto</div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <input type="text" id="vmProjNome" placeholder="Meu criativo" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif">
+      <button class="vm-btn vm-btn-green" style="width:auto;padding:8px 16px" onclick="vmProjSalvar()">Salvar</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted2);margin-bottom:8px">Salvos na sua conta</div>
+    <div id="vmProjLista" style="max-height:280px;overflow-y:auto"></div>
+    <div style="font-size:10px;color:var(--muted2);margin:12px 0 4px;line-height:1.5">Salva a montagem (ordem, cortes, camadas, configs). Os arquivos de vídeo/áudio não são enviados — ao abrir, selecione os mesmos arquivos e eles reconectam pelo nome.</div>
+    <button class="btn-fechar-modal" onclick="vmProjFechar()">Fechar</button>
   </div>
 </div>
 
@@ -2431,18 +2452,37 @@ function vmGetDur(url){ return new Promise(res=>{ const v=document.createElement
 // ── Adicionar mídia ───────────────────────────────────────
 async function vmAddClipes(files){
   vmGarantirLayers();
-  if(Array.from(files).some(f=>f.type.startsWith('video'))) vmPushUndo();
-  for(const f of Array.from(files)){
-    if(!f.type.startsWith('video')) continue;
+  const arr=Array.from(files).filter(f=>f.type.startsWith('video'));
+  if(arr.length) vmPushUndo();
+  for(const f of arr){
     const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
     const mid=vmUid();
-    vmMedia.push({id:mid, kind:'video', file:f, url, dur, nome});
-    const layer=vmVLayers[0];
-    const t=layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
-    layer.clips.push({id:vmUid(), mediaId:mid, nome, file:f, url, dur, in:0, out:dur, t, scale:1, x:0, y:0, kind:'video'});
+    vmMedia.push({id:mid, kind:'video', file:f, url, dur, nome, srcName:f.name});
+    // Se um projeto carregado tem clipes faltando com este nome, reconecta em vez de duplicar
+    if(!vmReconectar(f, url, dur, 'video')){
+      const layer=vmVLayers[0];
+      const t=layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
+      layer.clips.push({id:vmUid(), mediaId:mid, nome, srcName:f.name, file:f, url, dur, in:0, out:dur, t, scale:1, x:0, y:0, kind:'video'});
+    }
   }
-  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes(); vmPopulateStretchSelect();
+  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes(); vmPopulateStretchSelect(); vmUpdateMissing();
   document.getElementById('vmClipCount').textContent = vmMedia.filter(m=>m.kind==='video').length;
+}
+// Reconecta arquivos a clipes "faltando" (de um projeto carregado) pelo nome do arquivo
+function vmReconectar(file, url, dur, kind){
+  let any=false;
+  (kind==='video'?vmVLayers:vmALayers).forEach(l=>l.clips.forEach(c=>{
+    if(c.missing && c.srcName===file.name){ c.file=file; c.url=url; if(!c.dur) c.dur=dur; c.missing=false; any=true; }
+  }));
+  return any;
+}
+function vmMissingCount(){
+  let n=0; [...vmVLayers,...vmALayers].forEach(l=>l.clips.forEach(c=>{ if(c.missing) n++; })); return n;
+}
+function vmUpdateMissing(){
+  const n=vmMissingCount();
+  const el=document.getElementById('vmMissingBanner');
+  if(el){ el.style.display=n?'block':'none'; el.textContent=n?`⚠ ${n} arquivo(s) do projeto faltando — adicione os mesmos vídeos/áudios para reconectar.`:''; }
 }
 
 // Áudios formam a "pasta" (pool) para a geração em lote — NÃO vão para a timeline.
@@ -2450,9 +2490,10 @@ async function vmAddAudios(files){
   for(const f of Array.from(files)){
     if(!f.type.startsWith('audio')) continue;
     const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
-    vmMedia.push({id:vmUid(), kind:'audio', file:f, url, dur, nome});
+    vmMedia.push({id:vmUid(), kind:'audio', file:f, url, dur, nome, srcName:f.name});
+    vmReconectar(f, url, dur, 'audio');
   }
-  vmRenderBin(); vmAtualizarBotoes(); vmUpdateAudioPoolInfo();
+  vmRenderBin(); vmRenderTimeline(); vmAtualizarBotoes(); vmUpdateAudioPoolInfo(); vmUpdateMissing();
   document.getElementById('vmAudioCount').textContent = vmMedia.filter(m=>m.kind==='audio').length + ' arq.';
 }
 function vmUpdateAudioPoolInfo(){
@@ -2501,11 +2542,11 @@ function vmBinAdd(mediaId, layerId, t){
     const layer=vmVLayers.find(l=>l.id===layerId)||vmVLayers[0];
     const pos=(t!=null)?t:layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
     const overlay=vmVLayers.indexOf(layer)!==0;
-    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), scale:overlay?0.5:1, x:overlay?0.25:0, y:overlay?0.25:0, kind:'video'});
+    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, srcName:m.srcName||(m.file&&m.file.name), file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), scale:overlay?0.5:1, x:overlay?0.25:0, y:overlay?0.25:0, kind:'video'});
   } else {
     const layer=vmALayers.find(l=>l.id===layerId)||vmALayers[0];
     const pos=(t!=null)?t:layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
-    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), kind:'audio'});
+    layer.clips.push({id:vmUid(), mediaId:m.id, nome:m.nome, srcName:m.srcName||(m.file&&m.file.name), file:m.file, url:m.url, dur:m.dur, in:0, out:m.dur, t:Math.max(0,pos), kind:'audio'});
   }
   vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
 }
@@ -2709,7 +2750,7 @@ function vmSyncPreview(seek){
   vmVLayers.forEach((layer,idx)=>{
     const v=stage.querySelector(`video[data-layer="${layer.id}"]`); if(!v) return;
     const c=vmActiveClip(layer);
-    if(!c){ v.style.display='none'; try{v.pause();}catch{} return; }
+    if(!c || !c.url){ v.style.display='none'; try{v.pause();}catch{} return; }
     if(idx===0){ v.style.cssText=`position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;z-index:1`; }
     else { v.style.cssText=`position:absolute;display:block;object-fit:contain;left:${(c.x*100).toFixed(1)}%;top:${(c.y*100).toFixed(1)}%;width:${(c.scale*100).toFixed(1)}%;z-index:${idx+1}`; }
     if(v.dataset.cur!==c.id){ v.src=c.url; v.dataset.cur=c.id; }
@@ -2720,7 +2761,7 @@ function vmSyncPreview(seek){
   vmALayers.forEach(layer=>{
     const a=stage.querySelector(`audio[data-layer="${layer.id}"]`); if(!a) return;
     const c=vmActiveClip(layer);
-    if(!c){ try{a.pause();}catch{} return; }
+    if(!c || !c.url){ try{a.pause();}catch{} return; }
     if(a.dataset.cur!==c.id){ a.src=c.url; a.dataset.cur=c.id; }
     const target=Math.min(c.dur, Math.max(0, c.in+(vmPlayhead-c.t)));
     if(seek || !vmPlaying){ try{a.currentTime=target;}catch{} if(!vmPlaying){ try{a.pause();}catch{} } }
@@ -2813,6 +2854,7 @@ function vmPlanoMain(targetDur, fillMode, stretchSel){
 // ── Produção em lote (1 vídeo por áudio da pasta) ─────────
 async function vmGerar(){
   if(!vmTemConteudo()){ toast('Monte o vídeo base (adicione clipes).','error'); return; }
+  if(vmMissingCount()){ toast('Há arquivos do projeto faltando. Adicione-os antes de gerar.','error'); return; }
   const okf=await vmCarregarFFmpeg(); if(!okf){ toast('Erro ao carregar FFmpeg. Use Chrome.','error'); return; }
   const nomeBase=document.getElementById('vmNomeBase').value.trim()||'criativo';
   const fillMode=document.getElementById('vmFitMode').value;
@@ -2972,6 +3014,83 @@ document.addEventListener('keydown', e=>{
     case 'Delete': case 'Backspace': if(c){ vmRemoverSelecionado(); toast('Clipe removido','info',1200); } break;
   }
 });
+
+// ── Projetos (estrutura salva na conta; mídia reconecta por nome) ──
+let vmProjAtual=null; // { id, nome }
+function vmSerializar(){
+  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind});
+  return {
+    v: vmVLayers.map(l=>({clips:l.clips.map(clip)})),
+    a: vmALayers.map(l=>({clips:l.clips.map(clip)})),
+    fit: { mode:document.getElementById('vmFitMode').value, stretch:document.getElementById('vmStretchClip').value },
+    nomeBase: document.getElementById('vmNomeBase').value,
+    randMain: document.getElementById('vmRandMain').checked,
+  };
+}
+function vmDeserializar(d){
+  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', missing:true});
+  vmVLayers=(d.v&&d.v.length?d.v:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(mk)}));
+  vmALayers=(d.a&&d.a.length?d.a:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(c=>({...mk(c), kind:'audio'}))}));
+  // Reconecta clipes a mídia que já esteja no bin (mesmo nome de arquivo)
+  vmMedia.forEach(m=>{ if(m.file&&m.url) vmReconectar(m.file, m.url, m.dur, m.kind); });
+  const fm=document.getElementById('vmFitMode'); if(fm&&d.fit) fm.value=d.fit.mode||'loop';
+  if(d.nomeBase!=null) document.getElementById('vmNomeBase').value=d.nomeBase;
+  if(d.randMain!=null) document.getElementById('vmRandMain').checked=!!d.randMain;
+  vmSel=null; vmUndoStack=[]; vmRedoStack=[]; vmPlayhead=0;
+  vmFitModeChange(); vmRenderTimeline(); vmRebuildStage(); vmMostrarProps(); vmPopulateStretchSelect(); vmAtualizarBotoes(); vmUpdateMissing();
+}
+async function vmProjAbrir(){
+  if(!user){ toast('Faça login para usar projetos','warning'); return; }
+  document.getElementById('vmProjModal').classList.add('visible');
+  document.getElementById('vmProjNome').value = vmProjAtual?vmProjAtual.nome:'';
+  await vmProjListar();
+}
+function vmProjFechar(){ document.getElementById('vmProjModal').classList.remove('visible'); }
+async function vmProjListar(){
+  const cont=document.getElementById('vmProjLista');
+  cont.innerHTML='<div style="color:var(--muted2);font-size:12px">Carregando...</div>';
+  const r=await callApiAuth('projetos', null, 'GET');
+  if(!r.ok){ cont.innerHTML='<div style="color:var(--error);font-size:12px">Erro ao carregar.</div>'; return; }
+  window.__vmProjs=r.projetos||[];
+  if(!__vmProjs.length){ cont.innerHTML='<div style="color:var(--muted2);font-size:12px">Nenhum projeto salvo ainda.</div>'; return; }
+  cont.innerHTML=__vmProjs.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+    <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nome}</div>
+    <div style="font-size:10px;color:var(--muted2)">${new Date(p.atualizado_em).toLocaleString('pt-BR')}</div></div>
+    <button class="vm-tbtn" onclick="vmProjCarregar('${p.id}')">Abrir</button>
+    <button class="vm-tbtn" onclick="vmProjExcluir('${p.id}')" style="color:#fca5a5">🗑</button>
+  </div>`).join('');
+}
+async function vmProjSalvar(){
+  const nome=(document.getElementById('vmProjNome').value||'').trim();
+  if(!nome){ toast('Dê um nome ao projeto','warning'); return; }
+  const payload={ nome, dados:vmSerializar() };
+  if(vmProjAtual&&vmProjAtual.id) payload.id=vmProjAtual.id;
+  const r=await callApiAuth('projetos/salvar', payload);
+  if(r.ok){ vmProjAtual={ id:(r.projeto&&r.projeto.id)||(vmProjAtual&&vmProjAtual.id), nome }; toast('Projeto salvo!','success'); vmProjListar(); }
+  else toast(r.erro||'Erro ao salvar','error');
+}
+function vmProjCarregar(id){
+  const p=(window.__vmProjs||[]).find(x=>x.id===id); if(!p) return;
+  vmDeserializar(p.dados||{});
+  vmProjAtual={ id:p.id, nome:p.nome };
+  vmProjFechar();
+  const n=vmMissingCount();
+  toast('Projeto aberto: '+p.nome+(n?` — adicione ${n} arquivo(s) para reconectar`:''), n?'warning':'success', n?4500:2500);
+}
+async function vmProjExcluir(id){
+  if(!confirm('Excluir este projeto?')) return;
+  const r=await callApiAuth('projetos/excluir', { id });
+  if(r.ok){ if(vmProjAtual&&vmProjAtual.id===id) vmProjAtual=null; vmProjListar(); toast('Projeto excluído','info'); }
+  else toast(r.erro||'Erro ao excluir','error');
+}
+function vmProjNovo(){
+  if(!confirm('Começar um projeto novo? Alterações não salvas serão perdidas.')) return;
+  vmMedia=[]; vmVLayers=[{id:vmUid(),clips:[]}]; vmALayers=[{id:vmUid(),clips:[]}];
+  vmSel=null; vmProjAtual=null; vmUndoStack=[]; vmRedoStack=[]; vmPlayhead=0;
+  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmMostrarProps(); vmPopulateStretchSelect(); vmAtualizarBotoes(); vmUpdateAudioPoolInfo(); vmUpdateMissing();
+  document.getElementById('vmClipCount').textContent='0'; document.getElementById('vmAudioCount').textContent='';
+  vmProjFechar(); toast('Novo projeto','info',1500);
+}
 
 // ── Init ──────────────────────────────────────────────────
 function vmInit(){
