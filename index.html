@@ -1169,6 +1169,10 @@ tr:hover td{background:var(--surface2)}
   .vm-ctx{position:fixed;z-index:9999;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:4px;min-width:170px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none}
   .vm-ctx button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text);font-size:12px;padding:7px 10px;border-radius:6px;cursor:pointer;font-family:'Manrope',sans-serif}
   .vm-ctx button:hover{background:rgba(255,255,255,.06)}
+  .vm-snap{position:absolute;top:0;bottom:0;width:1px;background:#fbbf24;z-index:7;pointer-events:none;display:none}
+  .vm-trans-btn{position:absolute;top:50%;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:var(--surface2);border:1px solid var(--accent2);color:var(--accent3);font-size:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;line-height:1}
+  .vm-trans-btn:hover{background:var(--accent2);color:#fff}
+  .vm-trans-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 
   /* Painel direito */
   .vm-prop{padding:14px;border-bottom:1px solid rgba(255,255,255,.04)}
@@ -1271,6 +1275,7 @@ tr:hover td{background:var(--surface2)}
           <div class="vm-tl-inner" id="vmTlInner">
             <div class="vm-ruler" id="vmRuler"></div>
             <div id="vmTracks"></div>
+            <div class="vm-snap" id="vmSnapGuide" style="left:0"></div>
             <div class="vm-playhead" id="vmPlayheadEl" style="left:0"></div>
           </div>
         </div>
@@ -1322,6 +1327,15 @@ tr:hover td{background:var(--surface2)}
                 <option value="zoomin">Zoom in (aproxima)</option>
                 <option value="zoomout">Zoom out (afasta)</option>
               </select>
+            </div>
+            <div id="vmTransWrap" style="display:none;margin-top:8px;border-top:1px solid rgba(255,255,255,.06);padding-top:8px">
+              <div style="font-size:11px;color:var(--muted2);margin-bottom:4px">Transição p/ próximo clipe</div>
+              <select id="vmTransType" class="vm-num" onchange="vmPushUndo();vmUpdateTrans()" style="font-family:'Manrope',sans-serif;margin-bottom:6px">
+                <option value="none">Nenhuma</option>
+                <option value="fade">Fade (escurece)</option>
+              </select>
+              <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Duração <span id="vmTransDurVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
+              <input type="range" class="vm-range" id="vmTransDur" min="0.2" max="1.5" value="0.5" step="0.1" onmousedown="vmPushUndo()" oninput="vmUpdateTrans()">
             </div>
           </div>
 
@@ -1388,7 +1402,7 @@ tr:hover td{background:var(--surface2)}
 
       <!-- Atalhos (estilo After Effects) -->
       <div class="vm-prop" style="border-bottom:none">
-        <div class="vm-prop-title">⌨️ Atalhos (After Effects)</div>
+        <div class="vm-prop-title">⌨️ Atalhos</div>
         <div class="vm-keys">
           <span class="vm-key">Ctrl+Z</span><span class="vm-key-desc">desfazer / ⇧ refazer</span>
           <span class="vm-key">Espaço</span><span class="vm-key-desc">play / pause</span>
@@ -2654,7 +2668,18 @@ function vmTrackHtml(layer, lt, tag, cls){
       <div class="vm-bh r" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','r')"></div>
     </div>`;
   }
-  return `<div class="vm-track ${cls}" data-layer="${layer.id}" data-lt="${lt}" ondragover="vmRowDragOver(event)" ondragleave="vmRowDragLeave(event)" ondrop="vmRowDrop(event,'${layer.id}','${lt}')"><span class="vm-track-tag">${tag}</span>${blocks}</div>`;
+  let transBtns='';
+  if(lt==='v'){
+    const sorted=[...layer.clips].sort((a,b)=>a.t-b.t);
+    for(let i=0;i<sorted.length-1;i++){
+      const A=sorted[i], B=sorted[i+1];
+      if(Math.abs(vmClipEnd(A)-B.t)<0.08){
+        const x=(vmClipEnd(A)*vmPps).toFixed(1);
+        transBtns+=`<div class="vm-trans-btn ${A.trans&&A.trans!=='none'?'on':''}" style="left:${x}px" title="Ativar/desativar transição entre os clipes" onmousedown="event.stopPropagation()" onclick="vmToggleTrans(event,'${layer.id}','${A.id}')">⇄</div>`;
+      }
+    }
+  }
+  return `<div class="vm-track ${cls}" data-layer="${layer.id}" data-lt="${lt}" ondragover="vmRowDragOver(event)" ondragleave="vmRowDragLeave(event)" ondrop="vmRowDrop(event,'${layer.id}','${lt}')"><span class="vm-track-tag">${tag}</span>${blocks}${transBtns}</div>`;
 }
 function vmRenderPlayhead(){
   const ph=document.getElementById('vmPlayheadEl'); if(ph) ph.style.left=(vmPlayhead*vmPps)+'px';
@@ -2691,12 +2716,37 @@ function vmTrimDown(e, layerId, clipId, lt, side){
   vmPushUndo();
   vmDrag={mode:'trim', side, layerId, clipId, lt, startX:e.clientX, origIn:c.in, origOut:c.out, origT:c.t};
 }
+// ── Snap / alinhamento (bordas de clipes, playhead, início) ─
+function vmSnapTargets(excludeId){
+  const pts=[0, vmPlayhead];
+  [...vmVLayers,...vmALayers].forEach(l=>l.clips.forEach(c=>{ if(c.id===excludeId) return; pts.push(c.t); pts.push(vmClipEnd(c)); }));
+  return pts;
+}
+function vmSnapEdge(val, excludeId){
+  const thr=8/vmPps; let best=null, bd=thr;
+  for(const p of vmSnapTargets(excludeId)){ const d=Math.abs(val-p); if(d<bd){ bd=d; best=p; } }
+  return best;
+}
+function vmSnapMove(nt, len, excludeId){
+  const thr=8/vmPps; let best=null, bd=thr, guide=null;
+  for(const p of vmSnapTargets(excludeId)){
+    let d=Math.abs(nt-p); if(d<bd){ bd=d; best=p; guide=p; }
+    d=Math.abs((nt+len)-p); if(d<bd){ bd=d; best=p-len; guide=p; }
+  }
+  return best!=null ? {t:Math.max(0,best), guide} : {t:nt, guide:null};
+}
+function vmShowSnap(t){ const g=document.getElementById('vmSnapGuide'); if(g){ g.style.left=(t*vmPps)+'px'; g.style.display='block'; } }
+function vmHideSnap(){ const g=document.getElementById('vmSnapGuide'); if(g) g.style.display='none'; }
+
 function vmDragMove(e){
   if(!vmDrag) return;
   const c=vmFindClip(vmDrag.layerId, vmDrag.clipId); if(!c) return;
   const dx=(e.clientX-vmDrag.startX)/vmPps;
   if(vmDrag.mode==='move'){
-    c.t=Math.max(0, vmDrag.origT+dx);
+    const len=vmClipLen(c);
+    const snap=vmSnapMove(Math.max(0, vmDrag.origT+dx), len, vmDrag.clipId);
+    c.t=snap.t;
+    if(snap.guide!=null) vmShowSnap(snap.guide); else vmHideSnap();
     const el=document.elementFromPoint(e.clientX, e.clientY);
     const row=el && el.closest ? el.closest('.vm-track') : null;
     if(row && row.dataset.lt===vmDrag.lt && row.dataset.layer!==vmDrag.layerId){
@@ -2706,15 +2756,24 @@ function vmDragMove(e){
     vmRenderTimeline();
   } else {
     if(vmDrag.side==='l'){
-      const ni=Math.min(vmDrag.origOut-0.05, Math.max(0, vmDrag.origIn+dx));
-      c.t=Math.max(0, vmDrag.origT+(ni-vmDrag.origIn)); c.in=ni;
+      let ni=Math.min(vmDrag.origOut-0.05, Math.max(0, vmDrag.origIn+dx));
+      let nt=Math.max(0, vmDrag.origT+(ni-vmDrag.origIn));
+      const sp=vmSnapEdge(nt, vmDrag.clipId);
+      if(sp!=null){ ni+= (sp-nt); nt=sp; vmShowSnap(sp); } else vmHideSnap();
+      ni=Math.min(vmDrag.origOut-0.05, Math.max(0, ni)); nt=Math.max(0,nt);
+      c.in=ni; c.t=nt;
     } else {
-      c.out=Math.max(c.in+0.05, Math.min(c.dur, vmDrag.origOut+dx));
+      let no=Math.max(c.in+0.05, Math.min(c.dur, vmDrag.origOut+dx));
+      const endT=c.t+(no-c.in);
+      const sp=vmSnapEdge(endT, vmDrag.clipId);
+      if(sp!=null){ no=c.in+(sp-c.t); vmShowSnap(sp); } else vmHideSnap();
+      no=Math.max(c.in+0.05, Math.min(c.dur, no));
+      c.out=no;
     }
     vmRenderTimeline(); vmMostrarProps(); vmSyncPreview(true);
   }
 }
-function vmDragUp(){ if(vmDrag){ vmDrag=null; document.body.style.cursor=''; vmRebuildStage(); vmSyncPreview(true); } }
+function vmDragUp(){ if(vmDrag){ vmDrag=null; document.body.style.cursor=''; vmHideSnap(); vmRebuildStage(); vmSyncPreview(true); } }
 function vmMoverClipParaLayer(fromId, clipId, toId, lt){
   const layers=lt==='v'?vmVLayers:vmALayers;
   const from=layers.find(l=>l.id===fromId), to=layers.find(l=>l.id===toId);
@@ -2763,6 +2822,16 @@ function vmMostrarProps(){
     document.getElementById('vmFadeInVal').textContent=fi.toFixed(1)+'s';
     document.getElementById('vmFadeOutVal').textContent=fo.toFixed(1)+'s';
     document.getElementById('vmMotion').value=c.motion||'none';
+    // Transição: só quando há um próximo clipe encostado na mesma camada
+    const layerObj=(vmSel.lt==='v'?vmVLayers:vmALayers).find(l=>l.id===vmSel.layerId);
+    const hasNext=layerObj && layerObj.clips.some(x=>x.id!==c.id && Math.abs(x.t-vmClipEnd(c))<0.08);
+    document.getElementById('vmTransWrap').style.display = hasNext?'block':'none';
+    if(hasNext){
+      const td=c.transDur||0.5;
+      document.getElementById('vmTransType').value=c.trans||'none';
+      document.getElementById('vmTransDur').value=td;
+      document.getElementById('vmTransDurVal').textContent=td.toFixed(1)+'s';
+    }
   }
 }
 function vmUpdateFill(){
@@ -2781,13 +2850,41 @@ function vmUpdateFx(){
   document.getElementById('vmFadeOutVal').textContent=c.fadeOut.toFixed(1)+'s';
   vmSyncPreview(true);
 }
-function vmFadeOpacity(c, len){
-  let op=1; const fi=c.fadeIn||0, fo=c.fadeOut||0;
-  const tIn=vmPlayhead-c.t;
+function vmFadeOpacity(c, len, fi, fo){
+  fi = fi!=null?fi:(c.fadeIn||0); fo = fo!=null?fo:(c.fadeOut||0);
+  let op=1; const tIn=vmPlayhead-c.t;
   if(fi>0 && tIn<fi) op=Math.min(op, Math.max(0, tIn/fi));
   const tOut=(c.t+len)-vmPlayhead;
   if(fo>0 && tOut<fo) op=Math.min(op, Math.max(0, tOut/fo));
   return op;
+}
+// Fades efetivos = fades manuais + transições com clipes adjacentes na camada
+function vmEffFades(c, layer){
+  let fi=c.fadeIn||0, fo=c.fadeOut||0;
+  if(layer){
+    const prev=layer.clips.find(x=>x.id!==c.id && Math.abs(vmClipEnd(x)-c.t)<0.08 && x.trans && x.trans!=='none');
+    if(prev) fi=Math.max(fi, prev.transDur||0.5);
+    const hasNext=layer.clips.some(x=>x.id!==c.id && Math.abs(x.t-vmClipEnd(c))<0.08);
+    if(hasNext && c.trans && c.trans!=='none') fo=Math.max(fo, c.transDur||0.5);
+  }
+  return {fi,fo};
+}
+function vmToggleTrans(e, layerId, clipId){
+  if(e){ e.stopPropagation(); e.preventDefault(); }
+  const c=vmFindClip(layerId, clipId); if(!c) return;
+  vmPushUndo();
+  c.trans = (c.trans && c.trans!=='none') ? 'none' : 'fade';
+  if(c.trans!=='none' && !c.transDur) c.transDur=0.5;
+  vmRenderTimeline(); vmSyncPreview(true);
+  if(vmSel && vmSel.clipId===clipId) vmMostrarProps();
+  toast(c.trans!=='none'?'Transição ativada':'Transição removida','info',1200);
+}
+function vmUpdateTrans(){
+  const c=vmSelClip(); if(!c) return;
+  c.trans=document.getElementById('vmTransType').value;
+  c.transDur=parseFloat(document.getElementById('vmTransDur').value)||0.5;
+  document.getElementById('vmTransDurVal').textContent=c.transDur.toFixed(1)+'s';
+  vmRenderTimeline(); vmSyncPreview(true);
 }
 function vmMotionScale(c, len){
   const p=len>0?Math.min(1,Math.max(0,(vmPlayhead-c.t)/len)):0;
@@ -2898,7 +2995,7 @@ function vmSyncPreview(seek){
     const v=stage.querySelector(`video[data-layer="${layer.id}"]`); if(!v) return;
     const c=vmActiveClip(layer);
     if(!c || !c.url){ v.style.display='none'; try{v.pause();}catch{} return; }
-    const len=vmClipLen(c), op=vmFadeOpacity(c,len);
+    const len=vmClipLen(c); const ef=vmEffFades(c, layer); const op=vmFadeOpacity(c,len,ef.fi,ef.fo);
     if(idx===0){
       const of=(c.fit==='contain'?'contain':(c.fit==='stretch'?'fill':'cover'));
       const z=(c.zoom||1)*vmMotionScale(c,len);
@@ -3011,6 +3108,8 @@ function vmAplicarFxAleatorio(){
     c.motion=motions[Math.floor(Math.random()*motions.length)];
     c.fadeIn=Math.random()<0.5?0:0.3;
     c.fadeOut=Math.random()<0.5?0:0.3;
+    c.trans=Math.random()<0.4?'fade':'none';
+    c.transDur=0.5;
   });
 }
 
@@ -3096,7 +3195,9 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
     const mot=vmMotionFilter(s.clip.motion, frames);
     let chain=`[${s.idx}:v]trim=${s.in.toFixed(3)}:${s.out.toFixed(3)},setpts=PTS-STARTPTS,${speed}${vmScaleFilterMain(s.clip.fit, s.clip.zoom)}`;
     chain += mot ? mot : `,fps=${VM_FPS}`;
-    const fi=s.clip.fadeIn||0, fo=s.clip.fadeOut||0;
+    const prevTrans=(i>0 && segMeta[i-1].clip.trans && segMeta[i-1].clip.trans!=='none')?(segMeta[i-1].clip.transDur||0.5):0;
+    const ownTrans=(i<segMeta.length-1 && s.clip.trans && s.clip.trans!=='none')?(s.clip.transDur||0.5):0;
+    const fi=Math.max(s.clip.fadeIn||0, prevTrans), fo=Math.max(s.clip.fadeOut||0, ownTrans);
     if(fi>0) chain+=`,fade=t=in:st=0:d=${fi.toFixed(2)}`;
     if(fo>0) chain+=`,fade=t=out:st=${Math.max(0,segLen-fo).toFixed(2)}:d=${fo.toFixed(2)}`;
     fc+=chain+`[m${i}];`;
@@ -3212,7 +3313,7 @@ document.addEventListener('keydown', e=>{
 // ── Projetos (estrutura salva na conta; mídia reconecta por nome) ──
 let vmProjAtual=null; // { id, nome }
 function vmSerializar(){
-  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none'});
+  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5});
   return {
     v: vmVLayers.map(l=>({clips:l.clips.map(clip)})),
     a: vmALayers.map(l=>({clips:l.clips.map(clip)})),
@@ -3222,7 +3323,7 @@ function vmSerializar(){
   };
 }
 function vmDeserializar(d){
-  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', missing:true});
+  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, missing:true});
   vmVLayers=(d.v&&d.v.length?d.v:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(mk)}));
   vmALayers=(d.a&&d.a.length?d.a:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(c=>({...mk(c), kind:'audio'}))}));
   // Reconecta clipes a mídia que já esteja no bin (mesmo nome de arquivo)
