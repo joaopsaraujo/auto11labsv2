@@ -29,6 +29,14 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 
+/* Scrollbars temáticas */
+*{scrollbar-width:thin;scrollbar-color:var(--accent) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:linear-gradient(var(--accent),var(--accent2));border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+*::-webkit-scrollbar-thumb:hover{background:var(--accent3);background-clip:padding-box;border:2px solid transparent}
+*::-webkit-scrollbar-corner{background:transparent}
+
 body{background:var(--bg);color:var(--text);font-family:'Manrope',sans-serif;min-height:100vh}
 .screen{display:none;min-height:100vh;opacity:0;transition:opacity .3s ease}
 .screen.active{display:flex;animation:fadeIn .3s ease forwards}
@@ -1113,7 +1121,9 @@ tr:hover td{background:var(--surface2)}
 <div id="screenVideoMix" class="screen" style="flex-direction:column">
   <style>
   /* ===== VideoMix 2.0 — editor multi-camadas estilo CapCut ===== */
-  .vm-wrap{display:grid;grid-template-columns:230px 1fr 250px;height:calc(100vh - 57px);overflow:hidden}
+  .vm-wrap{display:grid;grid-template-columns:230px 1fr 250px;height:calc(100vh - 57px);overflow:hidden;position:relative}
+  .vm-resizer{position:absolute;top:0;bottom:0;width:7px;cursor:col-resize;z-index:40;transition:background .15s}
+  .vm-resizer:hover,.vm-resizer.active{background:rgba(124,147,251,.35)}
   .vm-col{display:flex;flex-direction:column;overflow:hidden;border-right:1px solid rgba(255,255,255,.04)}
   .vm-col:last-child{border-right:none;border-left:1px solid rgba(255,255,255,.04);overflow-y:auto}
   .vm-col-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted2);padding:14px 14px 8px;display:flex;justify-content:space-between;align-items:center}
@@ -1212,6 +1222,8 @@ tr:hover td{background:var(--surface2)}
   </div>
 
   <div class="vm-wrap">
+    <div class="vm-resizer" id="vmResizeL" onmousedown="vmResizeStart(event,'left')"></div>
+    <div class="vm-resizer" id="vmResizeR" onmousedown="vmResizeStart(event,'right')"></div>
 
     <!-- COL ESQUERDA: Biblioteca de mídia -->
     <div class="vm-col">
@@ -1228,9 +1240,13 @@ tr:hover td{background:var(--surface2)}
       <!-- Áudios -->
       <div style="border-top:1px solid rgba(255,255,255,.04);padding:12px;max-height:42%;overflow-y:auto">
         <div class="vm-col-title" style="padding:0 0 8px">🎵 Áudios <span id="vmAudioCount" style="font-weight:400;font-size:10px"></span></div>
-        <div class="vm-drop" style="margin:0 0 10px">
+        <div class="vm-drop" style="margin:0 0 8px">
           <input type="file" id="vmInputAudios" accept="audio/*" multiple webkitdirectory onchange="vmAddAudios(this.files)">
-          <div style="font-size:11px;color:var(--muted2)">📂 Selecionar pasta de .mp3</div>
+          <div style="font-size:11px;color:var(--muted2)">📂 Pasta de .mp3 (trocam a cada vídeo)</div>
+        </div>
+        <div class="vm-drop" style="margin:0 0 10px">
+          <input type="file" id="vmInputFundo" accept="audio/*" onchange="vmAddFundo(this.files)">
+          <div style="font-size:11px;color:var(--muted2)">🎚 Música de fundo (fixa em todos)</div>
         </div>
         <div id="vmAudiosList"></div>
       </div>
@@ -2585,6 +2601,19 @@ async function vmAddAudios(files){
   vmRenderBin(); vmRenderTimeline(); vmAtualizarBotoes(); vmUpdateAudioPoolInfo(); vmUpdateMissing();
   document.getElementById('vmAudioCount').textContent = vmMedia.filter(m=>m.kind==='audio').length + ' arq.';
 }
+// Música de fundo FIXA: vai para uma camada de áudio (mesma em todos os vídeos)
+async function vmAddFundo(files){
+  vmGarantirLayers();
+  const arr=Array.from(files).filter(f=>f.type.startsWith('audio'));
+  if(arr.length) vmPushUndo();
+  for(const f of arr){
+    const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
+    const layer=vmALayers[0];
+    layer.clips.push({id:vmUid(), mediaId:null, nome, srcName:f.name, file:f, url, dur, in:0, out:dur, t:0, kind:'audio'});
+  }
+  vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
+  if(arr.length) toast('Música de fundo fixada (entra em todos os vídeos)','success',2200);
+}
 function vmUpdateAudioPoolInfo(){
   const n=vmMedia.filter(m=>m.kind==='audio').length;
   const el=document.getElementById('vmAudioPoolInfo');
@@ -3187,8 +3216,11 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
   for(const s of segs){ const fn=`s${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(s.clip.file)); files.push(fn); segMeta.push({...s, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
   const pipMeta=[];
   for(const c of pip){ const fn=`p${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); files.push(fn); pipMeta.push({...c, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
-  let audIdx=-1, audFn=null;
-  if(audioFile){ const ext=(audioFile.name.split('.').pop()||'mp3'); audFn=`aud.${ext}`; await vmFfmpeg.writeFile(audFn, await toU8(audioFile)); files.push(audFn); audIdx=inIdx; inputArgs.push('-i', audFn); inIdx++; }
+  // Áudio: da pasta (varia a cada vídeo) + camadas de áudio fixas (iguais em todos)
+  const audioIns=[];
+  if(audioFile){ const ext=(audioFile.name.split('.').pop()||'mp3'); const fn=`aud.${ext}`; await vmFfmpeg.writeFile(fn, await toU8(audioFile)); files.push(fn); audioIns.push({idx:inIdx, kind:'pool'}); inputArgs.push('-i', fn); inIdx++; }
+  const fixos=[]; vmALayers.forEach(l=>l.clips.forEach(c=>{ if(c.file) fixos.push(c); }));
+  for(const c of fixos){ const ext=(c.file.name.split('.').pop()||'mp3'); const fn=`af${inIdx}.${ext}`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); files.push(fn); audioIns.push({idx:inIdx, kind:'fixed', clip:c}); inputArgs.push('-i', fn); inIdx++; }
 
   let fc='';
   // Trilha principal: corta, (desacelera), escala cobrindo a tela, concat
@@ -3224,12 +3256,26 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
     last=(i===pipMeta.length-1)?'outv':`po${i}`;
   });
   const videoOut = pipMeta.length ? '[outv]' : '[mainv]';
+
+  // Mix de áudio (pasta + fixas)
+  let audioOut=null;
+  if(audioIns.length){
+    const labels=[];
+    audioIns.forEach((a,i)=>{
+      if(a.kind==='pool'){ fc+=`[${a.idx}:a]aresample=async=1[aa${i}];`; }
+      else { const c=a.clip; const d=Math.round((c.t||0)*1000); fc+=`[${a.idx}:a]atrim=${c.in.toFixed(3)}:${c.out.toFixed(3)},asetpts=PTS-STARTPTS,adelay=${d}|${d}[aa${i}];`; }
+      labels.push(`[aa${i}]`);
+    });
+    if(labels.length===1) fc+=`${labels[0]}anull[outa];`;
+    else fc+=`${labels.join('')}amix=inputs=${labels.length}:normalize=0[outa];`;
+    audioOut='[outa]';
+  }
   if(fc.endsWith(';')) fc=fc.slice(0,-1);
 
   const args=['-y', ...inputArgs, '-filter_complex', fc, '-map', videoOut];
-  if(audIdx>=0) args.push('-map', `${audIdx}:a`);
+  if(audioOut) args.push('-map', audioOut);
   args.push('-t', D.toFixed(3), '-r', String(VM_FPS), '-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p','-crf','26');
-  if(audIdx>=0) args.push('-c:a','aac','-b:a','160k');
+  if(audioOut) args.push('-c:a','aac','-b:a','160k');
   args.push('-movflags','+faststart', nomeOut);
 
   await vmFfmpeg.exec(args);
@@ -3392,12 +3438,36 @@ function vmProjNovo(){
   vmProjFechar(); toast('Novo projeto','info',1500);
 }
 
+// ── Painéis redimensionáveis ──────────────────────────────
+let vmLeftW=230, vmRightW=250;
+function vmAplicarLarguras(){
+  const wrap=document.querySelector('.vm-wrap'); if(!wrap) return;
+  wrap.style.gridTemplateColumns=`${vmLeftW}px 1fr ${vmRightW}px`;
+  const l=document.getElementById('vmResizeL'), r=document.getElementById('vmResizeR');
+  if(l) l.style.left=(vmLeftW-3)+'px';
+  if(r) r.style.right=(vmRightW-3)+'px';
+}
+function vmResizeStart(e, side){
+  e.preventDefault();
+  const startX=e.clientX, sl=vmLeftW, sr=vmRightW;
+  const el=document.getElementById(side==='left'?'vmResizeL':'vmResizeR'); if(el) el.classList.add('active');
+  const mv=ev=>{
+    if(side==='left') vmLeftW=Math.max(170, Math.min(460, sl+(ev.clientX-startX)));
+    else vmRightW=Math.max(190, Math.min(500, sr-(ev.clientX-startX)));
+    vmAplicarLarguras();
+  };
+  const up=()=>{ if(el) el.classList.remove('active'); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); try{ localStorage.setItem('a11_vm_cols', vmLeftW+','+vmRightW); }catch{} };
+  document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+}
+
 // ── Init ──────────────────────────────────────────────────
 function vmInit(){
   const ruler=document.getElementById('vmRuler');
   if(ruler) ruler.addEventListener('mousedown', vmRulerDown);
   document.addEventListener('mousemove', vmDragMove);
   document.addEventListener('mouseup', vmDragUp);
+  try{ const s=localStorage.getItem('a11_vm_cols'); if(s){ const [a,b]=s.split(',').map(Number); if(a) vmLeftW=a; if(b) vmRightW=b; } }catch{}
+  vmAplicarLarguras();
   vmGarantirLayers(); vmRenderBin(); vmRenderTimeline(); vmRebuildStage();
   vmFitModeChange(); vmUpdateAudioPoolInfo();
 }
