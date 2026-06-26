@@ -1390,8 +1390,11 @@ tr:hover td{background:var(--surface2)}
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:8px;cursor:pointer">
           <input type="checkbox" id="vmRandMain" checked> Randomizar ordem dos clipes a cada áudio
         </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:8px;cursor:pointer">
           <input type="checkbox" id="vmRandFx"> Randomizar transições (fade/zoom) a cada vídeo
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="vmLegenda"> Legenda automática (transcreve a voz)
         </label>
         <div style="font-size:10px;color:var(--muted2);margin-bottom:10px;padding:8px;background:rgba(124,147,251,.05);border-radius:6px;border-left:2px solid rgba(124,147,251,.2);line-height:1.5">
           Monte o vídeo base na timeline (sem áudio). Selecione a pasta de áudios e clique em Iniciar — cada áudio vira um vídeo, do 1º ao último, com os clipes embaralhados e a duração encaixada no áudio.
@@ -2470,7 +2473,7 @@ let vmPlayhead = 0;      // tempo atual (s)
 let vmPlaying = false;
 let vmRaf = null, vmLastTs = 0;
 let vmSel = null;        // { lt:'v'|'a', layerId, clipId }
-let vmFfmpeg = null, vmFfmpegOk = false;
+let vmFfmpeg = null, vmFfmpegOk = false, vmFontOk = false;
 let vmDrag = null, vmBinDragId = null;
 const VM_FPS = 30, VM_W = 1080, VM_H = 1920;
 
@@ -2532,6 +2535,10 @@ async function vmCarregarFFmpeg() {
       wasmURL: await vmToBlobURL(`${core}/ffmpeg-core.wasm`, 'application/wasm'),
     });
     vmFfmpegOk = true;
+    // Carrega uma fonte para legendas (drawtext) — uma vez
+    if(!vmFontOk){
+      try{ const fr=await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf'); const fb=new Uint8Array(await fr.arrayBuffer()); await vmFfmpeg.writeFile('font.ttf', fb); vmFontOk=true; }catch(e){}
+    }
     vmSetStatus('Pronto');
     return true;
   } catch(e) {
@@ -3147,6 +3154,27 @@ function vmAplicarFxAleatorio(){
   });
 }
 
+// ── Legenda automática (Whisper via backend) ──────────────
+async function vmFileToB64(file){
+  const buf=new Uint8Array(await file.arrayBuffer());
+  let bin=''; const ch=0x8000;
+  for(let i=0;i<buf.length;i+=ch){ bin+=String.fromCharCode.apply(null, buf.subarray(i,i+ch)); }
+  return btoa(bin);
+}
+async function vmTranscrever(file){
+  const audioB64=await vmFileToB64(file);
+  const r=await callApiAuth('transcrever', { audioB64, filename:file.name, lang:'auto' });
+  if(!r.ok) throw new Error(r.erro||'transcrição falhou');
+  return r.segments||[];
+}
+function vmWrapCaption(t){
+  const words=(t||'').replace(/\s+/g,' ').trim().split(' ');
+  const lines=[]; let cur='';
+  for(const w of words){ if((cur+' '+w).trim().length>26){ if(cur) lines.push(cur.trim()); cur=w; } else cur=(cur+' '+w).trim(); }
+  if(cur) lines.push(cur.trim());
+  return lines.slice(0,3).join('\n');
+}
+
 // ── Produção em lote (1 vídeo por áudio da pasta) ─────────
 async function vmGerar(){
   if(!vmTemConteudo()){ toast('Monte o vídeo base (adicione clipes).','error'); return; }
@@ -3157,6 +3185,7 @@ async function vmGerar(){
   const stretchSel=document.getElementById('vmStretchClip').value;
   const randMain=document.getElementById('vmRandMain').checked;
   const randFx=document.getElementById('vmRandFx').checked;
+  const legenda=document.getElementById('vmLegenda').checked;
   const pool=vmMedia.filter(m=>m.kind==='audio');
 
   document.getElementById('vmProgressWrap').style.display='block';
@@ -3171,9 +3200,16 @@ async function vmGerar(){
     if(randFx) vmAplicarFxAleatorio();
     const targetDur = audio ? audio.dur : vmDuracao();
     const nomeArq=`${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
+    let legendas=null;
+    if(legenda && audio){
+      vmSetStatus(`Transcrevendo ${v+1}/${jobs.length}...`);
+      document.getElementById('vmProgressText').textContent=`Transcrevendo áudio ${v+1}/${jobs.length}...`;
+      try{ legendas=await vmTranscrever(audio.file); }
+      catch(e){ toast('Legenda falhou: '+e.message+' — gerando sem legenda','warning',5000); legendas=null; }
+    }
     vmSetStatus(`Gerando ${v+1}/${jobs.length}...`);
     document.getElementById('vmProgressText').textContent=`Vídeo ${v+1} de ${jobs.length} · ${nomeArq}`;
-    try{ const blob=await vmProcessar(nomeArq, audio?audio.file:null, targetDur, fillMode, stretchSel); vmAddOutput(nomeArq, blob, true); }
+    try{ const blob=await vmProcessar(nomeArq, audio?audio.file:null, targetDur, fillMode, stretchSel, legendas); vmAddOutput(nomeArq, blob, true); }
     catch(e){ console.error(e); vmAddOutput(nomeArq, null, false, e.message); }
     document.getElementById('vmProgressFill').style.width=((v+1)/jobs.length*100)+'%';
   }
@@ -3201,7 +3237,7 @@ function vmMotionFilter(motion, frames){
   return `,zoompan=z='${z}':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=${VM_W}x${VM_H}:fps=${VM_FPS}`;
 }
 
-async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
+async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, legendas){
   const toU8=async f=>new Uint8Array(await f.arrayBuffer());
   const segs=vmPlanoMain(targetDur, fillMode, stretchSel);
   if(!segs.length) throw new Error('Sem clipes na trilha principal');
@@ -3255,7 +3291,21 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
     fc+=`[${last}][p${i}]overlay=${Math.round(c.x*VM_W)}:${Math.round(c.y*VM_H)}:enable='between(t,${c.t.toFixed(3)},${t1})':eof_action=pass${out};`;
     last=(i===pipMeta.length-1)?'outv':`po${i}`;
   });
-  const videoOut = pipMeta.length ? '[outv]' : '[mainv]';
+  let videoOut = pipMeta.length ? '[outv]' : '[mainv]';
+
+  // Legenda automática queimada (drawtext por segmento, com tempo do Whisper)
+  if(legendas && legendas.length && vmFontOk){
+    let cur=videoOut;
+    for(let i=0;i<legendas.length;i++){
+      const L=legendas[i]; const txt=vmWrapCaption(L.text); if(!txt) continue;
+      await vmFfmpeg.writeFile(`cap${i}.txt`, txt); files.push(`cap${i}.txt`);
+      const st=Math.max(0, L.start||0).toFixed(2), en=Math.max(parseFloat(st), L.end||0).toFixed(2);
+      const outL=`[cap${i}]`;
+      fc+=`${cur}drawtext=fontfile=font.ttf:textfile=cap${i}.txt:fontcolor=white:fontsize=58:borderw=5:bordercolor=black@0.9:line_spacing=8:x=(w-text_w)/2:y=h-h*0.30:enable='between(t,${st}\\,${en})'${outL};`;
+      cur=outL;
+    }
+    videoOut=cur;
+  }
 
   // Mix de áudio (pasta + fixas)
   let audioOut=null;

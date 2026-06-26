@@ -347,6 +347,34 @@ module.exports = async (req, res) => {
     return ok({ ok: true });
   }
 
+  // ── POST /transcrever — legenda automática via OpenAI Whisper ──
+  if (path === "transcrever" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    if (!process.env.OPENAI_API_KEY) return err(503, "Transcrição não configurada (OPENAI_API_KEY ausente)");
+    const { audioB64, filename, lang } = body;
+    if (!audioB64) return err(400, "Áudio ausente");
+    try {
+      const buf = Buffer.from(audioB64, "base64");
+      const form = new FormData();
+      form.append("file", new Blob([buf]), filename || "audio.mp3");
+      form.append("model", "whisper-1");
+      form.append("response_format", "verbose_json");
+      if (lang && lang !== "auto") form.append("language", lang);
+      const r = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` },
+        body: form,
+      });
+      const data = await r.json();
+      if (!r.ok) return err(502, (data.error && data.error.message) || "Erro na transcrição");
+      const segments = (data.segments || []).map((s) => ({ start: s.start, end: s.end, text: (s.text || "").trim() }));
+      return ok({ ok: true, segments, text: data.text });
+    } catch (e) {
+      return err(500, "Erro ao transcrever: " + e.message);
+    }
+  }
+
   // ── GET /admin/usuarios ───────────────────────────────
   if (path === "admin/usuarios" && req.method === "GET") {
     const admin = await usuarioAutenticado();
