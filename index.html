@@ -1221,8 +1221,8 @@ tr:hover td{background:var(--surface2)}
       <div style="border-top:1px solid rgba(255,255,255,.04);padding:12px;max-height:42%;overflow-y:auto">
         <div class="vm-col-title" style="padding:0 0 8px">🎵 Áudios <span id="vmAudioCount" style="font-weight:400;font-size:10px"></span></div>
         <div class="vm-drop" style="margin:0 0 10px">
-          <input type="file" id="vmInputAudios" accept="audio/*" multiple onchange="vmAddAudios(this.files)">
-          <div style="font-size:11px;color:var(--muted2)">📂 Adicionar .mp3</div>
+          <input type="file" id="vmInputAudios" accept="audio/*" multiple webkitdirectory onchange="vmAddAudios(this.files)">
+          <div style="font-size:11px;color:var(--muted2)">📂 Selecionar pasta de .mp3</div>
         </div>
         <div id="vmAudiosList"></div>
       </div>
@@ -1310,18 +1310,26 @@ tr:hover td{background:var(--surface2)}
       <!-- Configuração -->
       <div class="vm-prop">
         <div class="vm-prop-title">⚙️ Geração</div>
-        <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Qtd. de vídeos</div>
-        <input type="number" id="vmQtd" value="1" min="1" max="30" class="vm-num" style="font-size:13px;margin-bottom:10px">
         <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Nome base</div>
         <input type="text" id="vmNomeBase" value="criativo" class="vm-num" style="font-family:'Inter',sans-serif;margin-bottom:10px">
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
-          <input type="checkbox" id="vmRandMain" checked> Embaralhar trilha principal a cada vídeo
-        </label>
-        <div style="font-size:10px;color:var(--muted2);margin-bottom:12px;padding:8px;background:rgba(59,130,246,.05);border-radius:6px;border-left:2px solid rgba(59,130,246,.2);line-height:1.5">
-          As camadas de vídeo se sobrepõem (a de cima por cima). As camadas de áudio se mixam. A trilha principal (inferior) preenche a tela; as de cima são PIP.
+        <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Encaixe no tempo do áudio</div>
+        <select id="vmFitMode" class="vm-num" onchange="vmFitModeChange()" style="font-family:'Inter',sans-serif;margin-bottom:8px">
+          <option value="loop">Repetir clipes em loop</option>
+          <option value="stretch">Esticar / encurtar um clipe</option>
+        </select>
+        <div id="vmStretchBox" style="display:none;margin-bottom:8px">
+          <div style="font-size:11px;color:var(--muted2);margin-bottom:6px">Clipe a ajustar</div>
+          <select id="vmStretchClip" class="vm-num" style="font-family:'Inter',sans-serif"></select>
         </div>
-        <button class="vm-btn vm-btn-blue" onclick="vmRandomizar()" id="vmBtnRand" disabled style="margin-bottom:8px">🔀 Randomizar</button>
-        <button class="vm-btn vm-btn-green" onclick="vmGerar()" id="vmBtnGerar" disabled>⚡ Gerar Vídeos</button>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="vmRandMain" checked> Randomizar ordem dos clipes a cada áudio
+        </label>
+        <div style="font-size:10px;color:var(--muted2);margin-bottom:10px;padding:8px;background:rgba(59,130,246,.05);border-radius:6px;border-left:2px solid rgba(59,130,246,.2);line-height:1.5">
+          Monte o vídeo base na timeline (sem áudio). Selecione a pasta de áudios e clique em Iniciar — cada áudio vira um vídeo, do 1º ao último, com os clipes embaralhados e a duração encaixada no áudio.
+        </div>
+        <div id="vmAudioPoolInfo" style="font-size:11px;color:var(--accent3);margin-bottom:8px;font-family:'JetBrains Mono',monospace">0 áudios → 0 vídeos</div>
+        <button class="vm-btn vm-btn-blue" onclick="vmRandomizar()" id="vmBtnRand" disabled style="margin-bottom:8px">🔀 Randomizar agora</button>
+        <button class="vm-btn vm-btn-green" onclick="vmGerar()" id="vmBtnGerar" disabled>⚡ Iniciar produção</button>
       </div>
 
       <!-- Progresso -->
@@ -2419,23 +2427,36 @@ async function vmAddClipes(files){
     const t=layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
     layer.clips.push({id:vmUid(), mediaId:mid, nome, file:f, url, dur, in:0, out:dur, t, scale:1, x:0, y:0, kind:'video'});
   }
-  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
+  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes(); vmPopulateStretchSelect();
   document.getElementById('vmClipCount').textContent = vmMedia.filter(m=>m.kind==='video').length;
 }
 
+// Áudios formam a "pasta" (pool) para a geração em lote — NÃO vão para a timeline.
 async function vmAddAudios(files){
-  vmGarantirLayers();
   for(const f of Array.from(files)){
     if(!f.type.startsWith('audio')) continue;
     const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
-    const mid=vmUid();
-    vmMedia.push({id:mid, kind:'audio', file:f, url, dur, nome});
-    const layer=vmALayers[0];
-    const t=layer.clips.reduce((a,c)=>Math.max(a,vmClipEnd(c)),0);
-    layer.clips.push({id:vmUid(), mediaId:mid, nome, file:f, url, dur, in:0, out:dur, t, kind:'audio'});
+    vmMedia.push({id:vmUid(), kind:'audio', file:f, url, dur, nome});
   }
-  vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
+  vmRenderBin(); vmAtualizarBotoes(); vmUpdateAudioPoolInfo();
   document.getElementById('vmAudioCount').textContent = vmMedia.filter(m=>m.kind==='audio').length + ' arq.';
+}
+function vmUpdateAudioPoolInfo(){
+  const n=vmMedia.filter(m=>m.kind==='audio').length;
+  const el=document.getElementById('vmAudioPoolInfo');
+  if(el) el.textContent = n ? `${n} áudio${n>1?'s':''} → ${n} vídeo${n>1?'s':''}` : '0 áudios → renderiza 1 vídeo (sem áudio)';
+}
+function vmFitModeChange(){
+  const mode=document.getElementById('vmFitMode').value;
+  document.getElementById('vmStretchBox').style.display = mode==='stretch' ? 'block':'none';
+  if(mode==='stretch') vmPopulateStretchSelect();
+}
+function vmPopulateStretchSelect(){
+  const sel=document.getElementById('vmStretchClip'); if(!sel) return;
+  const cur=sel.value;
+  const clips=(vmVLayers[0]||{clips:[]}).clips;
+  sel.innerHTML='<option value="last">Último da sequência</option>'+clips.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
 }
 
 // ── Biblioteca (coluna esquerda) ──────────────────────────
@@ -2732,96 +2753,127 @@ function vmRandomizar(){
   vmSetStatus('Trilha principal embaralhada'); toast('Embaralhado!','info',1400);
 }
 
-// ── Gerar vídeos (compositing multi-camada) ───────────────
+// ── Plano da trilha principal p/ encaixar no tempo do áudio ─
+// Retorna lista de segmentos {clip,in,out,speed}. speed = multiplicador de PTS
+// (1=normal; >1 = mais lento/longo). fillMode: 'loop' | 'stretch'.
+function vmPlanoMain(targetDur, fillMode, stretchSel){
+  const clips=(vmVLayers[0]||{clips:[]}).clips;
+  if(!clips.length) return [];
+  if(fillMode==='loop'){
+    const segs=[]; let acc=0, i=0;
+    while(acc < targetDur - 1e-3 && i < 5000){
+      const c=clips[i % clips.length];
+      let len=vmClipLen(c);
+      if(acc+len > targetDur){ len=targetDur-acc; segs.push({clip:c, in:c.in, out:c.in+len, speed:1}); }
+      else segs.push({clip:c, in:c.in, out:c.out, speed:1});
+      acc+=len; i++;
+    }
+    return segs;
+  }
+  // stretch
+  const segs=clips.map(c=>({clip:c, in:c.in, out:c.out, speed:1}));
+  let idx = segs.length-1;
+  if(stretchSel && stretchSel!=='last'){ const f=segs.findIndex(s=>s.clip.id===stretchSel); if(f>=0) idx=f; }
+  const sumAll=segs.reduce((a,s)=>a+(s.out-s.in),0);
+  const diff=targetDur - sumAll;
+  const s=segs[idx];
+  const naturalLen=s.out-s.in;
+  if(diff>0){
+    const extra=s.clip.dur - s.out;               // footage disponível após o corte
+    if(extra >= diff){ s.out += diff; }           // estende usando mais footage
+    else { s.out=s.clip.dur; const restante=diff-extra; const fullFoot=s.clip.dur-s.in; s.speed=(fullFoot+restante)/fullFoot; } // depois desacelera
+  } else if(diff<0){
+    const novaLen=naturalLen+diff;                // diff negativo
+    if(novaLen>=0.1){ s.out=s.in+novaLen; }       // encurta usando menos footage
+    else { s.out=s.in+0.1; }                      // mínimo; o -t corta o resto
+  }
+  return segs;
+}
+
+// ── Produção em lote (1 vídeo por áudio da pasta) ─────────
 async function vmGerar(){
-  if(!vmTemConteudo()){ toast('Adicione clipes de vídeo.','error'); return; }
+  if(!vmTemConteudo()){ toast('Monte o vídeo base (adicione clipes).','error'); return; }
   const okf=await vmCarregarFFmpeg(); if(!okf){ toast('Erro ao carregar FFmpeg. Use Chrome.','error'); return; }
-  const qtd=parseInt(document.getElementById('vmQtd').value)||1;
   const nomeBase=document.getElementById('vmNomeBase').value.trim()||'criativo';
+  const fillMode=document.getElementById('vmFitMode').value;
+  const stretchSel=document.getElementById('vmStretchClip').value;
   const randMain=document.getElementById('vmRandMain').checked;
+  const pool=vmMedia.filter(m=>m.kind==='audio');
+
   document.getElementById('vmProgressWrap').style.display='block';
   document.getElementById('vmBtnGerar').disabled=true; document.getElementById('vmBtnRand').disabled=true;
   document.getElementById('vmOutputList').innerHTML='';
-  for(let v=0; v<qtd; v++){
-    if(randMain && v>0) vmRandomizar();
+
+  // Sem áudios: renderiza o vídeo base uma vez (sem áudio), duração = timeline
+  const jobs = pool.length ? pool : [null];
+  for(let v=0; v<jobs.length; v++){
+    const audio=jobs[v];
+    if(randMain) vmRandomizar();
+    const targetDur = audio ? audio.dur : vmDuracao();
     const nomeArq=`${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
-    vmSetStatus(`Gerando ${v+1}/${qtd}...`);
-    document.getElementById('vmProgressText').textContent=`Vídeo ${v+1} de ${qtd} · ${nomeArq}`;
-    try{ const blob=await vmProcessar(nomeArq); vmAddOutput(nomeArq, blob, true); }
+    vmSetStatus(`Gerando ${v+1}/${jobs.length}...`);
+    document.getElementById('vmProgressText').textContent=`Vídeo ${v+1} de ${jobs.length} · ${nomeArq}`;
+    try{ const blob=await vmProcessar(nomeArq, audio?audio.file:null, targetDur, fillMode, stretchSel); vmAddOutput(nomeArq, blob, true); }
     catch(e){ console.error(e); vmAddOutput(nomeArq, null, false, e.message); }
-    document.getElementById('vmProgressFill').style.width=((v+1)/qtd*100)+'%';
+    document.getElementById('vmProgressFill').style.width=((v+1)/jobs.length*100)+'%';
   }
-  vmSetStatus(`Concluído! ${qtd} vídeo(s).`); document.getElementById('vmProgressText').textContent='Concluído!';
+
+  vmSetStatus(`Concluído! ${jobs.length} vídeo(s).`); document.getElementById('vmProgressText').textContent='Concluído!';
   document.getElementById('vmBtnGerar').disabled=false; document.getElementById('vmBtnRand').disabled=false;
   vmAtualizarBotoes();
-  toast(`${qtd} vídeo${qtd>1?'s':''} gerado${qtd>1?'s':''}!`,'success');
+  toast(`${jobs.length} vídeo${jobs.length>1?'s':''} gerado${jobs.length>1?'s':''}!`,'success');
 }
 
-async function vmProcessar(nomeOut){
+async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel){
   const toU8=async f=>new Uint8Array(await f.arrayBuffer());
-  const D=vmDuracao();
-  if(D<=0) throw new Error('Timeline vazia');
+  const segs=vmPlanoMain(targetDur, fillMode, stretchSel);
+  if(!segs.length) throw new Error('Sem clipes na trilha principal');
+  const D=Math.max(0.1, targetDur);
 
-  // Clipes de vídeo na ordem bottom->top (principal primeiro)
-  const vclips=[]; vmVLayers.forEach((layer,idx)=>layer.clips.forEach(c=>vclips.push({...c, layerIdx:idx})));
-  const aclips=[]; vmALayers.forEach(layer=>layer.clips.forEach(c=>aclips.push({...c})));
+  // Clipes de sobreposição (PIP): camadas de vídeo de índice > 0
+  const pip=[]; vmVLayers.forEach((l,idx)=>{ if(idx>0) l.clips.forEach(c=>pip.push({...c})); });
 
-  // Escreve inputs no FS do FFmpeg
-  const inputArgs=[]; let inIdx=0; const vmeta=[]; const ameta=[];
-  for(const c of vclips){ const fn=`v${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); vmeta.push({...c, idx:inIdx, fn}); inputArgs.push('-i', fn); inIdx++; }
-  for(const c of aclips){ const ext=(c.file.name.split('.').pop()||'mp3'); const fn=`a${inIdx}.${ext}`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); ameta.push({...c, idx:inIdx, fn}); inputArgs.push('-i', fn); inIdx++; }
+  // Escreve inputs (cada segmento e cada PIP = um input; áudio = 1 input)
+  const inputArgs=[]; let inIdx=0; const files=[];
+  const segMeta=[];
+  for(const s of segs){ const fn=`s${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(s.clip.file)); files.push(fn); segMeta.push({...s, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
+  const pipMeta=[];
+  for(const c of pip){ const fn=`p${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); files.push(fn); pipMeta.push({...c, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
+  let audIdx=-1, audFn=null;
+  if(audioFile){ const ext=(audioFile.name.split('.').pop()||'mp3'); audFn=`aud.${ext}`; await vmFfmpeg.writeFile(audFn, await toU8(audioFile)); files.push(audFn); audIdx=inIdx; inputArgs.push('-i', audFn); inIdx++; }
 
-  let fc=`color=c=black:s=${VM_W}x${VM_H}:r=${VM_FPS}:d=${D.toFixed(3)}[base];`;
-
-  // Prepara cada vídeo: corta, desloca PTS p/ posição t, escala/posiciona
-  vmeta.forEach((c,i)=>{
-    if(c.layerIdx===0){
-      fc+=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,`+
-          `scale=${VM_W}:${VM_H}:force_original_aspect_ratio=increase,crop=${VM_W}:${VM_H},setsar=1[v${i}];`;
-    } else {
-      const w=Math.max(2, Math.round(c.scale*VM_W));
-      fc+=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,`+
-          `scale=${w}:-2,setsar=1[v${i}];`;
-    }
+  let fc='';
+  // Trilha principal: corta, (desacelera), escala cobrindo a tela, concat
+  segMeta.forEach((s,i)=>{
+    const speed = (s.speed && Math.abs(s.speed-1)>1e-4) ? `setpts=${s.speed.toFixed(5)}*PTS,` : '';
+    fc+=`[${s.idx}:v]trim=${s.in.toFixed(3)}:${s.out.toFixed(3)},setpts=PTS-STARTPTS,${speed}`+
+        `scale=${VM_W}:${VM_H}:force_original_aspect_ratio=increase,crop=${VM_W}:${VM_H},setsar=1,fps=${VM_FPS}[m${i}];`;
   });
+  fc+=segMeta.map((_,i)=>`[m${i}]`).join('')+`concat=n=${segMeta.length}:v=1:a=0[mainv];`;
 
-  // Encadeia overlays (camadas de cima por último = ficam por cima)
-  let last='base';
-  vmeta.forEach((c,i)=>{
-    const isLast = i===vmeta.length-1;
-    const out = isLast ? '[outv]' : `[ov${i}]`;
-    const x = c.layerIdx===0 ? '0' : Math.round(c.x*VM_W).toString();
-    const y = c.layerIdx===0 ? '0' : Math.round(c.y*VM_H).toString();
+  // PIP por cima
+  let last='mainv';
+  pipMeta.forEach((c,i)=>{
+    const w=Math.max(2, Math.round(c.scale*VM_W));
     const t1=(c.t+vmClipLen(c)).toFixed(3);
-    fc+=`[${last}][v${i}]overlay=${x}:${y}:enable='between(t,${c.t.toFixed(3)},${t1})':eof_action=pass${out};`;
-    last = isLast ? 'outv' : `ov${i}`;
+    const out=(i===pipMeta.length-1)?'[outv]':`[po${i}]`;
+    fc+=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,scale=${w}:-2,setsar=1[p${i}];`;
+    fc+=`[${last}][p${i}]overlay=${Math.round(c.x*VM_W)}:${Math.round(c.y*VM_H)}:enable='between(t,${c.t.toFixed(3)},${t1})':eof_action=pass${out};`;
+    last=(i===pipMeta.length-1)?'outv':`po${i}`;
   });
-  const videoOut = vmeta.length ? '[outv]' : '[base]';
-
-  // Áudios: corta + atrasa p/ posição + mixa
-  let audioOut=null;
-  if(ameta.length){
-    ameta.forEach((c,i)=>{
-      const d=Math.round(c.t*1000);
-      fc+=`[${c.idx}:a]atrim=${c.in.toFixed(3)}:${c.out.toFixed(3)},asetpts=PTS-STARTPTS,adelay=${d}|${d}[a${i}];`;
-    });
-    if(ameta.length===1) fc+=`[a0]aresample=async=1[outa];`;
-    else fc+=ameta.map((_,i)=>`[a${i}]`).join('')+`amix=inputs=${ameta.length}:normalize=0[outa];`;
-    audioOut='[outa]';
-  }
+  const videoOut = pipMeta.length ? '[outv]' : '[mainv]';
   if(fc.endsWith(';')) fc=fc.slice(0,-1);
 
   const args=['-y', ...inputArgs, '-filter_complex', fc, '-map', videoOut];
-  if(audioOut) args.push('-map', audioOut);
+  if(audIdx>=0) args.push('-map', `${audIdx}:a`);
   args.push('-t', D.toFixed(3), '-r', String(VM_FPS), '-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p','-crf','26');
-  if(audioOut) args.push('-c:a','aac','-b:a','160k');
+  if(audIdx>=0) args.push('-c:a','aac','-b:a','160k');
   args.push('-movflags','+faststart', nomeOut);
 
   await vmFfmpeg.exec(args);
   const data=await vmFfmpeg.readFile(nomeOut);
   const blob=new Blob([data.buffer], { type:'video/mp4' });
-  for(const m of vmeta){ try{ await vmFfmpeg.deleteFile(m.fn); }catch{} }
-  for(const m of ameta){ try{ await vmFfmpeg.deleteFile(m.fn); }catch{} }
+  for(const fn of files){ try{ await vmFfmpeg.deleteFile(fn); }catch{} }
   try{ await vmFfmpeg.deleteFile(nomeOut); }catch{}
   return blob;
 }
@@ -2879,6 +2931,7 @@ function vmInit(){
   document.addEventListener('mousemove', vmDragMove);
   document.addEventListener('mouseup', vmDragUp);
   vmGarantirLayers(); vmRenderBin(); vmRenderTimeline(); vmRebuildStage();
+  vmFitModeChange(); vmUpdateAudioPoolInfo();
 }
 vmInit();
 
