@@ -307,19 +307,18 @@ input:focus{border-color:rgba(124,92,252,.5);box-shadow:0 0 0 3px rgba(124,92,25
 /* ── SIDEBAR (Notion/Claude style) ───────────────────────── */
 #appSidebar{
   display:none;
-  position:fixed;top:0;left:0;bottom:0;width:248px;z-index:100;
+  position:fixed;top:0;left:0;bottom:0;width:var(--sb-w,248px);z-index:100;
   flex-direction:column;
   background:var(--surface);
   border-right:1px solid var(--border);
   padding:16px 12px;
 }
 body.has-sidebar #appSidebar{display:flex}
-body.has-sidebar .screen.active{margin-left:248px;min-height:100vh}
-@media (max-width:860px){
-  #appSidebar{width:72px;padding:16px 8px}
-  body.has-sidebar .screen.active{margin-left:72px}
-  #appSidebar .sidebar-label{display:none}
-}
+body.has-sidebar .screen.active{margin-left:var(--sb-w,248px);min-height:100vh}
+#appSidebar.compact{padding:16px 8px}
+#appSidebar.compact .sidebar-label{display:none}
+.sb-resizer{position:absolute;top:0;right:0;bottom:0;width:6px;cursor:col-resize;z-index:101;transition:background .15s}
+.sb-resizer:hover,.sb-resizer.active{background:rgba(124,147,251,.4)}
 .sidebar-brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px;font-weight:700;font-size:15px;letter-spacing:-.2px}
 .sidebar-brand .topbar-icon{font-size:20px}
 .sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
@@ -511,6 +510,7 @@ tr:hover td{background:var(--surface2)}
 
 <!-- SIDEBAR (Notion/Claude style) — visível só quando logado -->
 <div id="appSidebar">
+  <div class="sb-resizer" id="sbResizer" onmousedown="sbResizeStart(event)"></div>
   <div class="sidebar-brand">
     <div class="topbar-icon">🎙️</div>
     <span class="sidebar-label">Auto11Labs</span>
@@ -929,6 +929,8 @@ tr:hover td{background:var(--surface2)}
       <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
       <div class="log-area" id="logArea"></div>
       <button class="btn-download" id="btnDownload" onclick="baixarZip()">⬇️ Baixar ZIP</button>
+      <button class="btn-download" id="btnDriveAudio" onclick="vmDriveZipAudios()" style="background:rgba(124,147,251,.14);border:1px solid rgba(124,147,251,.3);color:var(--accent3);margin-top:8px">☁ Enviar ZIP ao Drive</button>
+      <div id="audioDriveLink" style="display:none;font-size:12px;margin-top:8px;text-align:center"></div>
       <!-- Player inline -->
       <div id="audioPlayerContainer" style="margin-top:14px;display:flex;flex-direction:column;gap:0"></div>
     </div>
@@ -1420,9 +1422,12 @@ tr:hover td{background:var(--surface2)}
 
       <!-- Outputs -->
       <div class="vm-prop">
-        <div class="vm-prop-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px">
+        <div class="vm-prop-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
           <span>📦 Gerados</span>
-          <button id="vmDriveBtn" onclick="vmDriveConectar()" title="Conectar Google Drive para gerar links" style="background:rgba(124,147,251,.12);border:1px solid rgba(124,147,251,.25);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ Conectar Drive</button>
+          <span style="display:flex;gap:6px">
+            <button id="vmDriveBtn" onclick="vmDriveConectar()" title="Conectar Google Drive" style="background:rgba(124,147,251,.12);border:1px solid rgba(124,147,251,.25);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ Conectar Drive</button>
+            <button id="vmZipDriveBtn" onclick="vmDriveZipVideos()" title="Enviar todos os vídeos como 1 ZIP e gerar 1 link" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ ZIP → Drive</button>
+          </span>
         </div>
         <div id="vmOutputList"><div style="font-size:11px;color:var(--muted2);text-align:center">Aparecerão aqui</div></div>
       </div>
@@ -1749,6 +1754,32 @@ function setSidebarActive(tela) {
   const el = document.getElementById('sidebarItem-' + tela);
   if (el) el.classList.add('active');
 }
+
+// Sidebar redimensionável pelo usuário (largura salva)
+function sbAplicarLargura(w){
+  document.documentElement.style.setProperty('--sb-w', w + 'px');
+  const sb = document.getElementById('appSidebar');
+  if (sb) sb.classList.toggle('compact', w < 150);
+}
+function sbInit(){
+  let w = parseInt(localStorage.getItem('a11_sb_w')) || 248;
+  w = Math.max(64, Math.min(420, w));
+  sbAplicarLargura(w);
+}
+function sbResizeStart(e){
+  e.preventDefault();
+  const handle = document.getElementById('sbResizer');
+  if (handle) handle.classList.add('active');
+  const mv = ev => { const w = Math.max(64, Math.min(420, ev.clientX)); sbAplicarLargura(w); };
+  const up = ev => {
+    if (handle) handle.classList.remove('active');
+    const w = Math.max(64, Math.min(420, ev.clientX));
+    try { localStorage.setItem('a11_sb_w', w); } catch {}
+    document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up);
+  };
+  document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
+}
+sbInit();
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────
 function mostrarApp() {
@@ -2250,6 +2281,8 @@ async function iniciarGeracao() {
   document.getElementById('logArea').innerHTML = '';
   document.getElementById('progressCard').classList.add('visible');
   document.getElementById('btnDownload').classList.remove('visible');
+  document.getElementById('btnDriveAudio').classList.remove('visible');
+  document.getElementById('audioDriveLink').style.display = 'none';
   const playerContainer = document.getElementById('audioPlayerContainer');
   if (playerContainer) playerContainer.innerHTML = '';
   audioFiles = []; zipInstance = new JSZip();
@@ -2320,6 +2353,8 @@ async function iniciarGeracao() {
     const btn = document.getElementById('btnDownload');
     btn.classList.add('visible');
     btn.textContent = `⬇️ Baixar ZIP — ${ok} áudios (${zipName}.zip)`;
+    document.getElementById('btnDriveAudio').classList.add('visible');
+    document.getElementById('audioDriveLink').style.display = 'none';
     toast(`${ok} áudio${ok > 1 ? 's' : ''} gerado${ok > 1 ? 's' : ''} com sucesso!`, 'success');
 
     // Salva no histórico
@@ -2339,6 +2374,24 @@ async function baixarZip() {
   const a = document.createElement('a'); a.href = url; a.download = `${zipName}.zip`; a.click();
   URL.revokeObjectURL(url);
   log('ZIP baixado!', 'ok');
+}
+
+// Envia o ZIP dos áudios gerados ao Google Drive e gera UM link
+async function vmDriveZipAudios(){
+  if(!zipInstance || !audioFiles.length){ toast('Gere os áudios primeiro','warning'); return; }
+  if(!await vmDriveGarantirToken()) return;
+  const btn=document.getElementById('btnDriveAudio'); if(btn){ btn.disabled=true; btn.textContent='⏳ Enviando ao Drive...'; }
+  try{
+    const zipName=(document.getElementById('zipName').value.trim()||'audios_gerados')+'.zip';
+    const blob=await zipInstance.generateAsync({ type:'blob' });
+    const link=await vmDriveUploadBlob(blob, zipName, 'application/zip');
+    if(link){
+      const el=document.getElementById('audioDriveLink');
+      if(el){ el.style.display='block'; el.innerHTML=`🔗 <a href="${link}" target="_blank" style="color:var(--accent3)">Link do ZIP no Drive</a> (copiado)`; }
+      try{ await navigator.clipboard.writeText(link); toast('ZIP enviado ao Drive! Link copiado','success',5000); }catch{ toast('ZIP enviado ao Drive!','success'); }
+    }
+  }catch(e){ toast('Erro ao enviar: '+e.message,'error',5000); }
+  if(btn){ btn.disabled=false; btn.textContent='☁ Enviar ZIP ao Drive'; }
 }
 
 async function callApi(endpoint, body) {
@@ -3427,24 +3480,52 @@ async function vmDriveConectar(){
   }catch(e){ toast('Erro Drive: '+e.message,'error',5000); return false; }
 }
 async function vmDriveGarantirToken(){ return vmDriveConectado() ? true : await vmDriveConectar(); }
+// Upload genérico de um blob ao Drive; deixa público e devolve o link
+async function vmDriveUploadBlob(blob, nome, mime){
+  if(!await vmDriveGarantirToken()) return null;
+  const form=new FormData();
+  form.append('metadata', new Blob([JSON.stringify({ name:nome, mimeType:mime||'application/octet-stream' })], { type:'application/json' }));
+  form.append('file', blob);
+  const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,webContentLink', { method:'POST', headers:{ Authorization:'Bearer '+vmGToken }, body:form });
+  const data=await up.json();
+  if(!up.ok) throw new Error((data.error&&data.error.message)||'upload falhou');
+  await fetch(`https://www.googleapis.com/drive/v3/files/${data.id}/permissions`, { method:'POST', headers:{ Authorization:'Bearer '+vmGToken, 'Content-Type':'application/json' }, body:JSON.stringify({ role:'reader', type:'anyone' }) });
+  return data.webContentLink || data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`;
+}
 async function vmDriveUploadIdx(idx){
   const o=vmOutputs[idx]; if(!o||!o.blob) return;
-  if(!await vmDriveGarantirToken()) return;
   const btn=document.querySelector(`#vmOut${idx} button[onclick*="vmDriveUploadIdx(${idx})"]`);
   if(btn) btn.textContent='⏳';
   try{
-    const form=new FormData();
-    form.append('metadata', new Blob([JSON.stringify({ name:o.nome, mimeType:'video/mp4' })], { type:'application/json' }));
-    form.append('file', o.blob);
-    const up=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,webContentLink', { method:'POST', headers:{ Authorization:'Bearer '+vmGToken }, body:form });
-    const data=await up.json();
-    if(!up.ok) throw new Error((data.error&&data.error.message)||'upload falhou');
-    await fetch(`https://www.googleapis.com/drive/v3/files/${data.id}/permissions`, { method:'POST', headers:{ Authorization:'Bearer '+vmGToken, 'Content-Type':'application/json' }, body:JSON.stringify({ role:'reader', type:'anyone' }) });
-    const link=data.webContentLink || data.webViewLink || `https://drive.google.com/file/d/${data.id}/view`;
+    const link=await vmDriveUploadBlob(o.blob, o.nome, 'video/mp4');
+    if(!link){ if(btn) btn.textContent='☁️'; return; }
     o.driveLink=link;
     if(btn){ const a=document.createElement('a'); a.href=link; a.target='_blank'; a.className='vm-dl-btn'; a.style.textDecoration='none'; a.title='Abrir link do Drive'; a.textContent='🔗'; btn.replaceWith(a); }
     try{ await navigator.clipboard.writeText(link); toast('Enviado ao Drive! Link copiado','success',4500); }catch{ toast('Enviado ao Drive!','success'); }
   }catch(e){ if(btn) btn.textContent='☁️'; toast('Erro ao enviar: '+e.message,'error',5000); }
+}
+// Zipa todos os vídeos gerados e envia ao Drive como UM arquivo (um link)
+async function vmDriveZipVideos(){
+  const outs=vmOutputs.filter(o=>o.ok&&o.blob);
+  if(!outs.length){ toast('Nenhum vídeo gerado ainda','warning'); return; }
+  if(!await vmDriveGarantirToken()) return;
+  const btn=document.getElementById('vmZipDriveBtn'); if(btn){ btn.disabled=true; btn.textContent='⏳ Enviando...'; }
+  try{
+    const zip=new JSZip();
+    outs.forEach(o=>zip.file(o.nome, o.blob));
+    const blob=await zip.generateAsync({ type:'blob' });
+    const nome=((document.getElementById('vmNomeBase').value||'').trim()||'videos')+'.zip';
+    const link=await vmDriveUploadBlob(blob, nome, 'application/zip');
+    if(link) vmMostrarLinkDrive(link);
+  }catch(e){ toast('Erro ao enviar ZIP: '+e.message,'error',5000); }
+  if(btn){ btn.disabled=false; btn.textContent='☁ ZIP → Drive'; }
+}
+function vmMostrarLinkDrive(link){
+  const list=document.getElementById('vmOutputList');
+  let row=document.getElementById('vmDriveLinkRow');
+  if(!row){ row=document.createElement('div'); row.id='vmDriveLinkRow'; row.className='vm-out'; row.style.borderColor='rgba(52,211,153,.4)'; list.prepend(row); }
+  row.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name">🔗 Link do ZIP (Drive)</div><div class="vm-out-ok">público • copiado</div></div><a href="${link}" target="_blank" class="vm-dl-btn" style="text-decoration:none" title="Abrir link">↗</a>`;
+  try{ navigator.clipboard.writeText(link); toast('ZIP enviado ao Drive! Link copiado','success',5000); }catch{ toast('ZIP enviado ao Drive!','success'); }
 }
 
 function vmAtualizarBotoes(){
