@@ -438,6 +438,25 @@ textarea:focus{border-color:var(--accent)}
 .log-line{color:var(--muted2)}.log-line.ok{color:var(--success)}.log-line.err{color:var(--error)}.log-line.info{color:var(--accent2)}.log-line.warn{color:var(--warning)}
 .btn-download{width:100%;padding:14px;background:var(--success);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;margin-top:12px;display:none;align-items:center;justify-content:center;gap:8px;transition:all .2s;font-family:'Manrope',sans-serif}
 .btn-download:hover{background:#16a34a}.btn-download.visible{display:flex}
+
+/* Seletor de modelo de voz (cards) */
+.model-picker{display:flex;flex-direction:column;gap:8px}
+.model-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .15s;background:rgba(255,255,255,.015)}
+.model-opt:hover{border-color:rgba(124,147,251,.45);background:rgba(124,147,251,.05)}
+.model-opt.selected{border-color:var(--accent2);background:rgba(124,147,251,.08);box-shadow:inset 0 0 0 1px var(--accent2)}
+.mo-radio{width:18px;height:18px;border-radius:50%;border:2px solid var(--muted2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:border-color .15s}
+.model-opt.selected .mo-radio{border-color:var(--accent2)}
+.model-opt.selected .mo-radio::after{content:'';width:9px;height:9px;border-radius:50%;background:var(--accent2)}
+.mo-body{flex:1;min-width:0}
+.mo-name{font-size:13.5px;font-weight:600;color:var(--text)}
+.mo-desc{font-size:11px;color:var(--muted2);margin-top:1px}
+.mo-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;flex-shrink:0}
+.mo-badge.blue{background:rgba(124,147,251,.16);color:var(--accent3)}
+.mo-badge.green{background:rgba(52,211,153,.16);color:var(--success)}
+.mo-badge.gold{background:rgba(251,191,36,.16);color:var(--gold)}
+.saldo-box{margin-top:14px;font-size:12.5px;color:var(--text);padding:11px 13px;background:rgba(124,147,251,.06);border:1px solid rgba(124,147,251,.18);border-radius:10px;display:flex;align-items:center;gap:8px}
+.saldo-box .saldo-bar{flex:1;height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;min-width:40px}
+.saldo-box .saldo-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px}
 .info-tip{background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.2);border-radius:8px;padding:9px 13px;font-size:12px;color:#a78bfa;margin-top:8px;line-height:1.5}
 
 /* NOMES */
@@ -919,15 +938,28 @@ tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <div class="field" style="margin-bottom:10px">
-      <label>Modelo de voz</label>
-      <select id="ttsModel" onchange="vmAtualizarSaldoEleven()" style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;font-family:'Manrope',sans-serif">
-        <option value="eleven_multilingual_v2">Multilingual v2 — qualidade padrão (1 crédito/char)</option>
-        <option value="eleven_turbo_v2_5">Turbo v2.5 — 🌱 Eco, rápido (0,5 crédito/char)</option>
-        <option value="eleven_v3">Eleven v3 — mais expressivo (novo)</option>
-      </select>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-title">🎚️ Modelo de voz</div>
+      <input type="hidden" id="ttsModel" value="eleven_multilingual_v2">
+      <div class="model-picker">
+        <div class="model-opt selected" data-model="eleven_multilingual_v2" onclick="vmSelectModel(this)">
+          <div class="mo-radio"></div>
+          <div class="mo-body"><div class="mo-name">Multilingual v2</div><div class="mo-desc">Qualidade máxima · PT / ES</div></div>
+          <span class="mo-badge blue">1 crédito/char</span>
+        </div>
+        <div class="model-opt" data-model="eleven_turbo_v2_5" onclick="vmSelectModel(this)">
+          <div class="mo-radio"></div>
+          <div class="mo-body"><div class="mo-name">Turbo v2.5 &nbsp;<span style="color:var(--success);font-weight:700">🌱 Eco</span></div><div class="mo-desc">Mais rápido · metade do custo</div></div>
+          <span class="mo-badge green">0,5 crédito/char</span>
+        </div>
+        <div class="model-opt" data-model="eleven_v3" onclick="vmSelectModel(this)">
+          <div class="mo-radio"></div>
+          <div class="mo-body"><div class="mo-name">Eleven v3</div><div class="mo-desc">Mais expressivo e emotivo</div></div>
+          <span class="mo-badge gold">Novo</span>
+        </div>
+      </div>
+      <div id="elevenSaldo" class="saldo-box">💠 Saldo: <strong>—</strong></div>
     </div>
-    <div id="elevenSaldo" style="font-size:12px;color:var(--muted2);margin-bottom:12px"></div>
 
     <button class="btn-generate" id="btnGerar" onclick="iniciarGeracao()">🎙️ Gerar Áudios</button>
 
@@ -2465,17 +2497,22 @@ async function vmElevenSaldo(apiKey){
 }
 function vmRenderSaldoEleven(s){
   const el = document.getElementById('elevenSaldo'); if(!el) return;
-  if(!s){ el.innerHTML = '<span style="color:var(--warning)">Não foi possível ler o saldo — confira a chave</span>'; return; }
+  if(!s){ el.innerHTML = '💠 Saldo: <strong>—</strong> <span style="color:var(--muted2);font-size:11px">· cole a chave para ver</span>'; return; }
   const rest = Math.max(0, s.limit - s.used);
   const pct = s.limit ? Math.round(rest / s.limit * 100) : 0;
-  el.innerHTML = `💠 Saldo ElevenLabs: <strong style="color:var(--accent3)">${rest.toLocaleString('pt-BR')}</strong> de ${s.limit.toLocaleString('pt-BR')} caracteres (${pct}%)`;
+  el.innerHTML = `💠 Saldo: <strong style="color:var(--accent3)">${rest.toLocaleString('pt-BR')}</strong> <span style="color:var(--muted2)">/ ${s.limit.toLocaleString('pt-BR')}</span> <span class="saldo-bar"><i style="width:${pct}%"></i></span> <span style="color:var(--muted2);font-size:11px">${pct}%</span>`;
 }
 async function vmAtualizarSaldoEleven(){
   const apiKey = document.getElementById('apiKey').value.trim();
   const el = document.getElementById('elevenSaldo'); if(!el) return;
-  if(!apiKey){ el.textContent = ''; return; }
-  el.textContent = 'Verificando saldo ElevenLabs...';
+  if(!apiKey){ vmRenderSaldoEleven(null); return; }
+  el.innerHTML = '💠 Saldo: <span style="color:var(--muted2)">verificando…</span>';
   vmRenderSaldoEleven(await vmElevenSaldo(apiKey));
+}
+function vmSelectModel(el){
+  document.querySelectorAll('.model-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('ttsModel').value = el.dataset.model;
 }
 
 // Abre/fecha uma seção recolhível e gira a seta
