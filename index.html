@@ -799,7 +799,7 @@ tr:hover td{background:var(--surface2)}
       </div>
       <div id="apiKeyBody" style="display:none;margin-top:16px">
         <div class="input-wrap">
-          <input type="password" id="apiKey" placeholder="sk_..." autocomplete="off">
+          <input type="password" id="apiKey" placeholder="sk_..." autocomplete="off" onblur="salvarCacheApiKey(this.value.trim());vmAtualizarSaldoEleven()">
           <button class="eye-btn" onclick="toggleKey()">👁️</button>
         </div>
         <div class="info-tip">Sua key fica só no seu navegador — não é enviada para nenhum servidor.</div>
@@ -919,10 +919,15 @@ tr:hover td{background:var(--surface2)}
       </div>
     </div>
 
-    <label style="display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--muted2);margin-bottom:12px;cursor:pointer;padding:10px 12px;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:10px">
-      <input type="checkbox" id="ecoMode" style="margin-top:2px">
-      <span>🌱 <strong style="color:var(--success)">Modo Eco</strong> — usa o modelo <em>turbo</em>: gasta <strong>metade dos créditos</strong> por caractere e é mais rápido (qualidade ótima, PT/ES).</span>
-    </label>
+    <div class="field" style="margin-bottom:10px">
+      <label>Modelo de voz</label>
+      <select id="ttsModel" onchange="vmAtualizarSaldoEleven()" style="width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 12px;color:var(--text);font-size:13px;outline:none;font-family:'Manrope',sans-serif">
+        <option value="eleven_multilingual_v2">Multilingual v2 — qualidade padrão (1 crédito/char)</option>
+        <option value="eleven_turbo_v2_5">Turbo v2.5 — 🌱 Eco, rápido (0,5 crédito/char)</option>
+        <option value="eleven_v3">Eleven v3 — mais expressivo (novo)</option>
+      </select>
+    </div>
+    <div id="elevenSaldo" style="font-size:12px;color:var(--muted2);margin-bottom:12px"></div>
 
     <button class="btn-generate" id="btnGerar" onclick="iniciarGeracao()">🎙️ Gerar Áudios</button>
 
@@ -2293,12 +2298,15 @@ async function iniciarGeracao() {
   if (playerContainer) playerContainer.innerHTML = '';
   audioFiles = []; zipInstance = new JSZip();
 
-  const eco = document.getElementById('ecoMode').checked;
-  const modelId = eco ? 'eleven_turbo_v2_5' : 'eleven_multilingual_v2';
-  const taxa = eco ? 0.5 : 1; // créditos ElevenLabs por caractere
+  const modelId = document.getElementById('ttsModel').value;
+  const TAXA_MODELO = { 'eleven_multilingual_v2':1, 'eleven_turbo_v2_5':0.5, 'eleven_v3':1 };
+  const eco = modelId === 'eleven_turbo_v2_5';
+  const taxa = TAXA_MODELO[modelId] || 1;
+  const nomeModelo = { 'eleven_multilingual_v2':'Multilingual v2', 'eleven_turbo_v2_5':'Turbo v2.5 (Eco)', 'eleven_v3':'Eleven v3' }[modelId] || modelId;
   document.getElementById('tokenInfo').style.display = 'none';
+  const saldoAntes = await vmElevenSaldo(apiKey);
 
-  log(`Iniciando geração de ${textos.length} áudios...${eco ? ' (Modo Eco · turbo)' : ''}`, 'info');
+  log(`Iniciando geração de ${textos.length} áudios... (${nomeModelo})`, 'info');
   setProgress(0, textos.length);
 
   let ok = 0, erros = 0, totalChars = 0;
@@ -2363,16 +2371,21 @@ async function iniciarGeracao() {
 
   if (totalChars > 0) {
     const creditos = Math.round(totalChars * taxa);
+    const saldoDepois = await vmElevenSaldo(apiKey);
+    const usadoReal = (saldoDepois && saldoAntes) ? (saldoDepois.used - saldoAntes.used) : null;
     const tokenEl = document.getElementById('tokenInfo');
-    let html = `🔢 <strong>${totalChars.toLocaleString('pt-BR')}</strong> caracteres · <strong style="color:var(--accent3)">${creditos.toLocaleString('pt-BR')}</strong> créditos ElevenLabs${eco ? ' <span style="color:var(--success)">· Modo Eco</span>' : ''}`;
-    if (eco) {
-      html += `<br>🌱 Economia de ~<strong style="color:var(--success)">${(totalChars - creditos).toLocaleString('pt-BR')}</strong> créditos (no modelo normal seriam ${totalChars.toLocaleString('pt-BR')}).`;
+    let html = `🔢 <strong>${totalChars.toLocaleString('pt-BR')}</strong> caracteres · modelo <strong>${nomeModelo}</strong>`;
+    if (usadoReal != null) {
+      const rest = Math.max(0, saldoDepois.limit - saldoDepois.used);
+      html += `<br>💸 Gasto real (ElevenLabs): <strong style="color:var(--accent3)">${usadoReal.toLocaleString('pt-BR')}</strong> créditos · restam <strong style="color:var(--success)">${rest.toLocaleString('pt-BR')}</strong>`;
     } else {
-      html += `<br>🌱 No <strong style="color:var(--success)">Modo Eco</strong> custaria só <strong>${Math.round(totalChars * 0.5).toLocaleString('pt-BR')}</strong> créditos.`;
+      html += `<br>💸 Créditos (estimado): <strong style="color:var(--accent3)">${creditos.toLocaleString('pt-BR')}</strong>`;
     }
+    if (!eco) html += `<br>🌱 No Modo Eco (Turbo) custaria ~<strong style="color:var(--success)">${Math.round(totalChars * 0.5).toLocaleString('pt-BR')}</strong> créditos.`;
     tokenEl.innerHTML = html;
     tokenEl.style.display = 'block';
-    log(`Gasto: ${totalChars} caracteres ≈ ${creditos} créditos.`, 'info');
+    if (saldoDepois) vmRenderSaldoEleven(saldoDepois);
+    log(`Gasto ${usadoReal != null ? usadoReal + ' (real)' : creditos + ' (estimado)'} créditos · ${totalChars} caracteres.`, 'info');
   }
 
   if (ok > 0) {
@@ -2440,6 +2453,31 @@ async function callApiAuth(endpoint, body, method = 'POST') {
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// ── Saldo ElevenLabs em tempo real (chave do próprio usuário) ──
+async function vmElevenSaldo(apiKey){
+  if(!apiKey) return null;
+  try{
+    const r = await fetch('https://api.elevenlabs.io/v1/user/subscription', { headers:{ 'xi-api-key': apiKey } });
+    if(!r.ok) return null;
+    const d = await r.json();
+    return { used: d.character_count || 0, limit: d.character_limit || 0 };
+  }catch{ return null; }
+}
+function vmRenderSaldoEleven(s){
+  const el = document.getElementById('elevenSaldo'); if(!el) return;
+  if(!s){ el.innerHTML = '<span style="color:var(--warning)">Não foi possível ler o saldo — confira a chave</span>'; return; }
+  const rest = Math.max(0, s.limit - s.used);
+  const pct = s.limit ? Math.round(rest / s.limit * 100) : 0;
+  el.innerHTML = `💠 Saldo ElevenLabs: <strong style="color:var(--accent3)">${rest.toLocaleString('pt-BR')}</strong> de ${s.limit.toLocaleString('pt-BR')} caracteres (${pct}%)`;
+}
+async function vmAtualizarSaldoEleven(){
+  const apiKey = document.getElementById('apiKey').value.trim();
+  const el = document.getElementById('elevenSaldo'); if(!el) return;
+  if(!apiKey){ el.textContent = ''; return; }
+  el.textContent = 'Verificando saldo ElevenLabs...';
+  vmRenderSaldoEleven(await vmElevenSaldo(apiKey));
+}
+
 // Abre/fecha uma seção recolhível e gira a seta
 function toggleSection(bodyId, arrowId) {
   const body = document.getElementById(bodyId);
@@ -2474,6 +2512,7 @@ function carregarCacheApiKey() {
   if (cached) {
     const el = document.getElementById('apiKey');
     if (el) el.value = cached;
+    vmAtualizarSaldoEleven();
   }
 }
 
