@@ -457,6 +457,37 @@ textarea:focus{border-color:var(--accent)}
 .saldo-box{margin-top:14px;font-size:12.5px;color:var(--text);padding:11px 13px;background:rgba(124,147,251,.06);border:1px solid rgba(124,147,251,.18);border-radius:10px;display:flex;align-items:center;gap:8px}
 .saldo-box .saldo-bar{flex:1;height:6px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden;min-width:40px}
 .saldo-box .saldo-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px}
+
+/* ── Padronização global de campos ── */
+select{
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a92' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px !important;cursor:pointer;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent2) !important;box-shadow:0 0 0 3px rgba(124,147,251,.12)}
+select option{background:var(--surface2);color:var(--text)}
+::placeholder{color:var(--muted2);opacity:.7}
+.field input,.field textarea,.field select{transition:border-color .15s,box-shadow .15s}
+button{transition:filter .15s,background .15s,transform .05s}
+.btn-generate:active,.btn-download:active,.vm-btn:active{transform:translateY(1px)}
+
+/* ── Responsivo (celular) ── */
+@media (max-width:640px){
+  .app-body{padding:16px 10px 64px}
+  .topbar{padding:12px 14px}
+  .card{padding:16px}
+  .voice-grid{grid-template-columns:1fr}
+  #screenLogin{flex-direction:column;overflow-y:auto}
+  #screenLogin .login-hero{display:none}
+  .login-box{width:100%;max-width:100%;padding:24px 18px}
+}
+@media (max-width:400px){
+  .sidebar-user-email{max-width:120px}
+}
+
+/* Botão de pré-escuta da voz */
+.voice-test{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(124,147,251,.15);border:1px solid rgba(124,147,251,.3);color:var(--accent3);font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:3;transition:all .15s}
+.voice-test:hover{background:var(--accent2);color:#fff;transform:scale(1.1)}
 .info-tip{background:rgba(124,92,252,.08);border:1px solid rgba(124,92,252,.2);border-radius:8px;padding:9px 13px;font-size:12px;color:#a78bfa;margin-top:8px;line-height:1.5}
 
 /* NOMES */
@@ -843,6 +874,7 @@ tr:hover td{background:var(--surface2)}
         <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">Sugestões</div>
         <div class="voice-grid">
           <div class="voice-card selected" onclick="selectVoice(this,'ewn5JTa3lNPY8QVuZJi6','Voz Feminina MX','🇲🇽')">
+            <button class="voice-test" title="Ouvir amostra" onclick="event.stopPropagation();vmTestarVoz('ewn5JTa3lNPY8QVuZJi6')">▶</button>
             <input type="radio" name="voice" checked>
             <div class="voice-flag">🇲🇽</div>
             <div class="voice-name">Voz Feminina</div>
@@ -850,6 +882,7 @@ tr:hover td{background:var(--surface2)}
             <div class="check-dot"></div>
           </div>
           <div class="voice-card" onclick="selectVoice(this,'83Nae6GFQiNslSbuzmE7','Eduardo Monteiro','🇧🇷')">
+            <button class="voice-test" title="Ouvir amostra" onclick="event.stopPropagation();vmTestarVoz('83Nae6GFQiNslSbuzmE7')">▶</button>
             <input type="radio" name="voice">
             <div class="voice-flag">🇧🇷</div>
             <div class="voice-name">Eduardo Monteiro</div>
@@ -859,7 +892,10 @@ tr:hover td{background:var(--surface2)}
         </div>
         <div class="field" style="margin-top:14px">
           <label>ID de voz personalizada</label>
-          <input type="text" id="customVoiceId" placeholder="Cole o ID da voz do ElevenLabs">
+          <div style="display:flex;gap:8px">
+            <input type="text" id="customVoiceId" placeholder="Cole o ID da voz do ElevenLabs" style="flex:1">
+            <button onclick="vmTestarVoz(document.getElementById('customVoiceId').value.trim())" title="Ouvir amostra" style="flex-shrink:0;background:rgba(124,147,251,.14);border:1px solid rgba(124,147,251,.3);color:var(--accent3);border-radius:8px;padding:0 14px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:12px">▶ Testar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -961,6 +997,10 @@ tr:hover td{background:var(--surface2)}
       <div id="elevenSaldo" class="saldo-box">💠 Saldo: <strong>—</strong></div>
     </div>
 
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted2);margin-bottom:12px;cursor:pointer">
+      <input type="checkbox" id="autoDriveAudio"> ☁ Enviar ZIP ao Drive automaticamente ao terminar
+    </label>
+
     <button class="btn-generate" id="btnGerar" onclick="iniciarGeracao()">🎙️ Gerar Áudios</button>
 
     <div class="progress-card card" id="progressCard">
@@ -1031,7 +1071,10 @@ tr:hover td{background:var(--surface2)}
 
       <!-- Aba usuários -->
       <div id="adminAbaUsuarios">
-        <input type="text" class="search-bar" placeholder="🔍 Buscar por email..." oninput="filtrarUsers(this.value)" style="margin-bottom:16px">
+        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
+          <input type="text" class="search-bar" placeholder="🔍 Buscar por email..." oninput="filtrarUsers(this.value)" style="flex:1;margin:0">
+          <button onclick="exportarUsuariosCSV()" title="Exportar CSV" style="background:rgba(124,147,251,.14);border:1px solid rgba(124,147,251,.3);color:var(--accent3);border-radius:8px;padding:9px 14px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:12px;white-space:nowrap">⬇️ CSV</button>
+        </div>
         <div class="users-table">
           <table>
             <thead>
@@ -1440,6 +1483,22 @@ tr:hover td{background:var(--surface2)}
         </label>
         <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:6px;cursor:pointer">
           <input type="checkbox" id="vmLegenda"> Legenda automática (animada, estilo TikTok)
+        </label>
+        <div style="display:flex;gap:6px;margin-bottom:6px">
+          <select id="vmLegCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Cor do destaque da legenda">
+            <option value="amarelo">🟡 Destaque amarelo</option>
+            <option value="verde">🟢 Destaque verde</option>
+            <option value="rosa">🩷 Destaque rosa</option>
+            <option value="branco">⚪ Só branco</option>
+          </select>
+          <select id="vmLegPos" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Posição da legenda">
+            <option value="baixo">Embaixo</option>
+            <option value="meio" selected>Meio</option>
+            <option value="centro">Centro</option>
+          </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted2);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="vmAutoDrive"> ☁ Enviar ZIP ao Drive ao terminar
         </label>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px">
           <span style="font-size:11px;color:var(--muted2)">Saldo: <strong id="vmSaldoVal" style="color:var(--accent3)">R$ 0,00</strong></span>
@@ -2025,6 +2084,20 @@ function filtrarUsers(query) {
   renderUsers(filtrado);
 }
 
+function exportarUsuariosCSV() {
+  if (!todosUsers || !todosUsers.length) { toast('Nenhum usuário para exportar', 'warning'); return; }
+  const cab = ['email', 'plano', 'audios_mes', 'saldo', 'plano_expira_em', 'criado_em', 'is_admin', 'ip_cadastro'];
+  const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const linhas = todosUsers.map(u => cab.map(c => esc(u[c])).join(','));
+  const csv = '﻿' + cab.join(',') + '\n' + linhas.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `usuarios_${new Date().toISOString().slice(0, 10)}.csv`; a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV exportado', 'success', 2000);
+}
+
 function renderUsers(users) {
   const tbody = document.getElementById('usersTableBody');
   tbody.innerHTML = users.map(u => `
@@ -2359,18 +2432,7 @@ async function iniciarGeracao() {
 
       log(`[${num}] Gerando: ${nomeArquivo}`);
 
-      const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-        method: 'POST',
-        headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: textos[i], model_id: modelId, voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
-      });
-
-      if (!resp.ok) {
-        const errData = await resp.json().catch(() => ({}));
-        throw new Error(errData?.detail?.message || `HTTP ${resp.status}`);
-      }
-
-      const blob = await resp.blob();
+      const blob = await vmTTS(voiceId, textos[i], modelId, apiKey);
       audioFiles.push({ name: nomeArquivo, blob });
       zipInstance.file(nomeArquivo, blob);
       ok++;
@@ -2427,6 +2489,7 @@ async function iniciarGeracao() {
     document.getElementById('btnDriveAudio').classList.add('visible');
     document.getElementById('audioDriveLink').style.display = 'none';
     toast(`${ok} áudio${ok > 1 ? 's' : ''} gerado${ok > 1 ? 's' : ''} com sucesso!`, 'success');
+    if (document.getElementById('autoDriveAudio').checked) { vmDriveZipAudios(); }
 
     // Salva no histórico
     const vozNome = document.getElementById('vozSelecionadaLabel')?.textContent || 'Voz padrão';
@@ -2513,6 +2576,45 @@ function vmSelectModel(el){
   document.querySelectorAll('.model-opt').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
   document.getElementById('ttsModel').value = el.dataset.model;
+}
+// Gera TTS com retry automático (repete em erros de rede/429/5xx)
+async function vmTTS(voiceId, text, modelId, apiKey, tentativas = 2){
+  let ultErr;
+  for(let t = 0; t <= tentativas; t++){
+    try{
+      const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, model_id: modelId, voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
+      });
+      if(resp.ok) return await resp.blob();
+      const errData = await resp.json().catch(() => ({}));
+      const msg = (errData && errData.detail && errData.detail.message) || `HTTP ${resp.status}`;
+      // erros do cliente (chave/texto) não adianta repetir
+      if(resp.status < 500 && resp.status !== 429) throw new Error(msg);
+      ultErr = new Error(msg);
+    }catch(e){ ultErr = e; }
+    if(t < tentativas){ await sleep(800 * (t + 1)); }
+  }
+  throw ultErr || new Error('falha na geração');
+}
+
+// Pré-escuta: toca a amostra da voz (preview_url da ElevenLabs) — não gasta crédito
+let vmVozAudio = null;
+async function vmTestarVoz(voiceId){
+  if(!voiceId){ toast('Informe/selecione uma voz','warning'); return; }
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if(!apiKey){ toast('Cole sua API key da ElevenLabs primeiro','warning'); return; }
+  try{
+    if(vmVozAudio){ try{ vmVozAudio.pause(); }catch{} }
+    const r = await fetch('https://api.elevenlabs.io/v1/voices/' + encodeURIComponent(voiceId), { headers:{ 'xi-api-key': apiKey } });
+    if(!r.ok) throw new Error('voz não encontrada');
+    const d = await r.json();
+    if(!d.preview_url) throw new Error('sem amostra disponível');
+    vmVozAudio = new Audio(d.preview_url);
+    vmVozAudio.play().catch(()=>{});
+    toast('▶ Tocando amostra: ' + (d.name || voiceId), 'info', 2500);
+  }catch(e){ toast('Erro ao testar voz: ' + e.message, 'error', 3500); }
 }
 
 // Abre/fecha uma seção recolhível e gira a seta
@@ -3361,8 +3463,17 @@ async function vmTranscrever(file){
 // Gera legenda ASS animada (estilo TikTok: pop + karaokê palavra a palavra)
 function vmAssTime(t){ t=Math.max(0,t||0); const cs=Math.round(t*100); const h=Math.floor(cs/360000), m=Math.floor(cs/6000)%60, s=Math.floor(cs/100)%60, c=cs%100; return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(c).padStart(2,'0')}`; }
 function vmAssEsc(t){ return (t||'').replace(/[{}\\]/g,'').replace(/\r?\n/g,' '); }
+function vmLegendaEstilo(){
+  const cor = (document.getElementById('vmLegCor') || {}).value || 'amarelo';
+  const pos = (document.getElementById('vmLegPos') || {}).value || 'meio';
+  const cores = { amarelo:['&H0000F0FF','&H00FFFFFF'], verde:['&H0099D334','&H00FFFFFF'], rosa:['&H00B672F4','&H00FFFFFF'], branco:['&H00FFFFFF','&H00B9B9B9'] };
+  const posM = { baixo:280, meio:620, centro:900 };
+  const [primary, secondary] = cores[cor] || cores.amarelo;
+  return { primary, secondary, marginV: posM[pos] != null ? posM[pos] : 620, fontsize:92 };
+}
 function vmGerarAss(words){
-  const header='[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,DejaVu Sans,92,&H0000F0FF,&H00FFFFFF,&H00000000,&H64000000,1,6,2,2,80,80,520\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n';
+  const est = vmLegendaEstilo();
+  const header = `[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,DejaVu Sans,${est.fontsize},${est.primary},${est.secondary},&H00000000,&H64000000,1,6,2,2,80,80,${est.marginV}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
   const N=4; let ev='';
   for(let i=0;i<words.length;i+=N){
     const line=words.slice(i,i+N); if(!line.length) continue;
@@ -3421,6 +3532,7 @@ async function vmGerar(){
   document.getElementById('vmBtnGerar').disabled=false; document.getElementById('vmBtnRand').disabled=false;
   vmAtualizarBotoes();
   toast(`${jobs.length} vídeo${jobs.length>1?'s':''} gerado${jobs.length>1?'s':''}!`,'success');
+  if(document.getElementById('vmAutoDrive').checked){ try{ await vmDriveZipVideos(); }catch{} }
 }
 
 // Filtro de escala da trilha principal conforme preenchimento + zoom

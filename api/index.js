@@ -104,7 +104,9 @@ function pegarToken(req) {
 
 // ── Handler principal ─────────────────────────────────────
 module.exports = async (req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // CORS restrito ao próprio site (requisições do app são same-origin de qualquer forma)
+  res.setHeader("Access-Control-Allow-Origin", SITE_URL);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   if (req.method === "OPTIONS") return res.status(200).end();
