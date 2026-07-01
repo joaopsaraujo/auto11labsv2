@@ -1454,6 +1454,13 @@ tr:hover td{background:var(--surface2)}
             </div>
           </div>
 
+          <!-- Volume (clipes de áudio) -->
+          <div id="vmVolBox" style="display:none;border-top:1px solid rgba(255,255,255,.06);padding-top:10px;margin-top:4px">
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">🔊 Volume <span id="vmVolVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
+            <input type="range" class="vm-range" id="vmVol" min="0" max="2" value="1" step="0.05" onmousedown="vmPushUndo()" oninput="vmUpdateVol()">
+            <div style="font-size:10px;color:var(--muted2);margin-top:2px">Dica: música de fundo costuma ficar boa entre 15% e 40%.</div>
+          </div>
+
           <div style="display:flex;gap:6px;margin-top:10px">
             <button onclick="vmDuplicarSelecionado()" style="flex:1;padding:7px;background:rgba(124,147,251,.1);border:1px solid rgba(124,147,251,.2);border-radius:6px;color:var(--accent3);font-size:11px;cursor:pointer;font-family:'Manrope',sans-serif">⧉ Duplicar</button>
             <button onclick="vmRemoverSelecionado()" style="flex:1;padding:7px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);border-radius:6px;color:#fca5a5;font-size:11px;cursor:pointer;font-family:'Manrope',sans-serif">🗑 Remover</button>
@@ -2905,10 +2912,10 @@ async function vmAddFundo(files){
   for(const f of arr){
     const url=URL.createObjectURL(f); const dur=await vmGetDur(url); const nome=f.name.replace(/\.[^.]+$/,'');
     const layer=vmALayers[0];
-    layer.clips.push({id:vmUid(), mediaId:null, nome, srcName:f.name, file:f, url, dur, in:0, out:dur, t:0, kind:'audio'});
+    layer.clips.push({id:vmUid(), mediaId:null, nome, srcName:f.name, file:f, url, dur, in:0, out:dur, t:0, kind:'audio', vol:0.3});
   }
   vmRenderTimeline(); vmRebuildStage(); vmAtualizarBotoes();
-  if(arr.length) toast('Música de fundo fixada (entra em todos os vídeos)','success',2200);
+  if(arr.length) toast('Música de fundo fixada em 30% (ajuste no painel se quiser)','success',2600);
 }
 function vmUpdateAudioPoolInfo(){
   const n=vmMedia.filter(m=>m.kind==='audio').length;
@@ -3141,6 +3148,11 @@ function vmMostrarProps(){
     document.getElementById('vmZoomFill').value=z;
     document.getElementById('vmZoomFillVal').textContent=Math.round(z*100)+'%';
   }
+  // Volume (clipes de áudio)
+  const isAudio = vmSel.lt==='a';
+  document.getElementById('vmVolBox').style.display = isAudio?'block':'none';
+  if(isAudio){ const v=c.vol!=null?c.vol:1; document.getElementById('vmVol').value=v; document.getElementById('vmVolVal').textContent=Math.round(v*100)+'%'; }
+
   // Efeitos (fade p/ todo vídeo; movimento só na trilha principal)
   const isVideo = vmSel.lt==='v';
   document.getElementById('vmFxBox').style.display = isVideo?'block':'none';
@@ -3261,6 +3273,12 @@ function vmUpdateCorte(){
   c.in=Math.max(0,s); c.out=Math.min(c.dur,e);
   vmAtualizarProps(); vmRenderTimeline(); vmSyncPreview(true);
 }
+function vmUpdateVol(){
+  const c=vmSelClip(); if(!c) return;
+  c.vol=parseFloat(document.getElementById('vmVol').value);
+  document.getElementById('vmVolVal').textContent=Math.round(c.vol*100)+'%';
+  vmSyncPreview(true);
+}
 function vmUpdateTransform(){
   const c=vmSelClip(); if(!c) return;
   c.scale=parseFloat(document.getElementById('vmRangeScale').value)||0.5;
@@ -3343,6 +3361,7 @@ function vmSyncPreview(seek){
     const c=vmActiveClip(layer);
     if(!c || !c.url){ try{a.pause();}catch{} return; }
     if(a.dataset.cur!==c.id){ a.src=c.url; a.dataset.cur=c.id; }
+    a.volume = Math.min(1, c.vol!=null?c.vol:1);
     const target=Math.min(c.dur, Math.max(0, c.in+(vmPlayhead-c.t)));
     if(seek || !vmPlaying){ try{a.currentTime=target;}catch{} if(!vmPlaying){ try{a.pause();}catch{} } }
     else { if(Math.abs(a.currentTime-target)>0.3){ try{a.currentTime=target;}catch{} } if(a.paused) a.play().catch(()=>{}); }
@@ -3622,7 +3641,7 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, 
     const labels=[];
     audioIns.forEach((a,i)=>{
       if(a.kind==='pool'){ fc+=`[${a.idx}:a]aresample=async=1[aa${i}];`; }
-      else { const c=a.clip; const d=Math.round((c.t||0)*1000); fc+=`[${a.idx}:a]atrim=${c.in.toFixed(3)}:${c.out.toFixed(3)},asetpts=PTS-STARTPTS,adelay=${d}|${d}[aa${i}];`; }
+      else { const c=a.clip; const d=Math.round((c.t||0)*1000); const vol=(c.vol!=null?c.vol:1).toFixed(2); fc+=`[${a.idx}:a]atrim=${c.in.toFixed(3)}:${c.out.toFixed(3)},asetpts=PTS-STARTPTS,volume=${vol},adelay=${d}|${d}[aa${i}];`; }
       labels.push(`[aa${i}]`);
     });
     if(labels.length===1) fc+=`${labels[0]}anull[outa];`;
@@ -3807,7 +3826,7 @@ document.addEventListener('keydown', e=>{
 // ── Projetos (estrutura salva na conta; mídia reconecta por nome) ──
 let vmProjAtual=null; // { id, nome }
 function vmSerializar(){
-  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5});
+  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, vol:c.vol!=null?c.vol:1});
   return {
     v: vmVLayers.map(l=>({clips:l.clips.map(clip)})),
     a: vmALayers.map(l=>({clips:l.clips.map(clip)})),
@@ -3817,7 +3836,7 @@ function vmSerializar(){
   };
 }
 function vmDeserializar(d){
-  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, missing:true});
+  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, vol:c.vol!=null?c.vol:1, missing:true});
   vmVLayers=(d.v&&d.v.length?d.v:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(mk)}));
   vmALayers=(d.a&&d.a.length?d.a:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(c=>({...mk(c), kind:'audio'}))}));
   // Reconecta clipes a mídia que já esteja no bin (mesmo nome de arquivo)
