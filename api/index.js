@@ -155,15 +155,20 @@ module.exports = async (req, res) => {
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
-    const { data: novo } = await sb("POST", "users", {
+    const ins = await sb("POST", "users", {
       email,
       senha: senhaHash,
       is_admin: isAdmin,
       ip_cadastro: ip,
     });
 
-    if (!novo || !novo[0]) return err(500, "Erro ao criar conta");
-    const user = novo[0];
+    if (!ins.ok || !ins.data || !ins.data[0]) {
+      // Expõe o motivo real do banco p/ diagnóstico e registra no log
+      const det = (ins.data && ins.data.message) ? ins.data.message : ("status " + ins.status);
+      await logPagamento("cadastro_erro", { email, status: ins.status, resposta: ins.data });
+      return err(500, "Erro ao criar conta: " + det);
+    }
+    const user = ins.data[0];
     return ok({ ok: true, token: emitirToken(user.id), user: publicUser(user) });
   }
 
