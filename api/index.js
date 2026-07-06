@@ -155,12 +155,17 @@ module.exports = async (req, res) => {
     }
 
     const senhaHash = await bcrypt.hash(senha, 10);
-    const ins = await sb("POST", "users", {
+    let ins = await sb("POST", "users", {
       email,
       senha: senhaHash,
       is_admin: isAdmin,
       ip_cadastro: ip,
     });
+
+    // Banco sem a coluna ip_cadastro (SQL não executado): insere sem ela p/ não travar o cadastro
+    if (!ins.ok && ins.data && /ip_cadastro/.test(String(ins.data.message || ""))) {
+      ins = await sb("POST", "users", { email, senha: senhaHash, is_admin: isAdmin });
+    }
 
     if (!ins.ok || !ins.data || !ins.data[0]) {
       // Expõe o motivo real do banco p/ diagnóstico e registra no log
@@ -407,6 +412,33 @@ module.exports = async (req, res) => {
     } catch (e) {
       await logPagamento("recarga_excecao", { user_id: user.id, valor }, e.message);
       return err(500, "Erro interno ao criar recarga");
+    }
+  }
+
+  // ── GET /pexels — banco de vídeos grátis (stock) p/ completar a timeline ──
+  if (path === "pexels" && req.method === "GET") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    if (!process.env.PEXELS_API_KEY) return err(503, "Banco de vídeos não configurado (defina PEXELS_API_KEY)");
+    const q = String(query.q || "").slice(0, 80);
+    const page = Math.max(1, Math.min(50, parseInt(query.page) || 1));
+    if (!q) return err(400, "Busca vazia");
+    try {
+      const r = await fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&orientation=portrait&per_page=12&page=${page}`, {
+        headers: { Authorization: process.env.PEXELS_API_KEY },
+      });
+      const data = await r.json();
+      if (!r.ok) return err(502, "Erro na busca de vídeos");
+      const videos = (data.videos || []).map((v) => {
+        // pega o mp4 vertical de melhor qualidade até 1440px de largura (leve p/ navegador)
+        const files = (v.video_files || []).filter((f) => f.file_type === "video/mp4" && f.width && f.width <= 1440);
+        files.sort((a, b) => (b.width || 0) - (a.width || 0));
+        const best = files[0] || (v.video_files || [])[0];
+        return best ? { id: v.id, image: v.image, duration: v.duration, url: best.link } : null;
+      }).filter(Boolean);
+      return ok({ ok: true, videos });
+    } catch (e) {
+      return err(500, "Erro na busca: " + e.message);
     }
   }
 
