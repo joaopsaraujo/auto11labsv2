@@ -415,6 +415,43 @@ module.exports = async (req, res) => {
     }
   }
 
+  // ── POST /extrair-termos — identifica o conteúdo do roteiro e devolve
+  //    termos de busca (inglês) p/ o banco de vídeos. Usa Groq (LLM); se não
+  //    configurado, devolve vazio e o front usa extração local simples. ──
+  if (path === "extrair-termos" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    const texto = String(body.texto || "").slice(0, 2000);
+    if (!texto) return err(400, "Texto vazio");
+    const GKEY = process.env.GROQ_API_KEY;
+    if (!GKEY) return ok({ ok: true, termos: [] });
+    try {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${GKEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          temperature: 0.3,
+          max_tokens: 120,
+          messages: [
+            { role: "system", content: 'Você extrai termos de busca para banco de vídeos (stock footage). Dado um roteiro de vídeo, responda SOMENTE um array JSON com 3 termos curtos EM INGLÊS que representem VISUALMENTE o conteúdo (cenas filmáveis, não conceitos abstratos). Exemplo: ["gym workout","healthy meal prep","morning run"]' },
+            { role: "user", content: texto },
+          ],
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) return ok({ ok: true, termos: [] });
+      let termos = [];
+      try {
+        const m = String((data.choices && data.choices[0].message.content) || "").match(/\[[\s\S]*?\]/);
+        if (m) termos = JSON.parse(m[0]).filter((t) => typeof t === "string" && t.trim()).slice(0, 4);
+      } catch {}
+      return ok({ ok: true, termos });
+    } catch (e) {
+      return ok({ ok: true, termos: [] });
+    }
+  }
+
   // ── GET /pexels — banco de vídeos grátis (stock) p/ completar a timeline ──
   if (path === "pexels" && req.method === "GET") {
     const user = await usuarioAutenticado();

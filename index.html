@@ -575,6 +575,9 @@ tr:hover td{background:var(--surface2)}
     <div class="sidebar-item" id="sidebarItem-videomix" onclick="irParaVideoMix()">
       <span class="sidebar-icon">🎬</span><span class="sidebar-label">VideoMix</span>
     </div>
+    <div class="sidebar-item" id="sidebarItem-auto" onclick="irParaAuto()">
+      <span class="sidebar-icon">🤖</span><span class="sidebar-label">Gerador Automático <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-item" id="sidebarItem-admin" onclick="irParaAdmin()" style="display:none">
       <span class="sidebar-icon">⚙️</span><span class="sidebar-label">Painel Admin</span>
@@ -800,6 +803,14 @@ tr:hover td{background:var(--surface2)}
         </div>
       </div>
 
+    </div>
+
+    <!-- Gerador Automático (BETA) -->
+    <div onclick="irParaAuto()" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 22px;border:1px dashed rgba(251,191,36,.35);border-radius:999px;transition:all .2s;background:rgba(251,191,36,.04)"
+      onmouseover="this.style.background='rgba(251,191,36,.1)'" onmouseout="this.style.background='rgba(251,191,36,.04)'">
+      <span style="font-size:18px">🤖</span>
+      <span style="font-size:13px;font-weight:600">Gerador Automático — cole o roteiro e o site faz o vídeo inteiro</span>
+      <span style="font-size:9px;background:rgba(251,191,36,.18);color:var(--gold);padding:2px 8px;border-radius:999px;font-weight:800">BETA</span>
     </div>
 
     <!-- uso info -->
@@ -1584,6 +1595,99 @@ tr:hover td{background:var(--surface2)}
 </div>
 
 
+<!-- GERADOR AUTOMÁTICO (BETA) -->
+<div id="screenAuto" class="screen">
+  <div style="display:flex;flex-direction:column;width:100%">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:none">🤖</div>
+      <span class="topbar-name">Gerador Automático <span style="font-size:9px;background:rgba(251,191,36,.18);color:var(--gold);padding:2px 8px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--muted2)" id="agStatus">Pronto</span>
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="card" style="border-color:rgba(251,191,36,.25)">
+      <div style="font-size:13px;line-height:1.7;color:var(--muted2)">
+        <strong style="color:var(--text)">Cole os roteiros e o site faz o resto:</strong> gera a narração (ElevenLabs),
+        identifica o conteúdo de cada roteiro com IA, busca cenas no banco de vídeos grátis e monta os criativos completos — um vídeo por roteiro.
+      </div>
+    </div>
+
+    <!-- API Key -->
+    <div class="card">
+      <div class="card-title">🔑 API Key ElevenLabs</div>
+      <div class="input-wrap">
+        <input type="password" id="agApiKey" placeholder="sk_..." autocomplete="off" onblur="salvarCacheApiKey(this.value.trim())">
+      </div>
+      <div class="info-tip">Usa a mesma key do Gerador de Áudios (preenchida automaticamente se já colou lá).</div>
+    </div>
+
+    <!-- Voz e modelo -->
+    <div class="card">
+      <div class="card-title">🎤 Voz e modelo</div>
+      <div class="field">
+        <label>ID da voz (ElevenLabs)</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="agVoiceId" placeholder="ewn5JTa3lNPY8QVuZJi6" style="flex:1">
+          <button onclick="vmTestarVozAg()" title="Ouvir amostra" style="flex-shrink:0;background:rgba(124,147,251,.14);border:1px solid rgba(124,147,251,.3);color:var(--accent3);border-radius:8px;padding:0 14px;cursor:pointer;font-family:'Manrope',sans-serif;font-size:12px">▶ Testar</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="vm-tbtn" onclick="document.getElementById('agVoiceId').value='ewn5JTa3lNPY8QVuZJi6'">🇲🇽 Voz Feminina</button>
+          <button class="vm-tbtn" onclick="document.getElementById('agVoiceId').value='83Nae6GFQiNslSbuzmE7'">🇧🇷 Eduardo</button>
+        </div>
+      </div>
+      <div class="field" style="margin-top:12px">
+        <label>Modelo</label>
+        <select id="agModel" class="vm-num" style="font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px">
+          <option value="eleven_turbo_v2_5" selected>Turbo v2.5 — 🌱 Eco (0,5 crédito/char)</option>
+          <option value="eleven_multilingual_v2">Multilingual v2 — qualidade máxima</option>
+          <option value="eleven_v3">Eleven v3 — mais expressivo</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Roteiros -->
+    <div class="card">
+      <div class="card-title">📄 Roteiros</div>
+      <div class="field">
+        <textarea id="agRoteiros" placeholder="Roteiro do vídeo 1&#10;&#10;---&#10;&#10;Roteiro do vídeo 2&#10;&#10;---&#10;&#10;Roteiro do vídeo 3"></textarea>
+        <div class="textarea-hint">Separe cada vídeo com <strong>---</strong> em linha própria (ou um roteiro por linha). Cada roteiro vira 1 vídeo completo.</div>
+      </div>
+    </div>
+
+    <!-- Opções -->
+    <div class="card">
+      <div class="card-title">⚙️ Opções</div>
+      <div class="vm-flabel" style="margin-top:0">Duração de cada cena (clipe)</div>
+      <select id="agClipLen" class="vm-num" style="font-family:'Manrope',sans-serif;margin-bottom:10px">
+        <option value="4">~4 segundos (mais cortes, dinâmico)</option>
+        <option value="5" selected>~5 segundos</option>
+        <option value="7">~7 segundos (mais calmo)</option>
+      </select>
+      <label class="vm-check"><input type="checkbox" id="agLegenda"> Legenda automática animada (usa saldo)</label>
+    </div>
+
+    <button class="btn-generate" id="agBtnGerar" onclick="agGerarClick()">🤖 Gerar vídeos automaticamente</button>
+
+    <div class="progress-card card" id="agProgressCard">
+      <div class="progress-header">
+        <span class="progress-label" id="agProgressLabel">Gerando...</span>
+        <span class="progress-count" id="agProgressCount">0 / 0</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="agProgressFill"></div></div>
+      <div class="log-area" id="agLogArea"></div>
+      <button class="btn-download" id="agBtnZip" onclick="agBaixarZip()">⬇️ Baixar todos (ZIP)</button>
+      <div id="agOutputList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+  </div>
+</div>
+
 <!-- MODAL PAGAMENTO -->
 <div class="modal-overlay" id="modalPagamento">
   <div class="modal">
@@ -1853,12 +1957,15 @@ function sair() {
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem(TOKEN_KEY);
   user = null;
-  document.getElementById('screenApp').classList.remove('active');
-  document.getElementById('screenAdmin').classList.remove('active');
-  document.getElementById('screenVideoMix').classList.remove('active');
-  document.getElementById('screenHome').classList.remove('active');
-  document.getElementById('screenLogin').classList.add('active');
+  mostrarTela('screenLogin');
   document.body.classList.remove('has-sidebar');
+}
+
+// Ativa uma tela e esconde todas as outras
+function mostrarTela(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
 }
 
 // ── SIDEBAR (Notion/Claude style) ─────────────────────────
@@ -1910,42 +2017,26 @@ sbInit();
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────
 function mostrarApp() {
-  ['screenLogin','screenAdmin','screenApp','screenVideoMix'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById('screenHome').classList.add('active');
+  mostrarTela('screenHome');
   renderSidebar();
   setSidebarActive('home');
   atualizarHomeUI();
 }
 
 function irParaHome() {
-  ['screenApp','screenAdmin','screenVideoMix'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById('screenHome').classList.add('active');
+  mostrarTela('screenHome');
   setSidebarActive('home');
   atualizarHomeUI();
 }
 
 function irParaAdmin() {
-  ['screenApp','screenHome','screenVideoMix'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById('screenAdmin').classList.add('active');
+  mostrarTela('screenAdmin');
   setSidebarActive('admin');
   carregarAdmin();
 }
 
 function irParaApp() {
-  ['screenHome','screenAdmin','screenVideoMix'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById('screenApp').classList.add('active');
+  mostrarTela('screenApp');
   setSidebarActive('app');
   atualizarUI();
   carregarCacheApiKey();
@@ -1953,12 +2044,17 @@ function irParaApp() {
 }
 
 function irParaVideoMix() {
-  ['screenHome','screenAdmin','screenApp'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  document.getElementById('screenVideoMix').classList.add('active');
+  mostrarTela('screenVideoMix');
   setSidebarActive('videomix');
+  vmCarregarSaldo();
+}
+
+function irParaAuto() {
+  mostrarTela('screenAuto');
+  setSidebarActive('auto');
+  const k = localStorage.getItem(API_KEY_CACHE);
+  const el = document.getElementById('agApiKey');
+  if (k && el && !el.value) el.value = k;
   vmCarregarSaldo();
 }
 
@@ -3507,8 +3603,8 @@ function vmRandomizar(){
 // duração APENAS por velocidade, no máx ±2s por clipe. Nunca revela material
 // além do corte (in/out ficam intactos). speed = multiplicador de PTS
 // (>1 = mais lento/longo; <1 = mais rápido/curto).
-function vmPlanoMain(targetDur){
-  const clips=(vmVLayers[0]||{clips:[]}).clips;
+function vmPlanoMain(targetDur, clipsArr){
+  const clips=clipsArr||(vmVLayers[0]||{clips:[]}).clips;
   if(!clips.length) return [];
   const base=clips.map(c=>({clip:c, in:c.in, out:c.out, len:vmClipLen(c)}));
   const n=base.length;
@@ -4069,6 +4165,196 @@ function vmInit(){
   vmFitModeChange(); vmUpdateAudioPoolInfo();
 }
 vmInit();
+
+// ══════════════════════════════════════════════════════════
+// GERADOR AUTOMÁTICO (BETA) — roteiro → áudio → cenas → vídeo
+// ══════════════════════════════════════════════════════════
+let agRodando=false, agCancelar=false, agOutputs=[];
+
+function agLog(msg, tipo=''){
+  const el=document.getElementById('agLogArea'); if(!el) return;
+  const line=document.createElement('div');
+  line.className=`log-line ${tipo}`; line.textContent=msg;
+  el.appendChild(line); el.scrollTop=el.scrollHeight;
+}
+function agProgress(atual, total){
+  document.getElementById('agProgressFill').style.width=(total>0?(atual/total*100):0)+'%';
+  document.getElementById('agProgressCount').textContent=`${atual} / ${total}`;
+}
+function agParseRoteiros(txt){
+  txt=(txt||'').trim(); if(!txt) return [];
+  const parts=/^\s*---\s*$/m.test(txt) ? txt.split(/^\s*---\s*$/m) : txt.split(/\n+/);
+  return parts.map(p=>p.trim().replace(/\s+/g,' ')).filter(p=>p.length>2);
+}
+// Extração local de palavras-chave (fallback quando a IA não está configurada)
+function agTermosFallback(texto){
+  const stop=new Set('a o e de da do das dos um uma umas uns para com por que nao em no na nos nas se seu sua suas seus voce você vc é eh ao aos as os mais menos muito ja já como isso essa esse este esta estao está vai ser ter tem meu minha pra pro sobre quando onde tudo todo toda mas ou dia hoje agora entao então'.split(' '));
+  const palavras=(texto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').match(/[a-z]{4,}/g)||[]).filter(w=>!stop.has(w));
+  const freq={}; palavras.forEach(w=>freq[w]=(freq[w]||0)+1);
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
+}
+// Busca e baixa clipes do banco até cobrir a duração do áudio (máx 8 cenas)
+async function agBuscarClips(termos, audioDur, clipLen){
+  const clips=[]; let soma=0; const vistos=new Set();
+  for(const termo of termos){
+    if(soma>=audioDur*1.1 || clips.length>=8) break;
+    let r; try{ r=await callApiAuth(`pexels?q=${encodeURIComponent(termo)}&page=1`, null, 'GET'); }catch{ continue; }
+    if(!r.ok){ if(r.erro && /configurado/i.test(r.erro)) throw new Error(r.erro); continue; }
+    for(const v of (r.videos||[])){
+      if(soma>=audioDur*1.1 || clips.length>=8) break;
+      if(vistos.has(v.id)) continue; vistos.add(v.id);
+      try{
+        const resp=await fetch(v.url); if(!resp.ok) continue;
+        const blob=await resp.blob();
+        const f=new File([blob], `px_${v.id}.mp4`, { type:'video/mp4' });
+        const url=URL.createObjectURL(f); const dur=await vmGetDur(url); URL.revokeObjectURL(url);
+        const seg=Math.min(dur, clipLen);
+        const start=Math.max(0, Math.random()*Math.max(0, dur-seg));
+        clips.push({ id:'ag'+v.id, file:f, dur, in:start, out:start+seg });
+        soma+=seg;
+      }catch{}
+    }
+  }
+  // embaralha a ordem das cenas
+  for(let i=clips.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [clips[i],clips[j]]=[clips[j],clips[i]]; }
+  return clips;
+}
+// Monta o vídeo final: cenas encaixadas no áudio + legenda opcional
+async function agProcessar(nomeOut, clips, audioFile, targetDur, legendas){
+  const toU8=async f=>new Uint8Array(await f.arrayBuffer());
+  const segs=vmPlanoMain(targetDur, clips);
+  if(!segs.length) throw new Error('sem cenas para montar');
+  const D=Math.max(0.1, targetDur);
+  const inputArgs=[]; const files=[]; const segMeta=[]; let idx=0;
+  for(const s of segs){ const fn=`g${idx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(s.clip.file)); files.push(fn); segMeta.push({...s, idx}); inputArgs.push('-i', fn); idx++; }
+  const audFn='gaud.mp3'; await vmFfmpeg.writeFile(audFn, await toU8(audioFile)); files.push(audFn); const audIdx=idx; inputArgs.push('-i', audFn);
+  let fc='';
+  segMeta.forEach((s,i)=>{
+    const sp=(s.speed&&Math.abs(s.speed-1)>1e-4)?s.speed:1;
+    const speed=sp!==1?`setpts=${sp.toFixed(5)}*PTS,`:'';
+    fc+=`[${s.idx}:v]trim=${s.in.toFixed(3)}:${s.out.toFixed(3)},setpts=PTS-STARTPTS,${speed}scale=${VM_W}:${VM_H}:force_original_aspect_ratio=increase,crop=${VM_W}:${VM_H},setsar=1,fps=${VM_FPS},format=yuv420p[q${i}];`;
+  });
+  fc+=segMeta.map((_,i)=>`[q${i}]`).join('')+`concat=n=${segMeta.length}:v=1:a=0[agv];`;
+  let videoOut='[agv]';
+  if(legendas && legendas.length && vmFontOk){
+    await vmFfmpeg.writeFile('gcap.ass', vmGerarAss(legendas)); files.push('gcap.ass');
+    fc+=`[agv]ass=gcap.ass:fontsdir=.[agvc];`; videoOut='[agvc]';
+  }
+  fc+=`[${audIdx}:a]aresample=async=1[aga]`;
+  const args=['-y', ...inputArgs, '-filter_complex', fc, '-map', videoOut, '-map', '[aga]', '-t', D.toFixed(3), '-r', String(VM_FPS), '-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p','-crf','26','-c:a','aac','-b:a','160k','-movflags','+faststart', nomeOut];
+  await vmFfmpeg.exec(args);
+  const data=await vmFfmpeg.readFile(nomeOut);
+  const blob=new Blob([data.buffer], { type:'video/mp4' });
+  for(const fn of files){ try{ await vmFfmpeg.deleteFile(fn); }catch{} }
+  try{ await vmFfmpeg.deleteFile(nomeOut); }catch{}
+  return blob;
+}
+function agAddOutput(nome, blob, ok, errMsg){
+  agOutputs.push({ nome, blob, ok });
+  const list=document.getElementById('agOutputList');
+  const item=document.createElement('div'); item.className='vm-out';
+  if(ok && blob){
+    const url=URL.createObjectURL(blob);
+    item.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>`;
+  } else {
+    item.innerHTML=`<div><div class="vm-out-name">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,60)}</div></div>`;
+  }
+  list.appendChild(item);
+}
+async function agBaixarZip(){
+  const oks=agOutputs.filter(o=>o.ok&&o.blob);
+  if(!oks.length){ toast('Nenhum vídeo gerado','warning'); return; }
+  const zip=new JSZip(); oks.forEach(o=>zip.file(o.nome, o.blob));
+  const blob=await zip.generateAsync({ type:'blob' });
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='videos_automaticos.zip'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+function vmTestarVozAg(){
+  const key=(document.getElementById('agApiKey').value||'').trim();
+  const antiga=document.getElementById('apiKey').value;
+  if(key) document.getElementById('apiKey').value=key;
+  vmTestarVoz((document.getElementById('agVoiceId').value||'').trim()||'ewn5JTa3lNPY8QVuZJi6');
+  document.getElementById('apiKey').value=antiga;
+}
+function agGerarClick(){ if(agRodando){ agCancelar=true; document.getElementById('agStatus').textContent='Parando após o vídeo atual...'; toast('Vai parar após o vídeo atual','info',2500); } else agGerar(); }
+async function agGerar(){
+  const apiKey=(document.getElementById('agApiKey').value||'').trim();
+  if(!apiKey){ toast('Cole sua API key da ElevenLabs','warning'); return; }
+  salvarCacheApiKey(apiKey);
+  const voiceId=(document.getElementById('agVoiceId').value||'').trim()||'ewn5JTa3lNPY8QVuZJi6';
+  const modelId=document.getElementById('agModel').value;
+  const clipLen=parseFloat(document.getElementById('agClipLen').value)||5;
+  let legenda=document.getElementById('agLegenda').checked;
+  const roteiros=agParseRoteiros(document.getElementById('agRoteiros').value);
+  if(!roteiros.length){ toast('Cole pelo menos um roteiro','warning'); return; }
+  const okf=await vmCarregarFFmpeg();
+  if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+
+  agRodando=true; agCancelar=false; agOutputs=[];
+  document.getElementById('agBtnGerar').textContent='⏹ Parar produção';
+  document.getElementById('agProgressCard').classList.add('visible');
+  document.getElementById('agLogArea').innerHTML='';
+  document.getElementById('agOutputList').innerHTML='';
+  document.getElementById('agBtnZip').classList.remove('visible');
+  agProgress(0, roteiros.length);
+  agLog(`Iniciando: ${roteiros.length} roteiro(s) → ${roteiros.length} vídeo(s)`, 'info');
+
+  for(let i=0;i<roteiros.length;i++){
+    if(agCancelar){ agLog('Produção interrompida.', 'warn'); break; }
+    const num=String(i+1).padStart(3,'0');
+    const nome=`auto_${num}.mp4`;
+    document.getElementById('agProgressLabel').textContent=`Vídeo ${i+1} de ${roteiros.length}...`;
+    try{
+      const reg=await callApiAuth('registrar-audio', {});
+      if(!reg.ok){ agLog(`[${num}] ✗ Limite do plano atingido.`, 'warn'); abrirModal(); break; }
+      document.getElementById('agStatus').textContent=`Áudio ${i+1}/${roteiros.length}...`;
+      agLog(`[${num}] 🎙 Gerando narração...`);
+      const audioBlob=await vmTTS(voiceId, roteiros[i], modelId, apiKey);
+      const audioFile=new File([audioBlob], `ag_${num}.mp3`, { type:'audio/mpeg' });
+      const audioUrl=URL.createObjectURL(audioFile);
+      const audioDur=await vmGetDur(audioUrl); URL.revokeObjectURL(audioUrl);
+      agLog(`[${num}] 🧠 Identificando conteúdo...`);
+      let termos=[];
+      try{ const rt=await callApiAuth('extrair-termos', { texto: roteiros[i] }); if(rt.ok) termos=rt.termos||[]; }catch{}
+      if(!termos.length) termos=agTermosFallback(roteiros[i]);
+      if(!termos.length) termos=['abstract background'];
+      agLog(`[${num}] 🔎 Buscando cenas: ${termos.join(', ')}`);
+      document.getElementById('agStatus').textContent=`Baixando cenas ${i+1}/${roteiros.length}...`;
+      const clips=await agBuscarClips(termos, audioDur, clipLen);
+      if(!clips.length) throw new Error('nenhuma cena encontrada no banco para este roteiro');
+      agLog(`[${num}] 🎞 ${clips.length} cena(s) baixada(s) (${Math.round(audioDur)}s de áudio)`);
+      let legendas=null;
+      if(legenda){
+        agLog(`[${num}] 💬 Transcrevendo p/ legenda...`);
+        try{ legendas=await vmTranscrever(audioFile); }
+        catch(e){ if(e.semSaldo){ legenda=false; agLog('Saldo insuficiente — seguindo sem legenda.', 'warn'); } else agLog('Legenda falhou: '+e.message, 'warn'); }
+      }
+      document.getElementById('agStatus').textContent=`Montando ${i+1}/${roteiros.length}...`;
+      agLog(`[${num}] ⚙️ Montando vídeo...`);
+      const blob=await agProcessar(nome, clips, audioFile, audioDur, legendas);
+      agAddOutput(nome, blob, true);
+      agLog(`[${num}] ✓ ${nome} pronto!`, 'ok');
+    }catch(e){
+      console.error(e);
+      agAddOutput(nome, null, false, e.message);
+      agLog(`[${num}] ✗ ${e.message}`, 'err');
+    }
+    agProgress(i+1, roteiros.length);
+  }
+
+  agRodando=false;
+  const feitos=agOutputs.filter(o=>o.ok).length;
+  document.getElementById('agBtnGerar').textContent='🤖 Gerar vídeos automaticamente';
+  document.getElementById('agProgressLabel').textContent=agCancelar?'Parado':'Concluído!';
+  document.getElementById('agStatus').textContent='Pronto';
+  if(feitos>0){
+    document.getElementById('agBtnZip').classList.add('visible');
+    document.getElementById('agBtnZip').textContent=`⬇️ Baixar todos (ZIP) — ${feitos} vídeo${feitos>1?'s':''}`;
+  }
+  agLog(`\nFinalizado: ${feitos} vídeo(s) gerado(s).`, feitos>0?'info':'err');
+  toast(agCancelar?`Parado (${feitos} prontos)`:`${feitos} vídeo${feitos!==1?'s':''} gerado${feitos!==1?'s':''} automaticamente!`, agCancelar?'info':'success');
+}
 
 </script>
 </body>
