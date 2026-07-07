@@ -467,10 +467,11 @@ module.exports = async (req, res) => {
       const data = await r.json();
       if (!r.ok) return err(502, "Erro na busca de vídeos");
       const videos = (data.videos || []).map((v) => {
-        // pega o mp4 vertical de melhor qualidade até 1440px de largura (leve p/ navegador)
-        const files = (v.video_files || []).filter((f) => f.file_type === "video/mp4" && f.width && f.width <= 1440);
-        files.sort((a, b) => (b.width || 0) - (a.width || 0));
-        const best = files[0] || (v.video_files || [])[0];
+        // pega o menor mp4 vertical com pelo menos ~540px de largura —
+        // leve p/ baixar e p/ a memória do FFmpeg no navegador
+        const files = (v.video_files || []).filter((f) => f.file_type === "video/mp4" && f.width);
+        files.sort((a, b) => (a.width || 0) - (b.width || 0));
+        const best = files.find((f) => (f.width || 0) >= 540) || files[files.length - 1];
         return best ? { id: v.id, image: v.image, duration: v.duration, url: best.link } : null;
       }).filter(Boolean);
       return ok({ ok: true, videos });

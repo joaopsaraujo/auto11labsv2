@@ -579,6 +579,9 @@ tr:hover td{background:var(--surface2)}
       <span class="sidebar-icon">🤖</span><span class="sidebar-label">Gerador Automático <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
     </div>
     <div class="sidebar-divider"></div>
+    <div class="sidebar-item" id="sidebarItem-conta" onclick="irParaConta()">
+      <span class="sidebar-icon">💳</span><span class="sidebar-label">Saldo IA</span>
+    </div>
     <div class="sidebar-item" id="sidebarItem-admin" onclick="irParaAdmin()" style="display:none">
       <span class="sidebar-icon">⚙️</span><span class="sidebar-label">Painel Admin</span>
     </div>
@@ -1499,6 +1502,7 @@ tr:hover td{background:var(--surface2)}
             </select>
             <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Zoom <span id="vmZoomFillVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
             <input type="range" class="vm-range" id="vmZoomFill" min="1" max="3" value="1" step="0.05" onmousedown="vmPushUndo()" oninput="vmUpdateFill()">
+            <label class="vm-check" style="margin-top:8px"><input type="checkbox" id="vmFixEnd" onchange="vmToggleFixEnd()"> 📌 Fixar como último clipe (não randomiza)</label>
           </div>
 
           <!-- Efeitos (fade / movimento) -->
@@ -1536,6 +1540,18 @@ tr:hover td{background:var(--surface2)}
               <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">X (%)</div><input type="number" class="vm-num" id="vmPropX" min="0" max="100" value="25" onfocus="vmPushUndo()" onchange="vmUpdateTransform()"></div>
               <div style="flex:1"><div style="font-size:10px;color:var(--muted2);margin-bottom:3px">Y (%)</div><input type="number" class="vm-num" id="vmPropY" min="0" max="100" value="25" onfocus="vmPushUndo()" onchange="vmUpdateTransform()"></div>
             </div>
+            <div class="vm-flabel">Fundo (chroma key)</div>
+            <select id="vmChroma" class="vm-num" onchange="vmPushUndo();vmUpdateChroma()" style="font-family:'Manrope',sans-serif">
+              <option value="none">Manter fundo</option>
+              <option value="green">🟢 Remover verde (green screen)</option>
+              <option value="blue">🔵 Remover azul (blue screen)</option>
+            </select>
+            <div id="vmChromaSimWrap" style="display:none;margin-top:6px">
+              <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Intensidade <span id="vmChromaSimVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
+              <input type="range" class="vm-range" id="vmChromaSim" min="0.05" max="0.45" value="0.18" step="0.01" onmousedown="vmPushUndo()" oninput="vmUpdateChroma()">
+              <div style="font-size:10px;color:var(--muted2)">O fundo é removido no vídeo final (o preview mostra sem recorte).</div>
+            </div>
+            <label class="vm-check" style="margin-top:8px"><input type="checkbox" id="vmAlignEnd" onchange="vmToggleAlignEnd()"> 📌 Fixar no final do vídeo (sobre o último clipe)</label>
           </div>
 
           <!-- Volume (clipes de áudio) -->
@@ -1594,6 +1610,58 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
+
+<!-- MINHA CONTA / SALDO IA -->
+<div id="screenConta" class="screen">
+  <div style="display:flex;flex-direction:column;width:100%">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:none">💳</div>
+      <span class="topbar-name">Saldo IA</span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <!-- Conta -->
+    <div class="card">
+      <div class="card-title">👤 Conta</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div>
+          <div id="contaEmail" style="font-size:14px;font-weight:600"></div>
+          <div style="font-size:12px;color:var(--muted2);margin-top:2px">Plano: <span id="contaPlano" style="color:var(--accent3);font-weight:600"></span></div>
+        </div>
+        <button class="btn-icon" onclick="abrirModal('mensal')" style="border:1px solid var(--border);border-radius:8px">Mudar de plano</button>
+      </div>
+    </div>
+
+    <!-- Saldo IA -->
+    <div class="card" style="border-color:rgba(52,211,153,.25)">
+      <div class="card-title">🤖 Saldo IA</div>
+      <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:6px">
+        <span id="contaSaldoVal" style="font-size:34px;font-weight:800;color:var(--success)">R$ 0,00</span>
+        <span onclick="contaCarregarSaldo()" title="Atualizar" style="cursor:pointer;color:var(--accent3);font-size:15px">⟳</span>
+      </div>
+      <div id="contaEstCusto" style="font-size:12px;color:var(--muted2);margin-bottom:14px"></div>
+      <div class="info-tip" style="margin:0 0 16px">O saldo é usado pelas funções de IA (legenda automática nos vídeos). É independente do plano — recarregue quanto quiser.</div>
+      <div class="vm-flabel" style="margin-top:0">Recarregar via Mercado Pago</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="vm-tbtn" style="padding:10px 18px;font-size:13px" onclick="vmRecarregar(10)">R$ 10</button>
+        <button class="vm-tbtn" style="padding:10px 18px;font-size:13px" onclick="vmRecarregar(25)">R$ 25</button>
+        <button class="vm-tbtn" style="padding:10px 18px;font-size:13px" onclick="vmRecarregar(50)">R$ 50</button>
+        <button class="vm-tbtn" style="padding:10px 18px;font-size:13px" onclick="vmRecarregar(100)">R$ 100</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="number" id="contaRecargaValor" min="5" max="500" placeholder="Outro valor (mín. R$ 5)" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:10px 12px">
+        <button class="vm-btn vm-btn-green" style="width:auto;padding:10px 20px" onclick="contaRecarregar()">Pagar</button>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
 
 <!-- GERADOR AUTOMÁTICO (BETA) -->
 <div id="screenAuto" class="screen">
@@ -2058,6 +2126,38 @@ function irParaAuto() {
   vmCarregarSaldo();
 }
 
+function irParaConta() {
+  mostrarTela('screenConta');
+  setSidebarActive('conta');
+  if (user) {
+    document.getElementById('contaEmail').textContent = user.email;
+    const plano = user.plano || 'gratuito';
+    document.getElementById('contaPlano').textContent = plano === 'gratuito' ? 'Gratuito' : plano === 'mensal' ? '⭐ Pro' : '👑 Vitalício';
+  }
+  contaCarregarSaldo();
+}
+
+async function contaCarregarSaldo() {
+  try {
+    const r = await callApiAuth('saldo', null, 'GET');
+    if (r.ok) {
+      user.saldo = r.saldo;
+      vmPrecoLegendaMin = r.precoLegendaMin || vmPrecoLegendaMin;
+      localStorage.setItem(USER_KEY, JSON.stringify(user));
+    }
+  } catch {}
+  const v = Number((user && user.saldo) || 0);
+  document.getElementById('contaSaldoVal').textContent = 'R$ ' + v.toFixed(2).replace('.', ',');
+  document.getElementById('contaEstCusto').textContent = `Legenda automática: ~R$ ${vmPrecoLegendaMin.toFixed(3).replace('.', ',')}/min de áudio · vídeo de 30s ≈ R$ ${(vmPrecoLegendaMin * 0.5).toFixed(3).replace('.', ',')}`;
+  vmAtualizarSaldo();
+}
+
+function contaRecarregar() {
+  const v = parseFloat(document.getElementById('contaRecargaValor').value) || 0;
+  if (v < 5) { toast('Valor mínimo R$ 5', 'warning'); return; }
+  vmRecarregar(v);
+}
+
 function atualizarHomeUI() {
   if (!user) return;
   const plano = user.plano || 'gratuito';
@@ -2352,14 +2452,27 @@ function selecionarVozRecente(id, nome, flag) {
   salvarVozRecente(id, nome, flag);
   toggleVozCard(); // fecha após selecionar
 }
-function setNomeMode(mode, btn) {
+async function setNomeMode(mode, btn) {
   nomeMode = mode;
   document.querySelectorAll('.nomes-mode-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('nomesAuto').style.display = mode === 'auto' ? 'block' : 'none';
   document.getElementById('nomesManual').style.display = mode === 'manual' ? 'block' : 'none';
   document.getElementById('nomesNumerado').style.display = mode === 'numerado' ? 'block' : 'none';
-  if (mode === 'manual') renderNomesLista();
+  if (mode === 'manual') { await prepararNomes(); renderNomesLista(); }
+}
+
+// Monta a lista de nomes a partir dos textos atuais, PRESERVANDO o que o
+// usuário já editou (um nome só é trocado se ainda estiver no automático)
+async function prepararNomes() {
+  let textos = [];
+  try { textos = await getTextos(); } catch {}
+  nomesCustom = textos.map((t, i) => {
+    const auto = gerarNomeAuto(t, i);
+    const prev = nomesCustom[i];
+    const editado = prev && prev.nome && prev.nome !== prev.auto;
+    return { auto, nome: editado ? prev.nome : auto };
+  });
 }
 
 function gerarNomeAuto(texto, index) {
@@ -2374,14 +2487,17 @@ function renderNomesLista() {
     <div class="nome-item">
       <span class="nome-num">${String(i+1).padStart(3,'0')}</span>
       <input class="nome-input" type="text" value="${item.nome}" placeholder="${item.auto}"
-        onchange="nomesCustom[${i}].nome = this.value">
+        oninput="nomesCustom[${i}].nome = this.value">
     </div>
   `).join('');
 }
 
 function getNomeArquivo(index, texto, zipName) {
   if (nomeMode === 'numerado') return `${zipName}_${String(index+1).padStart(3,'0')}.mp3`;
-  if (nomeMode === 'manual' && nomesCustom[index]?.nome) return `${nomesCustom[index].nome}.mp3`;
+  if (nomeMode === 'manual' && nomesCustom[index]?.nome) {
+    const limpo = nomesCustom[index].nome.replace(/[\\/:*?"<>|]/g, '_').trim();
+    if (limpo) return `${limpo}.mp3`;
+  }
   return `${gerarNomeAuto(texto, index)}.mp3`;
 }
 
@@ -2501,8 +2617,8 @@ async function iniciarGeracao() {
   // Salva API key no cache
   salvarCacheApiKey(apiKey);
 
-  // Prepara nomes customizados
-  nomesCustom = textos.map((t, i) => ({ auto: gerarNomeAuto(t, i), nome: gerarNomeAuto(t, i) }));
+  // Prepara nomes customizados SEM sobrescrever os que o usuário editou
+  await prepararNomes();
   if (nomeMode === 'manual') renderNomesLista();
 
   if (user.plano === 'gratuito') {
@@ -2587,7 +2703,7 @@ async function iniciarGeracao() {
   if (totalChars > 0) {
     const creditos = Math.round(totalChars * taxa);
     const saldoDepois = await vmElevenSaldo(apiKey);
-    const usadoReal = (saldoDepois && saldoAntes) ? (saldoDepois.used - saldoAntes.used) : null;
+    const usadoReal = (saldoDepois && saldoDepois.used != null && saldoAntes && saldoAntes.used != null) ? (saldoDepois.used - saldoAntes.used) : null;
     const tokenEl = document.getElementById('tokenInfo');
     let html = `🔢 <strong>${totalChars.toLocaleString('pt-BR')}</strong> caracteres · modelo <strong>${nomeModelo}</strong>`;
     if (usadoReal != null) {
@@ -2675,17 +2791,31 @@ async function vmElevenSaldo(apiKey){
   if(!apiKey) return null;
   try{
     const r = await fetch('https://api.elevenlabs.io/v1/user/subscription', { headers:{ 'xi-api-key': apiKey } });
-    if(!r.ok) return null;
+    if(!r.ok){
+      let msg = 'HTTP ' + r.status;
+      try{ const d = await r.json(); msg = (d.detail && (d.detail.status || d.detail.message)) || msg; }catch{}
+      return { erro: String(msg), status: r.status };
+    }
     const d = await r.json();
     return { used: d.character_count || 0, limit: d.character_limit || 0 };
-  }catch{ return null; }
+  }catch(e){ return { erro: 'rede', status: 0 }; }
 }
 function vmRenderSaldoEleven(s){
   const el = document.getElementById('elevenSaldo'); if(!el) return;
-  if(!s){ el.innerHTML = '💠 Saldo: <strong>—</strong> <span style="color:var(--muted2);font-size:11px">· cole a chave para ver</span>'; return; }
+  const btnAtualizar = ' <span onclick="vmAtualizarSaldoEleven()" title="Atualizar saldo" style="cursor:pointer;color:var(--accent3);font-size:12px;margin-left:auto">⟳</span>';
+  if(!s){ el.innerHTML = '💠 Saldo: <strong>—</strong> <span style="color:var(--muted2);font-size:11px">· cole a chave para ver</span>' + btnAtualizar; return; }
+  if(s.erro){
+    // Chave restrita sem permissão de leitura do usuário — explica como resolver
+    const semPermissao = /missing_permissions|invalid_api_key|401/.test(s.erro + ' ' + s.status);
+    const msg = semPermissao
+      ? 'sua API key não tem a permissão <strong>User → Read</strong>. No ElevenLabs, edite a key (ou crie outra) marcando essa permissão para ver o saldo.'
+      : 'não deu para ler o saldo (' + s.erro + '). A geração funciona normalmente.';
+    el.innerHTML = `💠 Saldo: <strong>—</strong> <span style="color:var(--warning);font-size:11px">· ${msg}</span>` + btnAtualizar;
+    return;
+  }
   const rest = Math.max(0, s.limit - s.used);
   const pct = s.limit ? Math.round(rest / s.limit * 100) : 0;
-  el.innerHTML = `💠 Saldo: <strong style="color:var(--accent3)">${rest.toLocaleString('pt-BR')}</strong> <span style="color:var(--muted2)">/ ${s.limit.toLocaleString('pt-BR')}</span> <span class="saldo-bar"><i style="width:${pct}%"></i></span> <span style="color:var(--muted2);font-size:11px">${pct}%</span>`;
+  el.innerHTML = `💠 Saldo: <strong style="color:var(--accent3)">${rest.toLocaleString('pt-BR')}</strong> <span style="color:var(--muted2)">/ ${s.limit.toLocaleString('pt-BR')}</span> <span class="saldo-bar"><i style="width:${pct}%"></i></span> <span style="color:var(--muted2);font-size:11px">${pct}%</span>` + btnAtualizar;
 }
 async function vmAtualizarSaldoEleven(){
   const apiKey = document.getElementById('apiKey').value.trim();
@@ -2960,7 +3090,7 @@ async function vmCarregarFFmpeg() {
     const { FFmpeg } = window.FFmpegWASM;
     vmFfmpeg = new FFmpeg();
     vmFfmpeg.on('progress', ({ progress }) => { const el=document.getElementById('vmProgressFill'); if(el) el.style.width=(progress*100)+'%'; });
-    vmFfmpeg.on('log', ({ message }) => { const el=document.getElementById('vmProgressText'); if(el) el.textContent=(message||'').substring(0,70); });
+    vmFfmpeg.on('log', ({ message }) => { window.__vmFfLast=message||''; const el=document.getElementById('vmProgressText'); if(el) el.textContent=(message||'').substring(0,70); });
 
     // Worker (UMD 0.12.10) + core em ESM (necessário pois o worker importa via import())
     const ffu = `https://unpkg.com/@ffmpeg/ffmpeg@${FF}/dist/umd`;
@@ -3186,7 +3316,7 @@ function vmTrackHtml(layer, lt, tag, cls){
     const bg=(cls==='video' && c.thumb)?`background-image:url(${c.thumb});background-size:cover;background-position:center;`:'';
     blocks+=`<div class="vm-block ${cls} ${sel?'sel':''}" data-clip="${c.id}" data-layer="${layer.id}" data-lt="${lt}" style="left:${left}px;width:${w}px;${bg}" onmousedown="vmBlockDown(event,'${layer.id}','${c.id}','${lt}')" oncontextmenu="vmCtx(event,'${layer.id}','${c.id}','${lt}')">
       <div class="vm-bh l" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','l')"></div>
-      <span class="lbl">${c.nome}</span>
+      <span class="lbl">${c.fixEnd?'📌 ':''}${c.alignEnd?'📌 ':''}${c.chroma==='green'?'🟢 ':''}${c.chroma==='blue'?'🔵 ':''}${c.nome}</span>
       <div class="vm-bh r" onmousedown="vmTrimDown(event,'${layer.id}','${c.id}','${lt}','r')"></div>
     </div>`;
   }
@@ -3324,6 +3454,12 @@ function vmMostrarProps(){
     document.getElementById('vmPropScale').textContent=Math.round(c.scale*100)+'%';
     document.getElementById('vmPropX').value=Math.round(c.x*100);
     document.getElementById('vmPropY').value=Math.round(c.y*100);
+    const ch=c.chroma||'none', cs=c.chromaSim!=null?c.chromaSim:0.18;
+    document.getElementById('vmChroma').value=ch;
+    document.getElementById('vmChromaSim').value=cs;
+    document.getElementById('vmChromaSimVal').textContent=Math.round(cs*100)+'%';
+    document.getElementById('vmChromaSimWrap').style.display=ch!=='none'?'block':'none';
+    document.getElementById('vmAlignEnd').checked=!!c.alignEnd;
   }
   // Preenchimento de tela (trilha principal)
   document.getElementById('vmFillBox').style.display = isMainVideo?'block':'none';
@@ -3332,6 +3468,7 @@ function vmMostrarProps(){
     document.getElementById('vmFitFill').value=c.fit||'cover';
     document.getElementById('vmZoomFill').value=z;
     document.getElementById('vmZoomFillVal').textContent=Math.round(z*100)+'%';
+    document.getElementById('vmFixEnd').checked=!!c.fixEnd;
   }
   // Volume (clipes de áudio)
   const isAudio = vmSel.lt==='a';
@@ -3367,6 +3504,42 @@ function vmUpdateFill(){
   c.zoom=parseFloat(document.getElementById('vmZoomFill').value)||1;
   document.getElementById('vmZoomFillVal').textContent=Math.round(c.zoom*100)+'%';
   vmSyncPreview(true);
+}
+function vmUpdateChroma(){
+  const c=vmSelClip(); if(!c) return;
+  c.chroma=document.getElementById('vmChroma').value;
+  c.chromaSim=parseFloat(document.getElementById('vmChromaSim').value)||0.18;
+  document.getElementById('vmChromaSimWrap').style.display=c.chroma!=='none'?'block':'none';
+  document.getElementById('vmChromaSimVal').textContent=Math.round(c.chromaSim*100)+'%';
+  vmRenderTimeline();
+}
+function vmToggleAlignEnd(){
+  const c=vmSelClip(); if(!c) return;
+  vmPushUndo();
+  c.alignEnd=document.getElementById('vmAlignEnd').checked;
+  if(c.alignEnd){
+    // move o bloco p/ o fim da timeline atual (na geração ele recalcula por vídeo)
+    const mainDur=((vmVLayers[0]||{clips:[]}).clips).reduce((a,x)=>Math.max(a,vmClipEnd(x)),0);
+    c.t=Math.max(0, mainDur - vmClipLen(c));
+  }
+  vmRenderTimeline(); vmRebuildStage(); vmSyncPreview(true);
+  toast(c.alignEnd?'Overlay fixada no final de todos os vídeos':'Overlay solta na timeline','info',2200);
+}
+function vmToggleFixEnd(){
+  const c=vmSelClip(); if(!c) return;
+  vmPushUndo();
+  c.fixEnd=document.getElementById('vmFixEnd').checked;
+  if(c.fixEnd){
+    // reordena a trilha principal deixando os fixados por último
+    const layer=vmVLayers[0];
+    const livres=layer.clips.filter(x=>x.id!==c.id && !x.fixEnd);
+    const fins=layer.clips.filter(x=>x.id!==c.id && x.fixEnd);
+    const nova=[...livres, ...fins, c];
+    let t=0; nova.forEach(x=>{ x.t=t; t+=vmClipLen(x); });
+    layer.clips=nova;
+  }
+  vmRenderTimeline(); vmRebuildStage(); vmSyncPreview(true);
+  toast(c.fixEnd?'Clipe fixado como último (não randomiza)':'Clipe liberado para randomizar','info',2200);
 }
 function vmUpdateFx(){
   const c=vmSelClip(); if(!c) return;
@@ -3590,10 +3763,13 @@ function vmRandomizar(){
   const layer=vmVLayers[0];
   if(!layer || !layer.clips.length){ toast('Sem clipes na trilha principal','warning',1500); return; }
   vmPushUndo();
-  const arr=[...layer.clips];
+  // clipes fixados no final (📌) não entram no embaralhamento e ficam por último
+  const finais=layer.clips.filter(c=>c.fixEnd);
+  const arr=layer.clips.filter(c=>!c.fixEnd);
   for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
-  let t=0; arr.forEach(c=>{ c.t=t; t+=vmClipLen(c); });
-  layer.clips=arr;
+  const nova=[...arr, ...finais];
+  let t=0; nova.forEach(c=>{ c.t=t; t+=vmClipLen(c); });
+  layer.clips=nova;
   vmRenderTimeline(); vmRebuildStage();
   vmSetStatus('Trilha principal embaralhada'); toast('Embaralhado!','info',1400);
 }
@@ -3606,17 +3782,26 @@ function vmRandomizar(){
 function vmPlanoMain(targetDur, clipsArr){
   const clips=clipsArr||(vmVLayers[0]||{clips:[]}).clips;
   if(!clips.length) return [];
-  const base=clips.map(c=>({clip:c, in:c.in, out:c.out, len:vmClipLen(c)}));
-  const n=base.length;
-  const L=base.reduce((a,b)=>a+b.len,0);
-  if(L<=0) return [];
+  // Clipes fixados no final (📌) aparecem UMA vez, sempre por último;
+  // os livres preenchem o tempo restante (repetindo se preciso).
+  let finais=clips.filter(c=>c.fixEnd);
+  let livres=clips.filter(c=>!c.fixEnd);
+  if(!livres.length){ livres=finais; finais=[]; }
+  const baseL=livres.map(c=>({clip:c, in:c.in, out:c.out, len:vmClipLen(c)}));
+  const baseF=finais.map(c=>({clip:c, in:c.in, out:c.out, len:vmClipLen(c)}));
+  const L=baseL.reduce((a,b)=>a+b.len,0);
+  const F=baseF.reduce((a,b)=>a+b.len,0);
+  if(L+F<=0) return [];
   const CAP=2; // ajuste máximo por clipe (segundos), via velocidade
-  // menor nº de passadas completas p/ conseguir chegar em targetDur esticando ≤CAP/clipe
-  let P=1;
-  while(targetDur > (L + CAP*n) * P + 1e-6 && P < 60) P++;
+  const alvoLivre=Math.max(0, targetDur - F);
+  // menor nº de passadas completas dos livres p/ chegar no alvo esticando ≤CAP/clipe
+  let P = (L>0 && alvoLivre>0.3) ? 1 : 0;
+  if(P>0){ while(alvoLivre > (L + CAP*baseL.length) * P + 1e-6 && P < 60) P++; }
   const segs=[];
-  for(let p=0;p<P;p++) for(const b of base) segs.push({clip:b.clip, in:b.in, out:b.out, len:b.len, delta:0});
-  let restante=targetDur - L*P; // + estica / - encurta
+  for(let p=0;p<P;p++) for(const b of baseL) segs.push({clip:b.clip, in:b.in, out:b.out, len:b.len, delta:0});
+  for(const b of baseF) segs.push({clip:b.clip, in:b.in, out:b.out, len:b.len, delta:0});
+  if(!segs.length) return [];
+  let restante=targetDur - (L*P + F); // + estica / - encurta
   // "water-filling": distribui o restante entre os segmentos, cada um limitado a ±CAP
   for(let iter=0; iter<8 && Math.abs(restante)>0.02; iter++){
     const abertos=segs.filter(s => restante>0 ? s.delta<CAP-1e-3 : s.delta>-CAP+1e-3);
@@ -3817,13 +4002,21 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, 
   pipMeta.forEach((c,i)=>{
     const w=Math.max(2, Math.round(c.scale*VM_W));
     const len=vmClipLen(c);
-    const t1=(c.t+len).toFixed(3);
+    // 📌 overlay fixa no final: começa em D-len (fica sobre o último clipe em todos os vídeos)
+    const tIni = c.alignEnd ? Math.max(0, D - len) : c.t;
+    const t1=(tIni+len).toFixed(3);
     const out=(i===pipMeta.length-1)?'[outv]':`[po${i}]`;
     const fi=c.fadeIn||0, fo=c.fadeOut||0;
-    let pchain=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${c.t.toFixed(3)}/TB,scale=${w}:-2,setsar=1`;
-    if(fi>0||fo>0){ pchain+=`,format=yuva420p`; if(fi>0) pchain+=`,fade=t=in:st=${c.t.toFixed(3)}:d=${fi.toFixed(2)}:alpha=1`; if(fo>0) pchain+=`,fade=t=out:st=${(c.t+len-fo).toFixed(3)}:d=${fo.toFixed(2)}:alpha=1`; }
+    let pchain=`[${c.idx}:v]trim=${c.in.toFixed(3)}:${c.out.toFixed(3)},setpts=PTS-STARTPTS+${tIni.toFixed(3)}/TB,scale=${w}:-2,setsar=1`;
+    // green/blue screen: remove o fundo por chroma key (gera alpha)
+    if(c.chroma && c.chroma!=='none'){
+      const cor=c.chroma==='blue'?'0x0000ff':'0x00ff00';
+      const sim=Math.max(0.05, Math.min(0.45, c.chromaSim!=null?c.chromaSim:0.18)).toFixed(2);
+      pchain+=`,chromakey=${cor}:${sim}:0.08`;
+    }
+    if(fi>0||fo>0){ pchain+=`,format=yuva420p`; if(fi>0) pchain+=`,fade=t=in:st=${tIni.toFixed(3)}:d=${fi.toFixed(2)}:alpha=1`; if(fo>0) pchain+=`,fade=t=out:st=${(tIni+len-fo).toFixed(3)}:d=${fo.toFixed(2)}:alpha=1`; }
     fc+=pchain+`[p${i}];`;
-    fc+=`[${last}][p${i}]overlay=${Math.round(c.x*VM_W)}:${Math.round(c.y*VM_H)}:enable='between(t,${c.t.toFixed(3)},${t1})':eof_action=pass${out};`;
+    fc+=`[${last}][p${i}]overlay=${Math.round(c.x*VM_W)}:${Math.round(c.y*VM_H)}:enable='between(t,${tIni.toFixed(3)},${t1})':eof_action=pass${out};`;
     last=(i===pipMeta.length-1)?'outv':`po${i}`;
   });
   let videoOut = pipMeta.length ? '[outv]' : '[mainv]';
@@ -4036,7 +4229,7 @@ document.addEventListener('keydown', e=>{
 // ── Projetos (estrutura salva na conta; mídia reconecta por nome) ──
 let vmProjAtual=null; // { id, nome }
 function vmSerializar(){
-  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, vol:c.vol!=null?c.vol:1, bg:!!c.bg});
+  const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, vol:c.vol!=null?c.vol:1, bg:!!c.bg, fixEnd:!!c.fixEnd, alignEnd:!!c.alignEnd, chroma:c.chroma||'none', chromaSim:c.chromaSim!=null?c.chromaSim:0.18});
   return {
     v: vmVLayers.map(l=>({clips:l.clips.map(clip)})),
     a: vmALayers.map(l=>({clips:l.clips.map(clip)})),
@@ -4046,7 +4239,7 @@ function vmSerializar(){
   };
 }
 function vmDeserializar(d){
-  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, vol:c.vol!=null?c.vol:1, bg:!!c.bg, missing:true});
+  const mk=c=>({id:vmUid(), mediaId:null, srcName:c.srcName, nome:c.nome||c.srcName, file:null, url:null, dur:c.dur||0, in:c.in||0, out:c.out!=null?c.out:(c.dur||0), t:c.t||0, scale:c.scale!=null?c.scale:1, x:c.x||0, y:c.y||0, kind:c.kind||'video', fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, vol:c.vol!=null?c.vol:1, bg:!!c.bg, fixEnd:!!c.fixEnd, alignEnd:!!c.alignEnd, chroma:c.chroma||'none', chromaSim:c.chromaSim!=null?c.chromaSim:0.18, missing:true});
   vmVLayers=(d.v&&d.v.length?d.v:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(mk)}));
   vmALayers=(d.a&&d.a.length?d.a:[{clips:[]}]).map(l=>({id:vmUid(), clips:(l.clips||[]).map(c=>({...mk(c), kind:'audio'}))}));
   // Reconecta clipes a mídia que já esteja no bin (mesmo nome de arquivo)
@@ -4242,7 +4435,8 @@ async function agProcessar(nomeOut, clips, audioFile, targetDur, legendas){
   }
   fc+=`[${audIdx}:a]aresample=async=1[aga]`;
   const args=['-y', ...inputArgs, '-filter_complex', fc, '-map', videoOut, '-map', '[aga]', '-t', D.toFixed(3), '-r', String(VM_FPS), '-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p','-crf','26','-c:a','aac','-b:a','160k','-movflags','+faststart', nomeOut];
-  await vmFfmpeg.exec(args);
+  try{ await vmFfmpeg.exec(args); }
+  catch(e){ throw new Error('render falhou: '+String(window.__vmFfLast||e.message||'').slice(0,90)); }
   const data=await vmFfmpeg.readFile(nomeOut);
   const blob=new Blob([data.buffer], { type:'video/mp4' });
   for(const fn of files){ try{ await vmFfmpeg.deleteFile(fn); }catch{} }
