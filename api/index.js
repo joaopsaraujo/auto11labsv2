@@ -359,8 +359,8 @@ module.exports = async (req, res) => {
     if (!plano) return err(400, "Parâmetros obrigatórios");
 
     const planos = {
-      mensal: { titulo: "Auto11Labs — 2 Meses", preco: 44.90 },
-      vitalicio: { titulo: "Auto11Labs — Vitalício", preco: 198.90 },
+      mensal: { titulo: "Auto11Labs — 1 Mês", preco: 19.90 },
+      vitalicio: { titulo: "Auto11Labs — Vitalício", preco: 139.90 },
     };
     if (!planos[plano]) return err(400, "Plano inválido");
     const p = planos[plano];
@@ -437,10 +437,15 @@ module.exports = async (req, res) => {
 
       // Recarga de saldo (avulsa, sem relação com plano)
       if (meta.tipo === "recarga") {
+        const bruto = Number(meta.valor || 0);
+        // Credita o valor LÍQUIDO que caiu na conta (já descontada a taxa do
+        // Mercado Pago) — a taxa deixa de sair do bolso do dono do site
+        const liquido = Number(pagamento.transaction_details && pagamento.transaction_details.net_received_amount);
+        const credito = Math.round(Math.min(bruto, liquido > 0 ? liquido : bruto) * 100) / 100;
         const { data: us } = await sb("GET", `users?id=eq.${userId}&select=saldo`);
         const atual = us && us[0] ? Number(us[0].saldo || 0) : 0;
-        await sb("PATCH", `users?id=eq.${userId}`, { saldo: atual + Number(meta.valor || 0) });
-        await logPagamento("recarga_creditada", { user_id: userId, valor: meta.valor, payment_id: data.id });
+        await sb("PATCH", `users?id=eq.${userId}`, { saldo: atual + credito });
+        await logPagamento("recarga_creditada", { user_id: userId, valor_pago: bruto, credito, payment_id: data.id });
         return ok({ ok: true });
       }
 
@@ -450,7 +455,7 @@ module.exports = async (req, res) => {
         return ok({ ok: true });
       }
 
-      const expira = plano === "mensal" ? new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() : null;
+      const expira = plano === "mensal" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
       await sb("PATCH", `users?id=eq.${userId}`, {
         plano: plano === "mensal" ? "mensal" : "vitalicio",
         plano_expira_em: expira,
@@ -713,7 +718,7 @@ module.exports = async (req, res) => {
     if (!admin || !admin.is_admin) return err(403, "Acesso negado");
     const { user_id, plano } = body;
     if (!user_id || !plano) return err(400, "Parâmetros obrigatórios");
-    const expira = plano === "mensal" ? new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString() : null;
+    const expira = plano === "mensal" ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null;
     await sb("PATCH", `users?id=eq.${user_id}`, { plano, plano_expira_em: expira });
     await logPagamento("admin_alterou_plano", { admin_id: admin.id, user_id, plano });
     return ok({ ok: true });
