@@ -16,6 +16,9 @@ const LEGENDA_CUSTO_MIN = Number(process.env.LEGENDA_CUSTO_MIN || 0.02);
 const LEGENDA_MARGEM = Number(process.env.LEGENDA_MARGEM || 2);
 const PRECO_LEGENDA_MIN = LEGENDA_CUSTO_MIN * LEGENDA_MARGEM;
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
+const LIMITE_VIDEOS_SEMANA = 15; // VideoMix: vídeos por semana no plano gratuito
+const RESEND_API_KEY = process.env.RESEND_API_KEY; // envio de e-mail (recuperação de senha)
+const EMAIL_FROM = process.env.EMAIL_FROM || "Auto11Labs <onboarding@resend.dev>";
 
 if (!SESSION_SECRET) {
   console.error("AVISO: SESSION_SECRET não configurado. Defina essa env var antes de ir para produção.");
@@ -102,6 +105,61 @@ function pegarToken(req) {
   return auth.startsWith("Bearer ") ? auth.slice(7) : null;
 }
 
+// ── Semana ISO (ex: "2026-W28") — referência do limite semanal de vídeos ──
+function semanaISO(d = new Date()) {
+  const dt = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dia = dt.getUTCDay() || 7;
+  dt.setUTCDate(dt.getUTCDate() + 4 - dia);
+  const ano = dt.getUTCFullYear();
+  const semana = Math.ceil((((dt - Date.UTC(ano, 0, 1)) / 86400000) + 1) / 7);
+  return `${ano}-W${String(semana).padStart(2, "0")}`;
+}
+
+// ── Recuperação de senha (token assinado; expira em 1h e vale só até a senha mudar) ──
+// O token carrega um fragmento do hash da senha atual: ao redefinir, o hash muda
+// e o mesmo link deixa de valer (uso único, sem precisar de tabela no banco).
+function tokenRecuperacao(user) {
+  const payload = {
+    uid: user.id,
+    exp: Date.now() + 60 * 60 * 1000,
+    ph: crypto.createHash("sha256").update(String(user.senha || "")).digest("hex").slice(0, 12),
+  };
+  const json = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const assinatura = crypto.createHmac("sha256", (SESSION_SECRET || "dev-secret-inseguro") + "|reset")
+    .update(json).digest("base64url");
+  return `${json}.${assinatura}`;
+}
+
+function verificarTokenRecuperacao(token) {
+  if (!token || typeof token !== "string" || !token.includes(".")) return null;
+  const [json, assinatura] = token.split(".");
+  const esperada = crypto.createHmac("sha256", (SESSION_SECRET || "dev-secret-inseguro") + "|reset")
+    .update(json).digest("base64url");
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(assinatura), Buffer.from(esperada))) return null;
+    const payload = JSON.parse(Buffer.from(json, "base64url").toString());
+    if (!payload.uid || !payload.exp || Date.now() > payload.exp) return null;
+    return payload;
+  } catch { return null; }
+}
+
+// ── E-mail transacional via Resend (RESEND_API_KEY) ──────
+async function enviarEmail(para, assunto, html) {
+  if (!RESEND_API_KEY) return { ok: false, erro: "RESEND_API_KEY não configurado" };
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: EMAIL_FROM, to: [para], subject: assunto, html }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) return { ok: false, erro: (data && data.message) || ("HTTP " + r.status) };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, erro: e.message };
+  }
+}
+
 // ── Handler principal ─────────────────────────────────────
 module.exports = async (req, res) => {
   // CORS restrito ao próprio site (requisições do app são same-origin de qualquer forma)
@@ -133,7 +191,13 @@ module.exports = async (req, res) => {
   }
 
   function publicUser(user) {
-    return { id: user.id, email: user.email, plano: user.plano, audios_mes: user.audios_mes, is_admin: user.is_admin, saldo: Number(user.saldo || 0) };
+    // videos_semana zera automaticamente quando vira a semana ISO
+    const semana = semanaISO();
+    return {
+      id: user.id, email: user.email, plano: user.plano, audios_mes: user.audios_mes,
+      is_admin: user.is_admin, saldo: Number(user.saldo || 0),
+      videos_semana: user.semana_referencia === semana ? (user.videos_semana || 0) : 0,
+    };
   }
 
   // ── POST /cadastrar ───────────────────────────────────
@@ -201,6 +265,52 @@ module.exports = async (req, res) => {
     return ok({ ok: true, token: emitirToken(user.id), user: publicUser(user) });
   }
 
+  // ── POST /esqueci-senha — envia link de redefinição por e-mail ──
+  if (path === "esqueci-senha" && req.method === "POST") {
+    const { email } = body;
+    if (!email) return err(400, "Informe o e-mail");
+    // Resposta é sempre a mesma para não revelar se o e-mail existe no banco
+    const respostaGenerica = { ok: true };
+    const { data: users } = await sb("GET", `users?email=eq.${encodeURIComponent(email)}&select=*`);
+    if (!users || !users[0]) return ok(respostaGenerica);
+    const alvo = users[0];
+    const token = tokenRecuperacao(alvo);
+    const link = `${SITE_URL}/?recuperar=${encodeURIComponent(token)}`;
+    const envio = await enviarEmail(
+      alvo.email,
+      "Redefinir senha — Auto11Labs",
+      `<div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+        <h2>Redefinir sua senha</h2>
+        <p>Recebemos um pedido para redefinir a senha da sua conta no Auto11Labs.</p>
+        <p><a href="${link}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none;font-weight:bold">Criar nova senha</a></p>
+        <p style="font-size:12px;color:#666">O link vale por 1 hora e só pode ser usado uma vez.<br>Se você não pediu isso, ignore este e-mail — sua senha continua a mesma.</p>
+      </div>`
+    );
+    if (!envio.ok) {
+      await logPagamento("recuperacao_email_erro", { user_id: alvo.id }, envio.erro);
+      return err(503, "Envio de e-mail não configurado no servidor. Contate o suporte.");
+    }
+    await logPagamento("recuperacao_enviada", { user_id: alvo.id });
+    return ok(respostaGenerica);
+  }
+
+  // ── POST /redefinir-senha — troca a senha usando o token do e-mail ──
+  if (path === "redefinir-senha" && req.method === "POST") {
+    const { token, senha } = body;
+    if (!token || !senha) return err(400, "Parâmetros obrigatórios");
+    if (senha.length < 6) return err(400, "Senha deve ter pelo menos 6 caracteres");
+    const payload = verificarTokenRecuperacao(token);
+    if (!payload) return err(400, "Link inválido ou expirado. Peça um novo em 'Esqueci minha senha'.");
+    const { data: users } = await sb("GET", `users?id=eq.${payload.uid}&select=*`);
+    if (!users || !users[0]) return err(400, "Link inválido");
+    const phAtual = crypto.createHash("sha256").update(String(users[0].senha || "")).digest("hex").slice(0, 12);
+    if (phAtual !== payload.ph) return err(400, "Este link já foi usado. Peça um novo em 'Esqueci minha senha'.");
+    const hash = await bcrypt.hash(senha, 10);
+    await sb("PATCH", `users?id=eq.${payload.uid}`, { senha: hash });
+    await logPagamento("senha_redefinida", { user_id: payload.uid });
+    return ok({ ok: true });
+  }
+
   // ── GET /me (revalida sessão/recupera dados atuais) ───
   if (path === "me" && req.method === "GET") {
     const user = await usuarioAutenticado();
@@ -218,6 +328,27 @@ module.exports = async (req, res) => {
     const novoTotal = (user.audios_mes || 0) + 1;
     await sb("PATCH", `users?id=eq.${user.id}`, { audios_mes: novoTotal });
     return ok({ ok: true, audios_mes: novoTotal, restante: user.plano === "gratuito" ? LIMITE_GRATUITO - novoTotal : null });
+  }
+
+  // ── POST /registrar-video — controle do VideoMix (15 vídeos/semana no gratuito) ──
+  if (path === "registrar-video" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    if (user.plano !== "gratuito") return ok({ ok: true, videos_semana: null, restante: null });
+
+    const semana = semanaISO();
+    const usados = user.semana_referencia === semana ? (user.videos_semana || 0) : 0;
+    if (usados >= LIMITE_VIDEOS_SEMANA) {
+      return err(403, `Limite semanal atingido (${LIMITE_VIDEOS_SEMANA} vídeos/semana no plano gratuito). Faça upgrade para gerar sem limites.`);
+    }
+    const novo = usados + 1;
+    const upd = await sb("PATCH", `users?id=eq.${user.id}`, { videos_semana: novo, semana_referencia: semana });
+    if (!upd.ok) {
+      // Banco ainda sem as colunas (SQL não executado): não trava a produção, só registra
+      await logPagamento("registrar_video_erro", { user_id: user.id, resposta: upd.data });
+      return ok({ ok: true, videos_semana: null, restante: null });
+    }
+    return ok({ ok: true, videos_semana: novo, restante: LIMITE_VIDEOS_SEMANA - novo });
   }
 
   // ── POST /criar-pagamento ─────────────────────────────
@@ -452,6 +583,43 @@ module.exports = async (req, res) => {
     }
   }
 
+  // ── POST /gerar-copies — N variações da copy a partir da transcrição de um vídeo (Groq) ──
+  if (path === "gerar-copies" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    const texto = String(body.texto || "").slice(0, 4000);
+    const n = Math.max(1, Math.min(10, parseInt(body.n) || 3));
+    if (!texto || texto.length < 20) return err(400, "Transcrição muito curta para gerar variações");
+    const GKEY = process.env.GROQ_API_KEY;
+    if (!GKEY) return err(503, "IA de copies não configurada (defina GROQ_API_KEY)");
+    try {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${GKEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.9,
+          max_tokens: 2200,
+          messages: [
+            { role: "system", content: `Você é copywriter de criativos para TikTok/Reels. Receberá a transcrição da narração de um anúncio em vídeo. Gere ${n} VARIAÇÕES da copy: mesmo produto/oferta e mesmo idioma, mas com ganchos, ângulos e CTAs diferentes entre si. Cada variação deve ser um texto corrido pronto para narração (sem títulos, sem hashtags, sem emojis, sem marcações), com tamanho parecido ao original. Responda SOMENTE um array JSON de ${n} strings.` },
+            { role: "user", content: texto },
+          ],
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) return err(502, (data.error && data.error.message) || "Erro na IA de copies");
+      let copies = [];
+      try {
+        const m = String((data.choices && data.choices[0].message.content) || "").match(/\[[\s\S]*\]/);
+        if (m) copies = JSON.parse(m[0]).filter((t) => typeof t === "string" && t.trim().length > 10).slice(0, n);
+      } catch {}
+      if (!copies.length) return err(502, "A IA não retornou copies válidas — tente de novo");
+      return ok({ ok: true, copies });
+    } catch (e) {
+      return err(500, "Erro ao gerar copies: " + e.message);
+    }
+  }
+
   // ── GET /pexels — banco de vídeos grátis (stock) p/ completar a timeline ──
   if (path === "pexels" && req.method === "GET") {
     const user = await usuarioAutenticado();
@@ -509,11 +677,14 @@ module.exports = async (req, res) => {
       const data = await r.json();
       if (!r.ok) return err(502, (data.error && data.error.message) || "Erro na transcrição");
       const dur = Number(data.duration) || Number(estDur) || 0;
-      const custo = (dur / 60) * PRECO_LEGENDA_MIN;
-      const novoSaldo = Math.max(0, saldo - custo);
-      await sb("PATCH", `users?id=eq.${user.id}`, { saldo: novoSaldo });
       const words = (data.words || []).map((w) => ({ word: w.word, start: w.start, end: w.end }));
       const segments = (data.segments || []).map((s) => ({ start: s.start, end: s.end, text: (s.text || "").trim() }));
+      // Não cobra quando nenhuma fala foi reconhecida (ex: áudio só com música) —
+      // permite que o front tente de novo com outro processamento sem custo duplo
+      const temFala = words.length > 0 || segments.some((s) => (s.text || "").length > 2);
+      const custo = temFala ? (dur / 60) * PRECO_LEGENDA_MIN : 0;
+      const novoSaldo = Math.max(0, saldo - custo);
+      if (custo > 0) await sb("PATCH", `users?id=eq.${user.id}`, { saldo: novoSaldo });
       return ok({ ok: true, words, segments, custo, saldo: novoSaldo, dur });
     } catch (e) {
       return err(500, "Erro ao transcrever: " + e.message);
@@ -555,6 +726,25 @@ module.exports = async (req, res) => {
     const { user_id } = body;
     if (!user_id) return err(400, "Parâmetros obrigatórios");
     await sb("PATCH", `users?id=eq.${user_id}`, { audios_mes: 0 });
+    return ok({ ok: true });
+  }
+
+  // ── POST /admin/excluir-usuario — apaga a conta e os dados vinculados ──
+  if (path === "admin/excluir-usuario" && req.method === "POST") {
+    const admin = await usuarioAutenticado();
+    if (!admin || !admin.is_admin) return err(403, "Acesso negado");
+    const { user_id } = body;
+    if (!user_id) return err(400, "Parâmetros obrigatórios");
+    if (user_id === admin.id) return err(400, "Você não pode excluir a própria conta de admin");
+    const { data: alvo } = await sb("GET", `users?id=eq.${user_id}&select=id,email,is_admin`);
+    if (!alvo || !alvo[0]) return err(404, "Usuário não encontrado");
+    if (alvo[0].is_admin) return err(403, "Não é possível excluir outro admin");
+    // Apaga primeiro os registros que referenciam o usuário (FK)
+    await sb("DELETE", `projetos?user_id=eq.${user_id}`);
+    await sb("DELETE", `pagamentos?user_id=eq.${user_id}`);
+    const del = await sb("DELETE", `users?id=eq.${user_id}`);
+    if (!del.ok) return err(500, "Erro ao excluir: " + ((del.data && del.data.message) || del.status));
+    await logPagamento("admin_excluiu_usuario", { admin_id: admin.id, user_id, email: alvo[0].email });
     return ok({ ok: true });
   }
 

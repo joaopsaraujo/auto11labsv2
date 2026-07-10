@@ -3,6 +3,8 @@
 ```sql
 ALTER TABLE users ADD COLUMN IF NOT EXISTS ip_cadastro TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS saldo NUMERIC DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS videos_semana INT DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS semana_referencia TEXT;
 
 CREATE TABLE IF NOT EXISTS logs_pagamento (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -72,3 +74,13 @@ CREATE POLICY "all" ON projetos FOR ALL USING (true);
 ```sql
 ALTER TABLE users ADD COLUMN IF NOT EXISTS saldo NUMERIC DEFAULT 0;
 ```
+
+## Limite semanal do VideoMix (plano gratuito: 15 vídeos/semana)
+
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS videos_semana INT DEFAULT 0;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS semana_referencia TEXT;
+```
+
+> Sem essas colunas o site continua funcionando, mas o limite semanal
+> não é aplicado (o erro fica registrado em `logs_pagamento`).

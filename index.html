@@ -551,6 +551,52 @@ tr:hover td{background:var(--surface2)}
 .btn-sm-success{background:rgba(34,197,94,.1);color:var(--success)}.btn-sm-success:hover{background:rgba(34,197,94,.2)}
 .search-bar{width:100%;max-width:900px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-size:14px;outline:none;font-family:'Manrope',sans-serif}
 .search-bar:focus{border-color:var(--accent)}
+/* ══ HOME 2.0 — grade de ferramentas ══ */
+.home-hero{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 24px 56px;gap:42px;position:relative;overflow:hidden;background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(91,124,250,.08) 0%, transparent 60%)}
+.home-hero::before,.home-hero::after{content:'';position:absolute;border-radius:50%;filter:blur(90px);opacity:.14;pointer-events:none;animation:blobFloat 18s ease-in-out infinite}
+.home-hero::before{width:520px;height:520px;background:radial-gradient(circle,#2563eb 0%,transparent 65%);top:-160px;left:6%}
+.home-hero::after{width:480px;height:480px;background:radial-gradient(circle,#7c3aed 0%,transparent 65%);bottom:-150px;right:4%;animation-delay:-9s}
+@keyframes blobFloat{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(46px,28px) scale(1.14)}}
+.home-kicker{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:12px}
+.home-title{font-size:34px;font-weight:800;letter-spacing:-1px;background:linear-gradient(120deg,#ffffff 20%,#a8b6fd 70%,#7c93fb 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:18px;width:100%;max-width:1120px;position:relative;z-index:1}
+.tool-card{--tc:#3b82f6;--tc-soft:rgba(59,130,246,.16);--tc-b1:rgba(59,130,246,.35);--tc-b2:rgba(59,130,246,.08);position:relative;border-radius:22px;padding:32px 24px 26px;cursor:pointer;overflow:hidden;background:rgba(255,255,255,.015);transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s;animation:cardIn .6s cubic-bezier(.22,1,.36,1) both}
+.tool-card:nth-child(1){animation-delay:.05s}
+.tool-card:nth-child(2){animation-delay:.13s}
+.tool-card:nth-child(3){animation-delay:.21s}
+.tool-card:nth-child(4){animation-delay:.29s}
+@keyframes cardIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.tool-card::before{content:'';position:absolute;inset:0;border-radius:22px;background:radial-gradient(ellipse 130% 95% at 50% 112%, var(--tc-soft) 0%, transparent 62%);pointer-events:none;opacity:.85;transition:opacity .25s}
+.tool-card::after{content:'';position:absolute;inset:0;border-radius:22px;padding:1px;background:linear-gradient(150deg,var(--tc-b1) 0%,transparent 45%,var(--tc-b2) 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.tool-card:hover{transform:translateY(-7px);box-shadow:0 26px 64px -14px var(--tc-soft),0 0 0 1px var(--tc-soft)}
+.tool-card:hover::before{opacity:1}
+.tool-card .shine{position:absolute;top:0;left:-85%;width:55%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.05),transparent);transform:skewX(-18deg);transition:left .65s ease;pointer-events:none;z-index:2}
+.tool-card:hover .shine{left:135%}
+.tool-ic{width:74px;height:82px;margin:0 auto 16px;transition:transform .3s cubic-bezier(.22,1,.36,1);filter:drop-shadow(0 0 16px var(--tc-soft))}
+.tool-card:hover .tool-ic{transform:scale(1.08) translateY(-2px)}
+.tool-name{font-size:19px;font-weight:800;letter-spacing:-.3px;margin-bottom:6px;color:#eef2ff;text-align:center}
+.tool-badge{font-size:8px;background:rgba(251,191,36,.16);color:var(--gold);padding:2px 7px;border-radius:999px;font-weight:800;vertical-align:middle;margin-left:7px;letter-spacing:.5px}
+.tool-sep{height:1px;background:linear-gradient(90deg,transparent,var(--tc-soft),transparent);margin:13px 0}
+.tool-sub{font-size:12.5px;color:var(--muted2);min-height:20px;display:flex;align-items:center;justify-content:center;gap:3px;text-align:center}
+.tool-cursor{display:inline-block;width:1px;height:13px;background:var(--tc);border-radius:1px;animation:blink .7s step-end infinite;opacity:.8;flex-shrink:0}
+@media(max-width:1120px){.tool-grid{grid-template-columns:repeat(2,minmax(230px,1fr));max-width:640px}}
+@media(max-width:560px){.tool-grid{grid-template-columns:1fr;max-width:340px}.home-title{font-size:27px}}
+
+/* ══ POLIMENTO GLOBAL ══ */
+::selection{background:rgba(91,124,250,.35)}
+.screen.active{animation:fadeIn .45s cubic-bezier(.22,1,.36,1) forwards}
+.topbar{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.sidebar-item.active{background:linear-gradient(90deg,rgba(91,124,250,.18),rgba(91,124,250,.04));color:var(--accent3);box-shadow:inset 2px 0 0 var(--accent2)}
+input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
+.btn-generate{position:relative;overflow:hidden;background:linear-gradient(135deg,#4f6ef7 0%,#7c5cfc 100%)}
+.btn-generate::after{content:'';position:absolute;top:0;left:-75%;width:50%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-18deg);transition:left .55s ease}
+.btn-generate:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 34px rgba(124,92,252,.35)}
+.btn-generate:hover:not(:disabled)::after{left:140%}
+.btn-download:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(52,211,153,.22)}
+.modal-overlay.visible .modal{animation:modalIn .32s cubic-bezier(.22,1,.36,1)}
+@keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+.voice-card:hover{transform:translateY(-1px)}
+.vm-btn:hover:not(:disabled){transform:translateY(-1px)}
 </style>
 </head>
 <body>
@@ -575,8 +621,14 @@ tr:hover td{background:var(--surface2)}
     <div class="sidebar-item" id="sidebarItem-videomix" onclick="irParaVideoMix()">
       <span class="sidebar-icon">🎬</span><span class="sidebar-label">VideoMix</span>
     </div>
+    <div class="sidebar-item" id="sidebarItem-legendar" onclick="irParaLegendar()">
+      <span class="sidebar-icon">💬</span><span class="sidebar-label">AutoLegenda</span>
+    </div>
     <div class="sidebar-item" id="sidebarItem-auto" onclick="irParaAuto()">
       <span class="sidebar-icon">🤖</span><span class="sidebar-label">Gerador Automático <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
+    <div class="sidebar-item" id="sidebarItem-criativos" onclick="irParaCriativos()">
+      <span class="sidebar-icon">✨</span><span class="sidebar-label">Clonador IA <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-item" id="sidebarItem-conta" onclick="irParaConta()">
@@ -677,6 +729,7 @@ tr:hover td{background:var(--surface2)}
       <div class="field"><label>Senha</label><input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
       <button class="btn btn-primary" onclick="login()" id="btnLogin">Entrar →</button>
       <div class="err-msg" id="errLogin"></div>
+      <div style="text-align:center;margin-top:12px"><a onclick="mostrarForm('formEsqueci')" style="font-size:12px;color:var(--muted2);cursor:pointer;text-decoration:none" onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted2)'">Esqueci minha senha</a></div>
     </div>
 
     <div class="form-section" id="formCadastro">
@@ -685,6 +738,22 @@ tr:hover td{background:var(--surface2)}
       <div class="field"><label>Confirmar senha</label><input type="password" id="cadSenha2" placeholder="Repita a senha" autocomplete="new-password" onkeydown="if(event.key==='Enter')cadastrar()"></div>
       <button class="btn btn-primary" onclick="cadastrar()" id="btnCadastrar">Criar conta →</button>
       <div class="err-msg" id="errCadastro"></div>
+    </div>
+
+    <div class="form-section" id="formEsqueci">
+      <div style="font-size:13px;color:var(--muted2);margin-bottom:14px;line-height:1.5">Informe o e-mail da sua conta e enviaremos um link para criar uma nova senha.</div>
+      <div class="field"><label>E-mail</label><input type="email" id="esqueciEmail" placeholder="voce@email.com" autocomplete="username" onkeydown="if(event.key==='Enter')esqueciSenha()"></div>
+      <button class="btn btn-primary" onclick="esqueciSenha()" id="btnEsqueci">Enviar link →</button>
+      <div class="err-msg" id="errEsqueci"></div>
+      <div style="text-align:center;margin-top:12px"><a onclick="mostrarForm('formLogin')" style="font-size:12px;color:var(--muted2);cursor:pointer;text-decoration:none" onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted2)'">← Voltar ao login</a></div>
+    </div>
+
+    <div class="form-section" id="formRedefinir">
+      <div style="font-size:13px;color:var(--muted2);margin-bottom:14px;line-height:1.5">Crie uma nova senha para a sua conta.</div>
+      <div class="field"><label>Nova senha</label><input type="password" id="redefSenha" placeholder="Mínimo 6 caracteres" autocomplete="new-password"></div>
+      <div class="field"><label>Confirmar nova senha</label><input type="password" id="redefSenha2" placeholder="Repita a senha" autocomplete="new-password" onkeydown="if(event.key==='Enter')redefinirSenha()"></div>
+      <button class="btn btn-primary" onclick="redefinirSenha()" id="btnRedefinir">Salvar nova senha →</button>
+      <div class="err-msg" id="errRedefinir"></div>
     </div>
   </div>
 </div>
@@ -703,26 +772,21 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
-  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;gap:48px;background:radial-gradient(ellipse 80% 60% at 50% 0%, rgba(91,124,250,.08) 0%, transparent 60%)">
+  <div class="home-hero">
 
-    <div style="text-align:center">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:2px;color:var(--muted2);margin-bottom:12px">Escolha uma ferramenta</div>
-      <h1 style="font-size:32px;font-weight:800;letter-spacing:-1px;color:var(--text)">O que você vai criar hoje?</h1>
+    <div style="text-align:center;position:relative;z-index:1">
+      <div class="home-kicker">Escolha uma ferramenta</div>
+      <h1 class="home-title">O que você vai criar hoje?</h1>
     </div>
 
-    <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;width:100%;max-width:720px">
+    <div class="tool-grid">
 
       <!-- CARD GERADOR DE ÁUDIOS -->
-      <div onclick="irParaApp()" style="flex:1;min-width:280px;max-width:320px;cursor:pointer;position:relative;border-radius:24px;padding:36px 28px;overflow:hidden;transition:transform .2s,box-shadow .2s;background:transparent"
-        onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 60px rgba(91,124,250,.2)'"
-        onmouseout="this.style.transform='none';this.style.boxShadow='none'">
-        <!-- Gradiente de fundo sem caixa -->
-        <div style="position:absolute;inset:0;border-radius:24px;background:radial-gradient(ellipse 120% 100% at 50% 100%, rgba(91,124,250,.18) 0%, rgba(91,124,250,.06) 50%, transparent 100%);pointer-events:none"></div>
-        <div style="position:absolute;inset:0;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(124,147,251,.15) 0%,rgba(124,147,251,.02) 50%,transparent 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none"></div>
-
+      <div class="tool-card" onclick="irParaApp()" style="--tc:#3b82f6;--tc-soft:rgba(59,130,246,.18);--tc-b1:rgba(59,130,246,.4);--tc-b2:rgba(59,130,246,.08)">
+        <span class="shine"></span>
         <div style="position:relative;z-index:1">
           <!-- Ícone SVG microfone vintage neon -->
-          <div style="width:80px;height:88px;margin:0 auto 20px">
+          <div class="tool-ic">
             <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs><filter id="gn"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
               <g filter="url(#gn)">
@@ -747,28 +811,18 @@ tr:hover td{background:var(--surface2)}
             </svg>
           </div>
 
-          <div style="font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:8px;color:#e8f0fe">Gerador de Áudios</div>
-
-          <!-- Linha separadora -->
-          <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(124,147,251,.3),transparent);margin:14px 0"></div>
-
-          <!-- Typewriter do card -->
-          <div style="font-size:13px;color:var(--muted2);height:20px;display:flex;align-items:center;gap:3px">
-            <span id="twAudio"></span><span style="display:inline-block;width:1px;height:14px;background:#3b82f6;border-radius:1px;animation:blink .7s step-end infinite;opacity:.8"></span>
-          </div>
+          <div class="tool-name">Gerador de Áudios</div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twAudio"></span><span class="tool-cursor"></span></div>
         </div>
       </div>
 
       <!-- CARD VIDEOMIX -->
-      <div onclick="irParaVideoMix()" style="flex:1;min-width:280px;max-width:320px;cursor:pointer;position:relative;border-radius:24px;padding:36px 28px;overflow:hidden;transition:transform .2s,box-shadow .2s;background:transparent"
-        onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 20px 60px rgba(91,124,250,.18)'"
-        onmouseout="this.style.transform='none';this.style.boxShadow='none'">
-        <div style="position:absolute;inset:0;border-radius:24px;background:radial-gradient(ellipse 120% 100% at 50% 100%, rgba(91,124,250,.18) 0%, rgba(91,124,250,.05) 50%, transparent 100%);pointer-events:none"></div>
-        <div style="position:absolute;inset:0;border-radius:24px;padding:1px;background:linear-gradient(135deg,rgba(124,147,251,.15) 0%,rgba(124,147,251,.02) 50%,transparent 100%);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none"></div>
-
+      <div class="tool-card" onclick="irParaVideoMix()" style="--tc:#8b5cf6;--tc-soft:rgba(139,92,246,.18);--tc-b1:rgba(139,92,246,.4);--tc-b2:rgba(139,92,246,.08)">
+        <span class="shine"></span>
         <div style="position:relative;z-index:1">
           <!-- Ícone SVG claquete + mic vintage neon azul -->
-          <div style="width:80px;height:88px;margin:0 auto 20px">
+          <div class="tool-ic">
             <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs><filter id="gn2"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
               <g filter="url(#gn2)">
@@ -796,13 +850,74 @@ tr:hover td{background:var(--surface2)}
             </svg>
           </div>
 
-          <div style="font-size:20px;font-weight:800;letter-spacing:-.3px;margin-bottom:8px;color:#e8f0fe">VideoMix</div>
+          <div class="tool-name">VideoMix</div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twVideo"></span><span class="tool-cursor"></span></div>
+        </div>
+      </div>
 
-          <div style="height:1px;background:linear-gradient(90deg,transparent,rgba(124,147,251,.25),transparent);margin:14px 0"></div>
-
-          <div style="font-size:13px;color:var(--muted2);height:20px;display:flex;align-items:center;gap:3px">
-            <span id="twVideo"></span><span style="display:inline-block;width:1px;height:14px;background:#3b82f6;border-radius:1px;animation:blink .7s step-end infinite;opacity:.8"></span>
+      <!-- CARD AUTOLEGENDA -->
+      <div class="tool-card" onclick="irParaLegendar()" style="--tc:#34d399;--tc-soft:rgba(52,211,153,.16);--tc-b1:rgba(52,211,153,.4);--tc-b2:rgba(52,211,153,.08)">
+        <span class="shine"></span>
+        <div style="position:relative;z-index:1">
+          <!-- Ícone SVG tela + legenda + ondas de voz (verde neon) -->
+          <div class="tool-ic">
+            <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><filter id="gn3"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g filter="url(#gn3)">
+                <!-- Tela vertical 9:16 -->
+                <rect x="20" y="6" width="40" height="68" rx="7" stroke="#34d399" stroke-width="2.2" fill="none"/>
+                <!-- Play -->
+                <path d="M36 22l12 7-12 7z" stroke="#6ee7b7" stroke-width="1.6" fill="none" stroke-linejoin="round" opacity=".75"/>
+                <!-- Bloco de legenda com palavra destacada -->
+                <rect x="26" y="46" width="28" height="9" rx="3" fill="rgba(52,211,153,.14)" stroke="#34d399" stroke-width="1.4"/>
+                <line x1="30" y1="50.5" x2="40" y2="50.5" stroke="#a7f3d0" stroke-width="2.2" stroke-linecap="round"/>
+                <line x1="43" y1="50.5" x2="50" y2="50.5" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" opacity=".5"/>
+                <!-- Segunda linha -->
+                <line x1="31" y1="62" x2="49" y2="62" stroke="#6ee7b7" stroke-width="1.7" stroke-linecap="round" opacity=".45"/>
+                <!-- Ondas de voz -->
+                <path d="M12 32c3 3 3 9 0 12" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/>
+                <path d="M7 28c5 5 5 15 0 20" stroke="#34d399" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".4"/>
+                <path d="M68 32c-3 3-3 9 0 12" stroke="#34d399" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".7"/>
+                <path d="M73 28c-5 5-5 15 0 20" stroke="#34d399" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".4"/>
+                <!-- Base -->
+                <line x1="30" y1="82" x2="50" y2="82" stroke="#34d399" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+              </g>
+            </svg>
           </div>
+          <div class="tool-name">AutoLegenda</div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twLeg"></span><span class="tool-cursor"></span></div>
+        </div>
+      </div>
+
+      <!-- CARD CLONADOR IA -->
+      <div class="tool-card" onclick="irParaCriativos()" style="--tc:#fbbf24;--tc-soft:rgba(251,191,36,.14);--tc-b1:rgba(251,191,36,.4);--tc-b2:rgba(251,191,36,.08)">
+        <span class="shine"></span>
+        <div style="position:relative;z-index:1">
+          <!-- Ícone SVG vídeos clonados + faíscas IA (dourado neon) -->
+          <div class="tool-ic">
+            <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><filter id="gn4"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g filter="url(#gn4)">
+                <!-- Cópias atrás -->
+                <rect x="8" y="20" width="34" height="56" rx="6" stroke="#fbbf24" stroke-width="1.5" fill="none" opacity=".28"/>
+                <rect x="17" y="13" width="34" height="56" rx="6" stroke="#fbbf24" stroke-width="1.7" fill="none" opacity=".5"/>
+                <!-- Vídeo principal -->
+                <rect x="26" y="6" width="36" height="60" rx="6" stroke="#fbbf24" stroke-width="2.2" fill="rgba(10,10,11,.72)"/>
+                <path d="M40 28l12 8-12 8z" stroke="#fde68a" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+                <!-- Faíscas IA -->
+                <path d="M66 10l1.6 4.4L72 16l-4.4 1.6L66 22l-1.6-4.4L60 16l4.4-1.6z" fill="#fde68a" opacity=".9"/>
+                <path d="M70 30l1 2.8 2.8 1-2.8 1-1 2.8-1-2.8-2.8-1 2.8-1z" fill="#fbbf24" opacity=".55"/>
+                <!-- Seta de multiplicação -->
+                <path d="M22 80c6 5 22 5 28 0" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" fill="none" opacity=".6"/>
+                <path d="M50 84l3-4-5-.6" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity=".6"/>
+              </g>
+            </svg>
+          </div>
+          <div class="tool-name">Clonador IA<span class="tool-badge">BETA</span></div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twClone"></span><span class="tool-cursor"></span></div>
         </div>
       </div>
 
@@ -1026,6 +1141,7 @@ tr:hover td{background:var(--surface2)}
       <div class="log-area" id="logArea"></div>
       <div id="tokenInfo" style="display:none;font-size:12px;color:var(--muted2);margin-top:12px;padding:10px 12px;background:rgba(124,147,251,.06);border:1px solid rgba(124,147,251,.2);border-radius:10px;line-height:1.7"></div>
       <button class="btn-download" id="btnDownload" onclick="baixarZip()">⬇️ Baixar ZIP</button>
+      <button class="btn-download" id="btnUsarVideoMix" onclick="enviarAudiosParaVideoMix()" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);margin-top:8px">🎬 Usar no VideoMix (sem baixar)</button>
       <button class="btn-download" id="btnDriveAudio" onclick="vmDriveZipAudios()" style="background:rgba(124,147,251,.14);border:1px solid rgba(124,147,251,.3);color:var(--accent3);margin-top:8px">☁ Enviar ZIP ao Drive</button>
       <div id="audioDriveLink" style="display:none;font-size:12px;margin-top:8px;text-align:center"></div>
       <!-- Player inline -->
@@ -1414,6 +1530,7 @@ tr:hover td{background:var(--surface2)}
         </div>
         <div id="vmEstCusto" style="font-size:10px;color:var(--muted2);margin-bottom:8px"></div>
         <div id="vmAudioPoolInfo" style="font-size:11px;color:var(--accent3);margin-bottom:8px;font-family:'JetBrains Mono',monospace">0 áudios → 0 vídeos</div>
+        <div id="vmLimiteInfo" style="display:none;font-size:10px;color:var(--muted2);margin-bottom:8px;line-height:1.5"></div>
         <div id="vmMissingBanner" style="display:none;font-size:10px;color:var(--warning);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:8px;margin-bottom:8px"></div>
         <button class="vm-btn vm-btn-blue" onclick="vmRandomizar()" id="vmBtnRand" disabled style="margin-bottom:8px">🔀 Randomizar agora</button>
         <button class="vm-btn vm-btn-green" onclick="vmGerarClick()" id="vmBtnGerar" disabled>⚡ Iniciar produção</button>
@@ -1549,7 +1666,7 @@ tr:hover td{background:var(--surface2)}
             <div id="vmChromaSimWrap" style="display:none;margin-top:6px">
               <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Intensidade <span id="vmChromaSimVal" style="color:var(--text);font-family:'JetBrains Mono',monospace"></span></div>
               <input type="range" class="vm-range" id="vmChromaSim" min="0.05" max="0.45" value="0.18" step="0.01" onmousedown="vmPushUndo()" oninput="vmUpdateChroma()">
-              <div style="font-size:10px;color:var(--muted2)">O fundo é removido no vídeo final (o preview mostra sem recorte).</div>
+              <div style="font-size:10px;color:var(--muted2)">O recorte aparece no preview (aproximado) e é aplicado com precisão no vídeo final.</div>
             </div>
             <label class="vm-check" style="margin-top:8px"><input type="checkbox" id="vmAlignEnd" onchange="vmToggleAlignEnd()"> 📌 Fixar no final do vídeo (sobre o último clipe)</label>
           </div>
@@ -1575,6 +1692,7 @@ tr:hover td{background:var(--surface2)}
           <span style="display:flex;gap:6px">
             <button id="vmDriveBtn" onclick="vmDriveConectar()" title="Conectar Google Drive" style="background:rgba(124,147,251,.12);border:1px solid rgba(124,147,251,.25);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ Conectar Drive</button>
             <button id="vmZipDriveBtn" onclick="vmDriveZipVideos()" title="Enviar todos os vídeos como 1 ZIP e gerar 1 link" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ ZIP → Drive</button>
+            <button onclick="lgReceberTodosDoVideoMix()" title="Enviar todos os vídeos gerados ao AutoLegenda (sem baixar)" style="background:rgba(124,147,251,.12);border:1px solid rgba(124,147,251,.25);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">💬 Legendar todos</button>
           </span>
         </div>
         <div id="vmOutputList"><div style="font-size:11px;color:var(--muted2);text-align:center">Aparecerão aqui</div></div>
@@ -1756,6 +1874,174 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
+<!-- LEGENDADOR (legenda vídeos prontos em lote) -->
+<div id="screenLegendar" class="screen">
+  <div style="display:flex;flex-direction:column;width:100%">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:none">💬</div>
+      <span class="topbar-name">AutoLegenda</span>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--muted2)" id="lgStatus">Pronto</span>
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="card" style="border-color:rgba(124,147,251,.25)">
+      <div style="font-size:13px;line-height:1.7;color:var(--muted2)">
+        <strong style="color:var(--text)">Legende vídeos prontos, em lote:</strong> envie os vídeos (ou mande direto do VideoMix com 1 clique),
+        a IA <strong style="color:var(--text)">isola a voz da música de fundo</strong>, transcreve a fala e queima a legenda animada estilo TikTok. Usa o Saldo IA por minuto de áudio.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎞 Vídeos para legendar</div>
+      <div class="vm-drop" style="margin:0 0 10px">
+        <input type="file" accept="video/mp4,video/*" multiple onchange="lgAddVideos(this.files);this.value=''">
+        <div style="font-size:18px;margin-bottom:4px">📁</div>
+        <div style="font-size:12px;color:var(--muted2)">Adicione vídeos <strong style="color:var(--accent2)">.mp4</strong> (pode selecionar vários)</div>
+      </div>
+      <div id="lgLista"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎨 Estilo da legenda</div>
+      <div style="display:flex;gap:8px">
+        <select id="lgCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px" title="Cor do destaque">
+          <option value="amarelo">🟡 Amarelo</option>
+          <option value="verde">🟢 Verde</option>
+          <option value="rosa">🩷 Rosa</option>
+          <option value="branco">⚪ Branco</option>
+        </select>
+        <select id="lgPos" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px" title="Posição">
+          <option value="baixo">Embaixo</option>
+          <option value="meio" selected>Meio</option>
+          <option value="centro">Centro</option>
+        </select>
+      </div>
+      <div class="info-tip" style="margin-top:10px">Idioma detectado automaticamente · otimizado para vídeos verticais 9:16 · Saldo IA: <strong id="lgSaldo" style="color:var(--success)">R$ 0,00</strong></div>
+    </div>
+
+    <button class="btn-generate" id="lgBtnGerar" onclick="lgGerarClick()">💬 Legendar vídeos</button>
+
+    <div class="progress-card card" id="lgProgressCard">
+      <div class="progress-header">
+        <span class="progress-label" id="lgProgressLabel">Gerando...</span>
+        <span class="progress-count" id="lgProgressCount">0 / 0</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="lgProgressFill"></div></div>
+      <button class="btn-download" id="lgBtnZip" onclick="lgBaixarZip()">⬇️ Baixar todos (ZIP)</button>
+      <div id="lgOutputList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- CRIATIVOS IA (BETA) — 1 vídeo de referência vira N criativos -->
+<div id="screenCriativos" class="screen">
+  <div style="display:flex;flex-direction:column;width:100%">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:none">✨</div>
+      <span class="topbar-name">Clonador IA <span style="font-size:9px;background:rgba(251,191,36,.18);color:var(--gold);padding:2px 8px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--muted2)" id="crStatus">Pronto</span>
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="card" style="border-color:rgba(251,191,36,.25)">
+      <div style="font-size:13px;line-height:1.7;color:var(--muted2)">
+        <strong style="color:var(--text)">Envie 1 vídeo e receba vários criativos:</strong> a IA detecta e
+        <strong style="color:var(--text)">isola a voz da narração (mesmo com música de fundo)</strong>, transcreve,
+        escreve variações da copy (gancho/ângulo/CTA diferentes), narra com a voz escolhida, remonta usando as cenas
+        do próprio vídeo e legenda se você quiser. Usa Saldo IA (transcrição) + créditos ElevenLabs (narração).
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 API Key ElevenLabs</div>
+      <div class="input-wrap">
+        <input type="password" id="crApiKey" placeholder="sk_..." autocomplete="off" onblur="salvarCacheApiKey(this.value.trim())">
+      </div>
+      <div class="info-tip">Usa a mesma key do Gerador de Áudios (preenchida automaticamente se já colou lá).</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎬 Vídeo de referência</div>
+      <div class="vm-drop" style="margin:0">
+        <input type="file" accept="video/mp4,video/*" onchange="crSetVideo(this)">
+        <div style="font-size:18px;margin-bottom:4px">📤</div>
+        <div style="font-size:12px;color:var(--muted2)">Envie o criativo original <strong style="color:var(--accent2)">.mp4</strong> (com narração)</div>
+      </div>
+      <div id="crVideoNome" style="display:none;font-size:12px;color:var(--success);margin-top:10px;font-family:'JetBrains Mono',monospace"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ Opções</div>
+      <div class="vm-flabel" style="margin-top:0">Quantidade de criativos</div>
+      <select id="crQtd" class="vm-num" style="font-family:'Manrope',sans-serif;margin-bottom:10px">
+        <option value="1">1 criativo</option>
+        <option value="3" selected>3 criativos</option>
+        <option value="5">5 criativos</option>
+        <option value="10">10 criativos</option>
+      </select>
+      <div class="vm-flabel">ID da voz (ElevenLabs)</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input type="text" id="crVoiceId" placeholder="ewn5JTa3lNPY8QVuZJi6" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif">
+        <button class="vm-tbtn" onclick="document.getElementById('crVoiceId').value='ewn5JTa3lNPY8QVuZJi6'">🇲🇽 Feminina</button>
+        <button class="vm-tbtn" onclick="document.getElementById('crVoiceId').value='83Nae6GFQiNslSbuzmE7'">🇧🇷 Eduardo</button>
+      </div>
+      <div class="vm-flabel">Modelo de voz</div>
+      <select id="crModel" class="vm-num" style="font-family:'Manrope',sans-serif;margin-bottom:10px">
+        <option value="eleven_turbo_v2_5" selected>Turbo v2.5 — 🌱 Eco (0,5 crédito/char)</option>
+        <option value="eleven_multilingual_v2">Multilingual v2 — qualidade máxima</option>
+        <option value="eleven_v3">Eleven v3 — mais expressivo</option>
+      </select>
+      <div class="vm-flabel">Duração de cada cena</div>
+      <select id="crClipLen" class="vm-num" style="font-family:'Manrope',sans-serif;margin-bottom:10px">
+        <option value="4">~4 segundos (mais cortes, dinâmico)</option>
+        <option value="5" selected>~5 segundos</option>
+        <option value="7">~7 segundos (mais calmo)</option>
+      </select>
+      <label class="vm-check"><input type="checkbox" id="crLegenda" checked> Legenda automática animada (usa saldo)</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <select id="crCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Cor do destaque">
+          <option value="amarelo">🟡 Amarelo</option>
+          <option value="verde">🟢 Verde</option>
+          <option value="rosa">🩷 Rosa</option>
+          <option value="branco">⚪ Branco</option>
+        </select>
+        <select id="crPos" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Posição">
+          <option value="baixo">Embaixo</option>
+          <option value="meio" selected>Meio</option>
+          <option value="centro">Centro</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-generate" id="crBtnGerar" onclick="crGerarClick()">✨ Gerar criativos</button>
+
+    <div class="progress-card card" id="crProgressCard">
+      <div class="progress-header">
+        <span class="progress-label" id="crProgressLabel">Gerando...</span>
+        <span class="progress-count" id="crProgressCount">0 / 0</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="crProgressFill"></div></div>
+      <div class="log-area" id="crLogArea"></div>
+      <button class="btn-download" id="crBtnZip" onclick="crBaixarZip()">⬇️ Baixar todos (ZIP)</button>
+      <div id="crOutputList" style="margin-top:12px;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+  </div>
+</div>
+
 <!-- MODAL PAGAMENTO -->
 <div class="modal-overlay" id="modalPagamento">
   <div class="modal">
@@ -1883,6 +2169,16 @@ const TW_VIDEO = [
   'Randomize e gere vídeos únicos.',
   'Seu criativo pronto para o TikTok.',
 ];
+const TW_LEG = [
+  'Legendas animadas em 1 clique.',
+  'A IA isola a voz da música.',
+  'Estilo TikTok, direto no vídeo.',
+];
+const TW_CLONE = [
+  '1 vídeo vira 10 criativos.',
+  'A IA reescreve a copy e narra.',
+  'Escale seus anúncios sem esforço.',
+];
 let twAudioIdx=0,twAudioChar=0,twAudioAp=false;
 let twVideoIdx=0,twVideoChar=0,twVideoAp=false;
 
@@ -1907,6 +2203,8 @@ window.addEventListener('load', () => {
   setTimeout(twTick, 600);
   setTimeout(() => twCardTick('twAudio', TW_AUDIO, {idx:0,char:0,ap:false}, ()=>{}), 800);
   setTimeout(() => twCardTick('twVideo', TW_VIDEO, {idx:0,char:0,ap:false}, ()=>{}), 1200);
+  setTimeout(() => twCardTick('twLeg', TW_LEG, {idx:0,char:0,ap:false}, ()=>{}), 1600);
+  setTimeout(() => twCardTick('twClone', TW_CLONE, {idx:0,char:0,ap:false}, ()=>{}), 2000);
 });
 
 let user = null;
@@ -1926,7 +2224,16 @@ window.onload = async () => {
   const params = new URLSearchParams(location.search);
   const pagamentoSucesso = params.get('pagamento') === 'sucesso';
   const recargaSucesso = params.get('recarga') === 'sucesso';
-  if (params.has('pagamento') || params.has('recarga')) history.replaceState({}, '', '/');
+  const recToken = params.get('recuperar');
+  if (params.has('pagamento') || params.has('recarga') || params.has('recuperar')) history.replaceState({}, '', '/');
+
+  // Link de redefinição de senha (vindo do e-mail): mostra o formulário e para aqui
+  if (recToken) {
+    window.__recToken = recToken;
+    mostrarTela('screenLogin');
+    mostrarForm('formRedefinir');
+    return;
+  }
 
   const saved = localStorage.getItem(USER_KEY);
   const token = localStorage.getItem(TOKEN_KEY);
@@ -1958,10 +2265,58 @@ window.onload = async () => {
 function setTab(tab, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('formLogin').classList.toggle('active', tab === 'login');
-  document.getElementById('formCadastro').classList.toggle('active', tab === 'cadastro');
-  document.getElementById('errLogin').style.display = 'none';
-  document.getElementById('errCadastro').style.display = 'none';
+  mostrarForm(tab === 'login' ? 'formLogin' : 'formCadastro');
+}
+
+// Mostra apenas um dos formulários da tela de login (login/cadastro/esqueci/redefinir)
+function mostrarForm(id) {
+  document.querySelectorAll('.form-section').forEach(f => f.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.err-msg').forEach(e => e.style.display = 'none');
+}
+
+// ── ESQUECI MINHA SENHA ───────────────────────────────────
+async function esqueciSenha() {
+  const email = document.getElementById('esqueciEmail').value.trim();
+  const errEl = document.getElementById('errEsqueci');
+  errEl.style.display = 'none';
+  if (!email) { errEl.textContent = 'Informe seu e-mail.'; errEl.style.display = 'block'; return; }
+  const btn = document.getElementById('btnEsqueci');
+  btn.disabled = true; btn.textContent = 'Enviando...';
+  try {
+    const r = await callApi('esqueci-senha', { email });
+    if (r.ok) {
+      toast('Se este e-mail estiver cadastrado, você receberá o link em instantes. Confira também o spam.', 'success', 8000);
+      mostrarForm('formLogin');
+    } else {
+      errEl.textContent = r.erro || 'Erro ao enviar.'; errEl.style.display = 'block';
+    }
+  } catch { errEl.textContent = 'Erro de conexão.'; errEl.style.display = 'block'; }
+  btn.disabled = false; btn.textContent = 'Enviar link →';
+}
+
+async function redefinirSenha() {
+  const senha = document.getElementById('redefSenha').value;
+  const senha2 = document.getElementById('redefSenha2').value;
+  const errEl = document.getElementById('errRedefinir');
+  errEl.style.display = 'none';
+  if (!senha || senha.length < 6) { errEl.textContent = 'Senha deve ter pelo menos 6 caracteres.'; errEl.style.display = 'block'; return; }
+  if (senha !== senha2) { errEl.textContent = 'As senhas não coincidem.'; errEl.style.display = 'block'; return; }
+  if (!window.__recToken) { errEl.textContent = 'Link inválido — peça um novo em "Esqueci minha senha".'; errEl.style.display = 'block'; return; }
+  const btn = document.getElementById('btnRedefinir');
+  btn.disabled = true; btn.textContent = 'Salvando...';
+  try {
+    const r = await callApi('redefinir-senha', { token: window.__recToken, senha });
+    if (r.ok) {
+      window.__recToken = null;
+      toast('Senha redefinida! Entre com a nova senha.', 'success', 6000);
+      mostrarForm('formLogin');
+    } else {
+      errEl.textContent = r.erro || 'Erro ao redefinir.'; errEl.style.display = 'block';
+    }
+  } catch { errEl.textContent = 'Erro de conexão.'; errEl.style.display = 'block'; }
+  btn.disabled = false; btn.textContent = 'Salvar nova senha →';
 }
 
 async function login() {
@@ -2115,6 +2470,7 @@ function irParaVideoMix() {
   mostrarTela('screenVideoMix');
   setSidebarActive('videomix');
   vmCarregarSaldo();
+  vmAtualizarLimiteInfo();
 }
 
 function irParaAuto() {
@@ -2122,6 +2478,22 @@ function irParaAuto() {
   setSidebarActive('auto');
   const k = localStorage.getItem(API_KEY_CACHE);
   const el = document.getElementById('agApiKey');
+  if (k && el && !el.value) el.value = k;
+  vmCarregarSaldo();
+}
+
+function irParaLegendar() {
+  mostrarTela('screenLegendar');
+  setSidebarActive('legendar');
+  vmCarregarSaldo();
+  lgRender();
+}
+
+function irParaCriativos() {
+  mostrarTela('screenCriativos');
+  setSidebarActive('criativos');
+  const k = localStorage.getItem(API_KEY_CACHE);
+  const el = document.getElementById('crApiKey');
   if (k && el && !el.value) el.value = k;
   vmCarregarSaldo();
 }
@@ -2334,6 +2706,7 @@ function renderUsers(users) {
           <button class="btn-sm btn-sm-gold" onclick="alterarPlano('${u.id}','vitalicio')">Vitalício</button>
           <button class="btn-sm btn-sm-danger" onclick="alterarPlano('${u.id}','gratuito')">Free</button>
           <button class="btn-sm btn-sm-success" onclick="resetarUso('${u.id}')">Reset</button>
+          ${u.is_admin ? '' : `<button class="btn-sm btn-sm-danger" title="Excluir conta definitivamente" onclick="excluirUsuario('${u.id}','${u.email}')">🗑</button>`}
         </div>
       </td>
     </tr>
@@ -2347,6 +2720,14 @@ async function alterarPlano(userId, plano) {
 
 async function resetarUso(userId) {
   await callApiAuth('admin/resetar-uso', { user_id: userId });
+  carregarAdmin();
+}
+
+async function excluirUsuario(userId, email) {
+  if (!confirm(`Excluir DEFINITIVAMENTE a conta ${email}?\n\nOs projetos e o histórico de pagamentos do usuário também serão apagados. Essa ação não tem volta.`)) return;
+  const r = await callApiAuth('admin/excluir-usuario', { user_id: userId });
+  if (r.ok) toast('Usuário excluído', 'success');
+  else toast(r.erro || 'Erro ao excluir', 'error', 5000);
   carregarAdmin();
 }
 
@@ -2560,15 +2941,25 @@ async function getTextos() {
 }
 
 async function extrairDocx(file, lang) {
-  const JSZipLocal = new JSZip();
-  const zip = await JSZipLocal.loadAsync(file);
-  const xmlStr = await zip.file('word/document.xml').async('string');
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlStr, 'text/xml');
-  const paras = xmlDoc.querySelectorAll('p');
+  // Lê os parágrafos do .docx (mantendo os vazios, que marcam separação de blocos)
+  let paras = [];
+  try {
+    const zip = await new JSZip().loadAsync(file);
+    const entry = zip.file('word/document.xml');
+    if (!entry) throw new Error('estrutura de .docx não reconhecida');
+    const xmlStr = await entry.async('string');
+    const xmlDoc = new DOMParser().parseFromString(xmlStr, 'text/xml');
+    xmlDoc.querySelectorAll('p').forEach(p => {
+      paras.push(Array.from(p.querySelectorAll('t')).map(n => n.textContent).join('').trim());
+    });
+  } catch (e) {
+    toast('Não foi possível ler o .docx (' + e.message + '). Salve o arquivo novamente no Word/Docs ou use .txt.', 'error', 7000);
+    return [];
+  }
+
+  // 1) Modo template: documento com seções PORTUGUÊS/ESPAÑOL e blocos CRIATIVO
+  const linhas = paras.filter(Boolean);
   const flag = lang === 'es' ? 'ESPAÑOL' : 'PORTUGUÊS';
-  const linhas = [];
-  paras.forEach(p => { const t = Array.from(p.querySelectorAll('t')).map(n => n.textContent).join('').trim(); if (t) linhas.push(t); });
   const textos = []; let capturando = false, buffer = [];
   for (const linha of linhas) {
     if (linha.includes(flag)) { capturando = true; buffer = []; continue; }
@@ -2580,7 +2971,17 @@ async function extrairDocx(file, lang) {
     }
   }
   if (buffer.length) textos.push(buffer.join(' ').trim());
-  return textos;
+  if (textos.length) return textos;
+
+  // 2) Documento comum (sem o template): usa a mesma lógica do .txt —
+  //    separa por "---", por linha em branco, ou 1 parágrafo = 1 áudio
+  const raw = paras.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (!raw) return [];
+  let genericos;
+  if (/^\s*-{3,}\s*$/m.test(raw)) genericos = raw.split(/^\s*-{3,}\s*$/m).map(t => t.trim().replace(/\s+/g, ' ')).filter(Boolean);
+  else if (raw.includes('\n\n')) genericos = raw.split(/\n\n+/).map(t => t.trim().replace(/\s+/g, ' ')).filter(Boolean);
+  else genericos = raw.split(/\n/).map(t => t.trim()).filter(Boolean);
+  return genericos;
 }
 
 function log(msg, tipo = '') {
@@ -2634,6 +3035,7 @@ async function iniciarGeracao() {
   document.getElementById('logArea').innerHTML = '';
   document.getElementById('progressCard').classList.add('visible');
   document.getElementById('btnDownload').classList.remove('visible');
+  document.getElementById('btnUsarVideoMix').classList.remove('visible');
   document.getElementById('btnDriveAudio').classList.remove('visible');
   document.getElementById('audioDriveLink').style.display = 'none';
   const playerContainer = document.getElementById('audioPlayerContainer');
@@ -2723,6 +3125,7 @@ async function iniciarGeracao() {
     const btn = document.getElementById('btnDownload');
     btn.classList.add('visible');
     btn.textContent = `⬇️ Baixar ZIP — ${ok} áudios (${zipName}.zip)`;
+    document.getElementById('btnUsarVideoMix').classList.add('visible');
     document.getElementById('btnDriveAudio').classList.add('visible');
     document.getElementById('audioDriveLink').style.display = 'none';
     toast(`${ok} áudio${ok > 1 ? 's' : ''} gerado${ok > 1 ? 's' : ''} com sucesso!`, 'success');
@@ -3042,6 +3445,7 @@ let vmFfmpeg = null, vmFfmpegOk = false, vmFontOk = false;
 let vmDrag = null, vmBinDragId = null;
 let vmGerando = false, vmCancelar = false;
 const VM_FPS = 30, VM_W = 1080, VM_H = 1920;
+const VM_LOTE_FREE = 5, VM_SEMANA_FREE = 15; // plano gratuito: 5 vídeos/produção · 15/semana
 
 function vmUid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function vmSetStatus(m){ const el=document.getElementById('vmStatus'); if(el) el.textContent=m; }
@@ -3511,7 +3915,7 @@ function vmUpdateChroma(){
   c.chromaSim=parseFloat(document.getElementById('vmChromaSim').value)||0.18;
   document.getElementById('vmChromaSimWrap').style.display=c.chroma!=='none'?'block':'none';
   document.getElementById('vmChromaSimVal').textContent=Math.round(c.chromaSim*100)+'%';
-  vmRenderTimeline();
+  vmRenderTimeline(); vmSyncPreview(true); // atualiza o recorte no preview
 }
 function vmToggleAlignEnd(){
   const c=vmSelClip(); if(!c) return;
@@ -3687,8 +4091,12 @@ function vmRulerDown(e){
 // ── Preview ao vivo (multi-camada) ────────────────────────
 function vmRebuildStage(){
   const stage=document.getElementById('vmStage'); if(!stage) return;
-  stage.querySelectorAll('video,audio').forEach(m=>m.remove());
-  vmVLayers.forEach((layer,idx)=>{ const v=document.createElement('video'); v.playsInline=true; v.muted=true; v.preload='auto'; v.dataset.layer=layer.id; stage.appendChild(v); });
+  stage.querySelectorAll('video,audio,canvas').forEach(m=>m.remove());
+  vmVLayers.forEach((layer,idx)=>{
+    const v=document.createElement('video'); v.playsInline=true; v.muted=true; v.preload='auto'; v.dataset.layer=layer.id; stage.appendChild(v);
+    // canvas p/ preview do chroma key (recorte ao vivo nas camadas de sobreposição)
+    if(idx>0){ const cv=document.createElement('canvas'); cv.dataset.layer=layer.id; cv.style.display='none'; stage.appendChild(cv); }
+  });
   vmALayers.forEach(layer=>{ const a=document.createElement('audio'); a.preload='auto'; a.dataset.layer=layer.id; stage.appendChild(a); });
   const has=vmVLayers.some(l=>l.clips.length)||vmALayers.some(l=>l.clips.length);
   const ph=document.getElementById('vmPh'); if(ph) ph.style.display=has?'none':'flex';
@@ -3699,15 +4107,27 @@ function vmSyncPreview(seek){
   const stage=document.getElementById('vmStage'); if(!stage) return;
   vmVLayers.forEach((layer,idx)=>{
     const v=stage.querySelector(`video[data-layer="${layer.id}"]`); if(!v) return;
+    const cv=stage.querySelector(`canvas[data-layer="${layer.id}"]`);
     const c=vmActiveClip(layer);
-    if(!c || !c.url){ v.style.display='none'; try{v.pause();}catch{} return; }
+    if(!c || !c.url){ v.style.display='none'; if(cv) cv.style.display='none'; try{v.pause();}catch{} return; }
     const len=vmClipLen(c); const ef=vmEffFades(c, layer); const op=vmFadeOpacity(c,len,ef.fi,ef.fo);
     if(idx===0){
       const of=(c.fit==='contain'?'contain':(c.fit==='stretch'?'fill':'cover'));
       const z=(c.zoom||1)*vmMotionScale(c,len);
       v.style.cssText=`position:absolute;inset:0;width:100%;height:100%;object-fit:${of};display:block;z-index:1;transform:scale(${z.toFixed(3)});opacity:${op.toFixed(3)}`;
     } else {
-      v.style.cssText=`position:absolute;display:block;object-fit:contain;left:${(c.x*100).toFixed(1)}%;top:${(c.y*100).toFixed(1)}%;width:${(c.scale*100).toFixed(1)}%;z-index:${idx+1};opacity:${op.toFixed(3)}`;
+      const base=`position:absolute;left:${(c.x*100).toFixed(1)}%;top:${(c.y*100).toFixed(1)}%;width:${(c.scale*100).toFixed(1)}%;z-index:${idx+1};opacity:${op.toFixed(3)}`;
+      const comChroma=c.chroma && c.chroma!=='none' && cv;
+      if(comChroma){
+        // vídeo fica invisível (mas decodificando); o canvas mostra o recorte
+        cv.style.cssText=base+';display:block';
+        v.style.cssText=base+';object-fit:contain;display:block;opacity:0;pointer-events:none';
+        vmChromaAgendar(v, cv, c);
+      } else {
+        if(cv) cv.style.display='none';
+        v.onseeked=null;
+        v.style.cssText=base+';object-fit:contain;display:block';
+      }
     }
     if(v.dataset.cur!==c.id){ v.src=c.url; v.dataset.cur=c.id; }
     const target=Math.min(c.dur, Math.max(0, c.in+(vmPlayhead-c.t)));
@@ -3724,6 +4144,35 @@ function vmSyncPreview(seek){
     if(seek || !vmPlaying){ try{a.currentTime=target;}catch{} if(!vmPlaying){ try{a.pause();}catch{} } }
     else { if(Math.abs(a.currentTime-target)>0.3){ try{a.currentTime=target;}catch{} } if(a.paused) a.play().catch(()=>{}); }
   });
+}
+
+// ── Preview do chroma key (recorte aproximado, ao vivo) ───
+// O corte final é feito pelo FFmpeg; aqui é uma prévia por distância RGB.
+function vmChromaAgendar(v, cv, c){
+  const draw=()=>vmChromaDraw(v, cv, c);
+  if(v.readyState>=2) requestAnimationFrame(draw);
+  v.onseeked=draw;
+}
+function vmChromaDraw(v, cv, c){
+  if(!v.videoWidth) return;
+  const w=180, h=Math.max(2, Math.round(w*v.videoHeight/v.videoWidth));
+  if(cv.width!==w) cv.width=w;
+  if(cv.height!==h) cv.height=h;
+  const ctx=cv.getContext('2d',{ willReadFrequently:true });
+  ctx.clearRect(0,0,w,h);
+  ctx.drawImage(v,0,0,w,h);
+  let img; try{ img=ctx.getImageData(0,0,w,h); }catch{ return; }
+  const d=img.data;
+  const azul=c.chroma==='blue';
+  const kg=azul?0:255, kb=azul?255:0;
+  const sim=(c.chromaSim!=null?c.chromaSim:0.18), blend=0.08;
+  for(let i=0;i<d.length;i+=4){
+    const dr=d[i], dg=d[i+1]-kg, db=d[i+2]-kb;
+    const dist=Math.sqrt(dr*dr+dg*dg+db*db)/441.67;
+    if(dist<sim) d[i+3]=0;
+    else if(dist<sim+blend) d[i+3]=Math.round(d[i+3]*(dist-sim)/blend);
+  }
+  ctx.putImageData(img,0,0);
 }
 
 // ── Transporte ────────────────────────────────────────────
@@ -3759,19 +4208,24 @@ function vmTrimOutPlayhead(c){ const off=vmPlayhead-c.t; if(off<=0.05||off>=vmCl
 
 
 // ── Randomizar trilha principal ───────────────────────────
-function vmRandomizar(){
+// Fisher-Yates numa CÓPIA do array (não mexe no original)
+function vmShuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function vmRandomizar(silencioso){
   const layer=vmVLayers[0];
-  if(!layer || !layer.clips.length){ toast('Sem clipes na trilha principal','warning',1500); return; }
+  if(!layer || !layer.clips.length){ if(!silencioso) toast('Sem clipes na trilha principal','warning',1500); return; }
   vmPushUndo();
   // clipes fixados no final (📌) não entram no embaralhamento e ficam por último
   const finais=layer.clips.filter(c=>c.fixEnd);
-  const arr=layer.clips.filter(c=>!c.fixEnd);
-  for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; }
+  const arr=vmShuffle(layer.clips.filter(c=>!c.fixEnd));
   const nova=[...arr, ...finais];
   let t=0; nova.forEach(c=>{ c.t=t; t+=vmClipLen(c); });
   layer.clips=nova;
   vmRenderTimeline(); vmRebuildStage();
-  vmSetStatus('Trilha principal embaralhada'); toast('Embaralhado!','info',1400);
+  if(!silencioso){ vmSetStatus('Trilha principal embaralhada'); toast('Embaralhado!','info',1400); }
 }
 
 // ── Plano da trilha principal p/ encaixar no tempo do áudio ─
@@ -3798,7 +4252,12 @@ function vmPlanoMain(targetDur, clipsArr){
   let P = (L>0 && alvoLivre>0.3) ? 1 : 0;
   if(P>0){ while(alvoLivre > (L + CAP*baseL.length) * P + 1e-6 && P < 60) P++; }
   const segs=[];
-  for(let p=0;p<P;p++) for(const b of baseL) segs.push({clip:b.clip, in:b.in, out:b.out, len:b.len, delta:0});
+  // 1ª passada segue a ordem da timeline; repetições vêm embaralhadas para o
+  // vídeo não repetir a mesma sequência de clipes em áudios longos
+  for(let p=0;p<P;p++){
+    const ordem = p===0 ? baseL : vmShuffle(baseL);
+    for(const b of ordem) segs.push({clip:b.clip, in:b.in, out:b.out, len:b.len, delta:0});
+  }
   for(const b of baseF) segs.push({clip:b.clip, in:b.in, out:b.out, len:b.len, delta:0});
   if(!segs.length) return [];
   let restante=targetDur - (L*P + F); // + estica / - encurta
@@ -3815,7 +4274,9 @@ function vmPlanoMain(targetDur, clipsArr){
 
 // Aplica fade/movimento aleatórios aos clipes da trilha principal
 function vmAplicarFxAleatorio(){
-  const motions=['none','zoomin','zoomout'];
+  // 50% sem movimento: zoompan é o filtro mais pesado do render — em excesso
+  // deixa a produção lenta e aumenta o risco de faltar memória
+  const motions=['none','none','zoomin','zoomout'];
   ((vmVLayers[0]&&vmVLayers[0].clips)||[]).forEach(c=>{
     c.motion=motions[Math.floor(Math.random()*motions.length)];
     c.fadeIn=Math.random()<0.5?0:0.3;
@@ -3845,16 +4306,17 @@ async function vmTranscrever(file){
 // Gera legenda ASS animada (estilo TikTok: pop + karaokê palavra a palavra)
 function vmAssTime(t){ t=Math.max(0,t||0); const cs=Math.round(t*100); const h=Math.floor(cs/360000), m=Math.floor(cs/6000)%60, s=Math.floor(cs/100)%60, c=cs%100; return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(c).padStart(2,'0')}`; }
 function vmAssEsc(t){ return (t||'').replace(/[{}\\]/g,'').replace(/\r?\n/g,' '); }
-function vmLegendaEstilo(){
-  const cor = (document.getElementById('vmLegCor') || {}).value || 'amarelo';
-  const pos = (document.getElementById('vmLegPos') || {}).value || 'meio';
+// cor/pos opcionais — sem eles, lê os seletores do VideoMix (comportamento original)
+function vmLegendaEstilo(cor, pos){
+  cor = cor || (document.getElementById('vmLegCor') || {}).value || 'amarelo';
+  pos = pos || (document.getElementById('vmLegPos') || {}).value || 'meio';
   const cores = { amarelo:['&H0000F0FF','&H00FFFFFF'], verde:['&H0099D334','&H00FFFFFF'], rosa:['&H00B672F4','&H00FFFFFF'], branco:['&H00FFFFFF','&H00B9B9B9'] };
   const posM = { baixo:280, meio:620, centro:900 };
   const [primary, secondary] = cores[cor] || cores.amarelo;
   return { primary, secondary, marginV: posM[pos] != null ? posM[pos] : 620, fontsize:92 };
 }
-function vmGerarAss(words){
-  const est = vmLegendaEstilo();
+function vmGerarAss(words, estilo){
+  const est = estilo || vmLegendaEstilo();
   const header = `[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,DejaVu Sans,${est.fontsize},${est.primary},${est.secondary},&H00000000,&H64000000,1,6,2,2,80,80,${est.marginV}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
   const N=4; let ev='';
   for(let i=0;i<words.length;i+=N){
@@ -3883,19 +4345,50 @@ async function vmGerar(){
   const randN=parseInt((document.getElementById('vmRandN')||{}).value); const randMod=isNaN(randN)?1:randN;
   const randFx=document.getElementById('vmRandFx').checked;
   let legenda=document.getElementById('vmLegenda').checked;
-  const pool=vmMedia.filter(m=>m.kind==='audio');
+  // Ordem dos áudios embaralhada a cada produção (antes seguia sempre a ordem
+  // alfabética da pasta — os pares áudio↔vídeo saíam iguais em toda produção)
+  const pool=vmShuffle(vmMedia.filter(m=>m.kind==='audio'));
+
+  // Sem áudios: renderiza o vídeo base uma vez (sem áudio), duração = timeline
+  let jobs = pool.length ? pool : [null];
+
+  // Plano gratuito: até 5 vídeos por produção
+  if(user && user.plano==='gratuito' && jobs.length>VM_LOTE_FREE){
+    jobs=jobs.slice(0, VM_LOTE_FREE);
+    toast(`Plano gratuito: até ${VM_LOTE_FREE} vídeos por produção — gerando os ${VM_LOTE_FREE} primeiros. Faça upgrade para produzir sem limites.`,'warning',6000);
+  }
+
+  // Estimativa de tempo: FFmpeg no navegador leva em média ~2× a duração final
+  const durTotal=jobs.reduce((a,j)=>a+(j?(j.dur||0):vmDuracao()),0);
+  const estMin=Math.max(1, Math.round(durTotal*2/60));
+  if(durTotal>900){
+    if(!confirm(`Produção grande: ${jobs.length} vídeo(s), ~${Math.round(durTotal/60)} min de vídeo final.\nEstimativa de renderização: ~${estMin} min (varia com o computador).\nMantenha esta aba aberta até o fim. Continuar?`)) return;
+  } else if(jobs.length>1){
+    toast(`${jobs.length} vídeos · renderização estimada: ~${estMin} min`,'info',4500);
+  }
 
   vmGerando=true; vmCancelar=false;
   document.getElementById('vmProgressWrap').style.display='block';
   document.getElementById('vmBtnGerar').textContent='⏹ Parar produção'; document.getElementById('vmBtnRand').disabled=true;
   document.getElementById('vmOutputList').innerHTML=''; vmOutputs=[];
 
-  // Sem áudios: renderiza o vídeo base uma vez (sem áudio), duração = timeline
-  const jobs = pool.length ? pool : [null];
+  const t0=Date.now();
   for(let v=0; v<jobs.length; v++){
     if(vmCancelar) break;
+
+    // Limite semanal do plano gratuito (15/semana) — o servidor decide
+    try{
+      const reg=await callApiAuth('registrar-video', {});
+      if(!reg.ok){
+        toast(reg.erro||'Limite de vídeos atingido','warning',7000);
+        if(/semanal|limite/i.test(reg.erro||'')) abrirModal();
+        break;
+      }
+      if(reg.videos_semana!=null && user){ user.videos_semana=reg.videos_semana; vmAtualizarLimiteInfo(); }
+    }catch{}
+
     const audio=jobs[v];
-    if(randMod>0 && (v % randMod === 0)) vmRandomizar();
+    if(randMod>0 && (v % randMod === 0)) vmRandomizar(true);
     if(randFx) vmAplicarFxAleatorio();
     const targetDur = audio ? audio.dur : vmDuracao();
     const nomeArq=`${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
@@ -3910,11 +4403,22 @@ async function vmGerar(){
         else toast('Legenda falhou: '+e.message+' — gerando sem legenda','warning',5000);
       }
     }
+    // Se o render anterior falhou, o FFmpeg foi reiniciado — recarrega antes de seguir
+    if(!vmFfmpegOk){
+      const ok2=await vmCarregarFFmpeg();
+      if(!ok2){ vmAddOutput(nomeArq, null, false, 'FFmpeg não recarregou — recarregue a página'); break; }
+    }
     vmSetStatus(`Gerando ${v+1}/${jobs.length}...`);
     document.getElementById('vmProgressText').textContent=`Vídeo ${v+1} de ${jobs.length} · ${nomeArq}`;
     try{ const blob=await vmProcessar(nomeArq, audio?audio.file:null, targetDur, fillMode, stretchSel, legendas); vmAddOutput(nomeArq, blob, true); }
     catch(e){ console.error(e); vmAddOutput(nomeArq, null, false, e.message); }
     document.getElementById('vmProgressFill').style.width=((v+1)/jobs.length*100)+'%';
+    // ETA com base no tempo médio dos vídeos já prontos
+    if(v<jobs.length-1 && !vmCancelar){
+      const media=(Date.now()-t0)/(v+1), restMs=media*(jobs.length-v-1);
+      const restMin=Math.round(restMs/60000);
+      document.getElementById('vmProgressText').textContent=`Vídeo ${v+1}/${jobs.length} pronto · ${restMin<1?'menos de 1 min':'~'+restMin+' min'} restante${restMin>1?'s':''}`;
+    }
   }
 
   vmGerando=false;
@@ -3961,20 +4465,38 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, 
   // Clipes de sobreposição (PIP): camadas de vídeo de índice > 0
   const pip=[]; vmVLayers.forEach((l,idx)=>{ if(idx>0) l.clips.forEach(c=>pip.push({...c})); });
 
-  // Escreve inputs (cada segmento e cada PIP = um input; áudio = 1 input)
-  const inputArgs=[]; let inIdx=0; const files=[];
+  // Cada arquivo é gravado UMA única vez na memória do FFmpeg, mesmo que o clipe
+  // se repita em vários segmentos (antes era 1 cópia por segmento — em áudios
+  // longos isso multiplicava a memória e derrubava a renderização).
+  const files=[]; const escritos=new Map();
+  async function escreverArquivo(file, ext){
+    const key=(file.name||'')+'|'+file.size+'|'+(file.lastModified||0);
+    if(escritos.has(key)) return escritos.get(key);
+    const fn=`f${escritos.size}.${ext}`;
+    await vmFfmpeg.writeFile(fn, await toU8(file));
+    files.push(fn); escritos.set(key, fn);
+    return fn;
+  }
+
+  const inputArgs=[]; let inIdx=0;
   const segMeta=[];
-  for(const s of segs){ const fn=`s${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(s.clip.file)); files.push(fn); segMeta.push({...s, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
+  for(const s of segs){ const fn=await escreverArquivo(s.clip.file,'mp4'); segMeta.push({...s, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
   const pipMeta=[];
-  for(const c of pip){ const fn=`p${inIdx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); files.push(fn); pipMeta.push({...c, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
+  for(const c of pip){ const fn=await escreverArquivo(c.file,'mp4'); pipMeta.push({...c, idx:inIdx}); inputArgs.push('-i', fn); inIdx++; }
   // Áudio: da pasta (varia a cada vídeo) + camadas de áudio fixas (iguais em todos)
   const audioIns=[];
-  if(audioFile){ const ext=(audioFile.name.split('.').pop()||'mp3'); const fn=`aud.${ext}`; await vmFfmpeg.writeFile(fn, await toU8(audioFile)); files.push(fn); audioIns.push({idx:inIdx, kind:'pool'}); inputArgs.push('-i', fn); inIdx++; }
+  if(audioFile){ const ext=(audioFile.name.split('.').pop()||'mp3'); const fn=await escreverArquivo(audioFile, ext); audioIns.push({idx:inIdx, kind:'pool'}); inputArgs.push('-i', fn); inIdx++; }
   // Com áudio da pasta: mixa só a música de fundo (bg). Áudio manual da timeline
   // só entra se "misturar" estiver marcado (evita a voz sair duplicada nos vídeos).
   const misturar = (document.getElementById('vmMixTimeline')||{}).checked;
   const fixos=[]; vmALayers.forEach(l=>l.clips.forEach(c=>{ if(c.file && (!audioFile || c.bg || misturar)) fixos.push(c); }));
-  for(const c of fixos){ const ext=(c.file.name.split('.').pop()||'mp3'); const fn=`af${inIdx}.${ext}`; await vmFfmpeg.writeFile(fn, await toU8(c.file)); files.push(fn); audioIns.push({idx:inIdx, kind:'fixed', clip:c}); inputArgs.push('-i', fn); inIdx++; }
+  for(const c of fixos){
+    const ext=(c.file.name.split('.').pop()||'mp3'); const fn=await escreverArquivo(c.file, ext);
+    // Música de fundo sem corte entra em loop até o fim do vídeo (antes parava no meio)
+    const loop=!!c.bg && c.in<0.01 && Math.abs(c.out-c.dur)<0.01 && (c.t||0)<0.01;
+    if(loop) inputArgs.push('-stream_loop','-1');
+    audioIns.push({idx:inIdx, kind:'fixed', clip:c, loop}); inputArgs.push('-i', fn); inIdx++;
+  }
 
   let fc='';
   // Trilha principal: corta, (desacelera), escala cobrindo a tela, concat
@@ -4035,6 +4557,7 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, 
     const labels=[];
     audioIns.forEach((a,i)=>{
       if(a.kind==='pool'){ fc+=`[${a.idx}:a]aresample=async=1[aa${i}];`; }
+      else if(a.loop){ const vol=(a.clip.vol!=null?a.clip.vol:1).toFixed(2); fc+=`[${a.idx}:a]atrim=0:${D.toFixed(3)},asetpts=PTS-STARTPTS,volume=${vol}[aa${i}];`; }
       else { const c=a.clip; const d=Math.round((c.t||0)*1000); const vol=(c.vol!=null?c.vol:1).toFixed(2); fc+=`[${a.idx}:a]atrim=${c.in.toFixed(3)}:${c.out.toFixed(3)},asetpts=PTS-STARTPTS,volume=${vol},adelay=${d}|${d}[aa${i}];`; }
       labels.push(`[aa${i}]`);
     });
@@ -4050,9 +4573,23 @@ async function vmProcessar(nomeOut, audioFile, targetDur, fillMode, stretchSel, 
   if(audioOut) args.push('-c:a','aac','-b:a','160k');
   args.push('-movflags','+faststart', nomeOut);
 
-  await vmFfmpeg.exec(args);
-  const data=await vmFfmpeg.readFile(nomeOut);
-  const blob=new Blob([data.buffer], { type:'video/mp4' });
+  // Timeout proporcional à duração: se o FFmpeg travar (falta de memória),
+  // aborta este vídeo em vez de congelar a produção inteira.
+  const timeoutMs=Math.min(15*60*1000, Math.max(240000, D*12000));
+  let blob=null, execErr=null;
+  try{
+    await vmFfmpeg.exec(args, timeoutMs);
+    const data=await vmFfmpeg.readFile(nomeOut);
+    blob=new Blob([data.buffer], { type:'video/mp4' });
+  }catch(e){
+    execErr=new Error('render falhou: '+String(window.__vmFfLast||e.message||e).slice(0,120));
+  }
+  if(execErr){
+    // Reinicia o FFmpeg: libera toda a memória e o próximo vídeo parte do zero
+    try{ vmFfmpeg.terminate(); }catch{}
+    vmFfmpeg=null; vmFfmpegOk=false; vmFontOk=false;
+    throw execErr;
+  }
   for(const fn of files){ try{ await vmFfmpeg.deleteFile(fn); }catch{} }
   try{ await vmFfmpeg.deleteFile(nomeOut); }catch{}
   return blob;
@@ -4077,6 +4614,7 @@ function vmAddOutput(nome, blob, ok, errMsg){
     const url=URL.createObjectURL(blob);
     item.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div>`+
       `<a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>`+
+      `<button class="vm-dl-btn" title="Enviar ao AutoLegenda (legenda sem baixar)" onclick="lgReceberDoVideoMix(${idx})">💬</button>`+
       `<button class="vm-dl-btn" title="Enviar ao Google Drive" onclick="vmDriveUploadIdx(${idx})">☁️</button>`;
   } else {
     item.innerHTML=`<div><div class="vm-out-name">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,40)}</div></div>`;
@@ -4171,6 +4709,15 @@ function vmAtualizarBotoes(){
   if(bg){ bg.disabled=!tem; bg.style.opacity=tem?'1':'.35'; }
 }
 
+// Mostra ao usuário gratuito quantos vídeos ainda pode gerar nesta semana
+function vmAtualizarLimiteInfo(){
+  const el=document.getElementById('vmLimiteInfo'); if(!el) return;
+  if(!user || user.plano!=='gratuito'){ el.style.display='none'; return; }
+  const usados=Number(user.videos_semana||0);
+  el.style.display='block';
+  el.textContent=`🆓 Plano gratuito: até ${VM_LOTE_FREE} vídeos por produção · ${Math.max(0,VM_SEMANA_FREE-usados)} de ${VM_SEMANA_FREE} restantes nesta semana`;
+}
+
 // ── Undo / Redo (histórico da timeline) ───────────────────
 let vmUndoStack=[], vmRedoStack=[];
 const VM_UNDO_MAX=80;
@@ -4184,6 +4731,7 @@ function vmPushUndo(){
   vmUndoStack.push(vmSnapshot());
   if(vmUndoStack.length>VM_UNDO_MAX) vmUndoStack.shift();
   vmRedoStack=[];
+  vmDirty=true; // marca alteração p/ o autosave do projeto
 }
 function vmRestore(s){
   vmVLayers=s.v.map(l=>({id:l.id, clips:l.clips.map(c=>({...c}))}));
@@ -4228,14 +4776,18 @@ document.addEventListener('keydown', e=>{
 
 // ── Projetos (estrutura salva na conta; mídia reconecta por nome) ──
 let vmProjAtual=null; // { id, nome }
+let vmDirty=false;    // houve alteração desde o último salvamento (p/ autosave)
 function vmSerializar(){
   const clip=c=>({srcName:c.srcName||c.nome, nome:c.nome, dur:c.dur, in:c.in, out:c.out, t:c.t, scale:c.scale, x:c.x, y:c.y, kind:c.kind, fit:c.fit||'cover', zoom:c.zoom||1, fadeIn:c.fadeIn||0, fadeOut:c.fadeOut||0, motion:c.motion||'none', trans:c.trans||'none', transDur:c.transDur||0.5, vol:c.vol!=null?c.vol:1, bg:!!c.bg, fixEnd:!!c.fixEnd, alignEnd:!!c.alignEnd, chroma:c.chroma||'none', chromaSim:c.chromaSim!=null?c.chromaSim:0.18});
+  // miniatura do projeto = thumb do primeiro clipe com imagem (JPEG pequeno)
+  const comThumb=((vmVLayers[0]||{clips:[]}).clips).find(c=>c.thumb);
   return {
     v: vmVLayers.map(l=>({clips:l.clips.map(clip)})),
     a: vmALayers.map(l=>({clips:l.clips.map(clip)})),
     fit: { mode:document.getElementById('vmFitMode').value, stretch:document.getElementById('vmStretchClip').value },
     nomeBase: document.getElementById('vmNomeBase').value,
     randN: (document.getElementById('vmRandN')||{}).value,
+    thumb: comThumb ? comThumb.thumb : null,
   };
 }
 function vmDeserializar(d){
@@ -4265,9 +4817,13 @@ async function vmProjListar(){
   window.__vmProjs=r.projetos||[];
   if(!__vmProjs.length){ cont.innerHTML='<div style="color:var(--muted2);font-size:12px">Nenhum projeto salvo ainda.</div>'; return; }
   cont.innerHTML=__vmProjs.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px">
+    ${p.dados&&p.dados.thumb
+      ?`<img src="${p.dados.thumb}" style="width:32px;height:54px;object-fit:cover;border-radius:6px;flex-shrink:0;background:#000">`
+      :`<div style="width:32px;height:54px;border-radius:6px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🎬</div>`}
     <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.nome}</div>
     <div style="font-size:10px;color:var(--muted2)">${new Date(p.atualizado_em).toLocaleString('pt-BR')}</div></div>
     <button class="vm-tbtn" onclick="vmProjCarregar('${p.id}')">Abrir</button>
+    <button class="vm-tbtn" title="Duplicar projeto" onclick="vmProjDuplicar('${p.id}')">⧉</button>
     <button class="vm-tbtn" onclick="vmProjExcluir('${p.id}')" style="color:#fca5a5">🗑</button>
   </div>`).join('');
 }
@@ -4277,13 +4833,22 @@ async function vmProjSalvar(){
   const payload={ nome, dados:vmSerializar() };
   if(vmProjAtual&&vmProjAtual.id) payload.id=vmProjAtual.id;
   const r=await callApiAuth('projetos/salvar', payload);
-  if(r.ok){ vmProjAtual={ id:(r.projeto&&r.projeto.id)||(vmProjAtual&&vmProjAtual.id), nome }; toast('Projeto salvo!','success'); vmProjListar(); }
+  if(r.ok){ vmProjAtual={ id:(r.projeto&&r.projeto.id)||(vmProjAtual&&vmProjAtual.id), nome }; vmDirty=false; toast('Projeto salvo!','success'); vmProjListar(); }
   else toast(r.erro||'Erro ao salvar','error');
+}
+
+// Duplica um projeto salvo (cria uma cópia independente)
+async function vmProjDuplicar(id){
+  const p=(window.__vmProjs||[]).find(x=>x.id===id); if(!p) return;
+  const r=await callApiAuth('projetos/salvar', { nome:p.nome+' (cópia)', dados:p.dados });
+  if(r.ok){ toast('Projeto duplicado','success',2000); vmProjListar(); }
+  else toast(r.erro||'Erro ao duplicar','error');
 }
 function vmProjCarregar(id){
   const p=(window.__vmProjs||[]).find(x=>x.id===id); if(!p) return;
   vmDeserializar(p.dados||{});
   vmProjAtual={ id:p.id, nome:p.nome };
+  vmDirty=false;
   vmProjFechar();
   const n=vmMissingCount();
   toast('Projeto aberto: '+p.nome+(n?` — adicione ${n} arquivo(s) para reconectar`:''), n?'warning':'success', n?4500:2500);
@@ -4297,7 +4862,7 @@ async function vmProjExcluir(id){
 function vmProjNovo(){
   if(!confirm('Começar um projeto novo? Alterações não salvas serão perdidas.')) return;
   vmMedia=[]; vmVLayers=[{id:vmUid(),clips:[]}]; vmALayers=[{id:vmUid(),clips:[]}];
-  vmSel=null; vmProjAtual=null; vmUndoStack=[]; vmRedoStack=[]; vmPlayhead=0;
+  vmSel=null; vmProjAtual=null; vmDirty=false; vmUndoStack=[]; vmRedoStack=[]; vmPlayhead=0;
   vmRenderBin(); vmRenderTimeline(); vmRebuildStage(); vmMostrarProps(); vmPopulateStretchSelect(); vmAtualizarBotoes(); vmUpdateAudioPoolInfo(); vmUpdateMissing();
   document.getElementById('vmClipCount').textContent='0'; document.getElementById('vmAudioCount').textContent='';
   vmProjFechar(); toast('Novo projeto','info',1500);
@@ -4334,6 +4899,7 @@ async function vmCarregarSaldo(){
 function vmAtualizarSaldo(){
   const v=Number((user&&user.saldo)||0);
   const el=document.getElementById('vmSaldoVal'); if(el) el.textContent='R$ '+v.toFixed(2).replace('.',',');
+  const lg=document.getElementById('lgSaldo'); if(lg) lg.textContent='R$ '+v.toFixed(2).replace('.',',');
   const est=document.getElementById('vmEstCusto'); if(est) est.textContent=`Legenda ~R$ ${vmPrecoLegendaMin.toFixed(3).replace('.',',')}/min · vídeo de 30s ≈ R$ ${(vmPrecoLegendaMin*0.5).toFixed(3).replace('.',',')}`;
 }
 function vmAbrirRecarga(){ if(!user){ toast('Faça login','warning'); return; } document.getElementById('vmRecargaModal').classList.add('visible'); }
@@ -4356,6 +4922,16 @@ function vmInit(){
   vmAplicarLarguras();
   vmGarantirLayers(); vmRenderBin(); vmRenderTimeline(); vmRebuildStage();
   vmFitModeChange(); vmUpdateAudioPoolInfo();
+  // Autosave: se há um projeto aberto e houve alteração, salva sozinho a cada 20s
+  setInterval(async()=>{
+    if(!vmDirty || !vmProjAtual || !vmProjAtual.id || !user || vmGerando) return;
+    vmDirty=false;
+    try{
+      const r=await callApiAuth('projetos/salvar', { id:vmProjAtual.id, nome:vmProjAtual.nome, dados:vmSerializar() });
+      if(r.ok) vmSetStatus('💾 Salvo automaticamente às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}));
+      else vmDirty=true;
+    }catch{ vmDirty=true; }
+  }, 20000);
 }
 vmInit();
 
@@ -4413,13 +4989,24 @@ async function agBuscarClips(termos, audioDur, clipLen){
   return clips;
 }
 // Monta o vídeo final: cenas encaixadas no áudio + legenda opcional
-async function agProcessar(nomeOut, clips, audioFile, targetDur, legendas){
+async function agProcessar(nomeOut, clips, audioFile, targetDur, legendas, estilo){
   const toU8=async f=>new Uint8Array(await f.arrayBuffer());
   const segs=vmPlanoMain(targetDur, clips);
   if(!segs.length) throw new Error('sem cenas para montar');
   const D=Math.max(0.1, targetDur);
+  // Mesmo esquema do vmProcessar: cada arquivo é gravado UMA vez na memória,
+  // mesmo quando vários segmentos vêm do mesmo vídeo (ex: Criativos IA)
   const inputArgs=[]; const files=[]; const segMeta=[]; let idx=0;
-  for(const s of segs){ const fn=`g${idx}.mp4`; await vmFfmpeg.writeFile(fn, await toU8(s.clip.file)); files.push(fn); segMeta.push({...s, idx}); inputArgs.push('-i', fn); idx++; }
+  const escritos=new Map();
+  async function escreverArquivo(file, ext){
+    const key=(file.name||'')+'|'+file.size+'|'+(file.lastModified||0);
+    if(escritos.has(key)) return escritos.get(key);
+    const fn=`g${escritos.size}.${ext}`;
+    await vmFfmpeg.writeFile(fn, await toU8(file));
+    files.push(fn); escritos.set(key, fn);
+    return fn;
+  }
+  for(const s of segs){ const fn=await escreverArquivo(s.clip.file,'mp4'); segMeta.push({...s, idx}); inputArgs.push('-i', fn); idx++; }
   const audFn='gaud.mp3'; await vmFfmpeg.writeFile(audFn, await toU8(audioFile)); files.push(audFn); const audIdx=idx; inputArgs.push('-i', audFn);
   let fc='';
   segMeta.forEach((s,i)=>{
@@ -4430,15 +5017,25 @@ async function agProcessar(nomeOut, clips, audioFile, targetDur, legendas){
   fc+=segMeta.map((_,i)=>`[q${i}]`).join('')+`concat=n=${segMeta.length}:v=1:a=0[agv];`;
   let videoOut='[agv]';
   if(legendas && legendas.length && vmFontOk){
-    await vmFfmpeg.writeFile('gcap.ass', vmGerarAss(legendas)); files.push('gcap.ass');
+    await vmFfmpeg.writeFile('gcap.ass', vmGerarAss(legendas, estilo)); files.push('gcap.ass');
     fc+=`[agv]ass=gcap.ass:fontsdir=.[agvc];`; videoOut='[agvc]';
   }
   fc+=`[${audIdx}:a]aresample=async=1[aga]`;
   const args=['-y', ...inputArgs, '-filter_complex', fc, '-map', videoOut, '-map', '[aga]', '-t', D.toFixed(3), '-r', String(VM_FPS), '-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p','-crf','26','-c:a','aac','-b:a','160k','-movflags','+faststart', nomeOut];
-  try{ await vmFfmpeg.exec(args); }
-  catch(e){ throw new Error('render falhou: '+String(window.__vmFfLast||e.message||'').slice(0,90)); }
-  const data=await vmFfmpeg.readFile(nomeOut);
-  const blob=new Blob([data.buffer], { type:'video/mp4' });
+  const timeoutMs=Math.min(15*60*1000, Math.max(240000, D*12000));
+  let blob=null, execErr=null;
+  try{
+    await vmFfmpeg.exec(args, timeoutMs);
+    const data=await vmFfmpeg.readFile(nomeOut);
+    blob=new Blob([data.buffer], { type:'video/mp4' });
+  }catch(e){
+    execErr=new Error('render falhou: '+String(window.__vmFfLast||e.message||'').slice(0,90));
+  }
+  if(execErr){
+    try{ vmFfmpeg.terminate(); }catch{}
+    vmFfmpeg=null; vmFfmpegOk=false; vmFontOk=false;
+    throw execErr;
+  }
   for(const fn of files){ try{ await vmFfmpeg.deleteFile(fn); }catch{} }
   try{ await vmFfmpeg.deleteFile(nomeOut); }catch{}
   return blob;
@@ -4548,6 +5145,363 @@ async function agGerar(){
   }
   agLog(`\nFinalizado: ${feitos} vídeo(s) gerado(s).`, feitos>0?'info':'err');
   toast(agCancelar?`Parado (${feitos} prontos)`:`${feitos} vídeo${feitos!==1?'s':''} gerado${feitos!==1?'s':''} automaticamente!`, agCancelar?'info':'success');
+}
+
+// ══════════════════════════════════════════════════════════
+// PIPELINE POR SESSÃO — passa arquivos entre ferramentas sem baixar
+// ══════════════════════════════════════════════════════════
+// Áudios gerados → pasta do VideoMix (direto da memória)
+function enviarAudiosParaVideoMix(){
+  if(!audioFiles.length){ toast('Gere os áudios primeiro','warning'); return; }
+  const files=audioFiles.map(a=>new File([a.blob], a.name, { type:a.blob.type||'audio/mpeg' }));
+  vmAddAudios(files);
+  irParaVideoMix();
+  toast(files.length+' áudio(s) enviados à pasta do VideoMix — sem precisar baixar!','success',4500);
+}
+// Vídeos do VideoMix → AutoLegenda
+function lgReceberDoVideoMix(idx){
+  const o=vmOutputs[idx]; if(!o||!o.blob){ toast('Vídeo indisponível','warning'); return; }
+  lgReceberBlob(o.nome, o.blob);
+  toast('Enviado ao AutoLegenda (aba 💬)','success',2500);
+}
+function lgReceberTodosDoVideoMix(){
+  const outs=vmOutputs.filter(o=>o.ok&&o.blob);
+  if(!outs.length){ toast('Nenhum vídeo gerado ainda','warning'); return; }
+  outs.forEach(o=>lgReceberBlob(o.nome, o.blob));
+  irParaLegendar();
+  toast(outs.length+' vídeo(s) enviados ao AutoLegenda','success',3000);
+}
+
+// ══════════════════════════════════════════════════════════
+// LEGENDADOR — legenda vídeos prontos em lote
+// ══════════════════════════════════════════════════════════
+let lgFiles=[];            // { nome, file }
+let lgRodando=false, lgCancelar=false, lgOutputs=[];
+
+function lgAddVideos(files){
+  for(const f of Array.from(files||[])){
+    if(f.type.startsWith('video')||/\.mp4$/i.test(f.name)) lgFiles.push({ nome:f.name, file:f });
+  }
+  lgRender();
+}
+function lgReceberBlob(nome, blob){
+  lgFiles.push({ nome, file:new File([blob], nome, { type:'video/mp4' }) });
+  lgRender();
+}
+function lgRemover(i){ lgFiles.splice(i,1); lgRender(); }
+function lgRender(){
+  const el=document.getElementById('lgLista'); if(!el) return;
+  el.innerHTML = lgFiles.length
+    ? lgFiles.map((f,i)=>`<div class="vm-out"><div style="flex:1;min-width:0"><div class="vm-out-name" style="max-width:none" title="${f.nome}">${f.nome}</div></div><button class="vm-dl-btn" title="Remover da fila" onclick="lgRemover(${i})">✕</button></div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted2);text-align:center;padding:8px">Nenhum vídeo na fila — adicione acima ou envie do VideoMix (botão 💬)</div>';
+  const s=document.getElementById('lgSaldo'); if(s) s.textContent='R$ '+Number((user&&user.saldo)||0).toFixed(2).replace('.',',');
+}
+function lgGerarClick(){ if(lgRodando){ lgCancelar=true; document.getElementById('lgStatus').textContent='Parando após o vídeo atual...'; } else lgGerar(); }
+
+// ── Detecção de voz (vídeos com música de fundo) ──────────
+// Modelo RNNoise (rede neural que separa voz de ruído/música) — baixa 1x (~85KB)
+let vmRnnBytes=null, vmRnnTentado=false;
+async function vmObterRnn(){
+  if(vmRnnBytes||vmRnnTentado) return vmRnnBytes;
+  vmRnnTentado=true;
+  try{
+    const r=await fetch('https://cdn.jsdelivr.net/gh/GregorR/rnnoise-models@master/somnolent-hogwash-2018-09-01/sh.rnnn');
+    if(r.ok) vmRnnBytes=new Uint8Array(await r.arrayBuffer());
+  }catch{}
+  return vmRnnBytes;
+}
+function vmPalavras(words){ return (words||[]).filter(w=>String(w.word||'').trim().length>0).length; }
+
+// Extrai o áudio do vídeo como MP3 leve (16 kHz mono) p/ transcrição.
+// realce=true: isola a voz da música de fundo — RNNoise + banda de fala +
+// redução de ruído. Cada tentativa que falhar cai para uma mais simples.
+async function lgExtrairAudio(file, realce){
+  const toU8=async f=>new Uint8Array(await f.arrayBuffer());
+  // vídeos longos: bitrate menor p/ caber no limite de upload da transcrição
+  let dur=0; try{ const u=URL.createObjectURL(file); dur=await vmGetDur(u); URL.revokeObjectURL(u); }catch{}
+  const kbps=dur>480?24:48;
+  await vmFfmpeg.writeFile('lgsrc.mp4', await toU8(file));
+  const filtros=[];
+  if(realce){
+    const rnn=await vmObterRnn();
+    if(rnn){ try{ await vmFfmpeg.writeFile('rnn.rnnn', rnn); filtros.push('highpass=f=150,lowpass=f=4000,arnndn=m=rnn.rnnn,dynaudnorm=f=150:g=15'); }catch{} }
+    filtros.push('highpass=f=150,lowpass=f=4000,afftdn=nf=-25,dynaudnorm=f=150:g=15');
+  }
+  filtros.push(null); // áudio puro (última tentativa)
+  let blob=null, err=null;
+  for(const af of filtros){
+    try{
+      const args=['-y','-i','lgsrc.mp4','-vn','-ac','1','-ar','16000'];
+      if(af) args.push('-af', af);
+      args.push('-b:a', kbps+'k', 'lgaud.mp3');
+      await vmFfmpeg.exec(args, 180000);
+      const d=await vmFfmpeg.readFile('lgaud.mp3');
+      if(d&&d.length>800){ blob=new Blob([d.buffer], { type:'audio/mpeg' }); break; }
+    }catch(e){ err=e; }
+    try{ await vmFfmpeg.deleteFile('lgaud.mp3'); }catch{}
+  }
+  try{ await vmFfmpeg.deleteFile('lgsrc.mp4'); }catch{}
+  try{ await vmFfmpeg.deleteFile('lgaud.mp3'); }catch{}
+  try{ await vmFfmpeg.deleteFile('rnn.rnnn'); }catch{}
+  if(!blob) throw new Error('não foi possível extrair o áudio ('+String(window.__vmFfLast||err&&err.message||'').slice(0,60)+')');
+  return new File([blob], 'audio.mp3', { type:'audio/mpeg' });
+}
+
+// Detecta a voz do vídeo mesmo com música de fundo: transcreve o áudio com
+// realce de voz; se sair quase nada, tenta o áudio original e usa o melhor.
+// A tentativa sem fala reconhecida não é cobrada do saldo (regra no servidor).
+async function vmVozDoVideo(file, aoStatus){
+  if(aoStatus) aoStatus('isolando a voz da música...');
+  let words=[];
+  try{
+    const audRealce=await lgExtrairAudio(file, true);
+    if(aoStatus) aoStatus('transcrevendo a voz...');
+    words=await vmTranscrever(audRealce);
+  }catch(e){ if(e.semSaldo) throw e; }
+  if(vmPalavras(words)<4){
+    if(aoStatus) aoStatus('pouca fala detectada — tentando o áudio original...');
+    try{
+      const audPuro=await lgExtrairAudio(file, false);
+      const words2=await vmTranscrever(audPuro);
+      if(vmPalavras(words2)>vmPalavras(words)) words=words2;
+    }catch(e){ if(e.semSaldo) throw e; }
+  }
+  return words||[];
+}
+
+// Queima a legenda ASS no vídeo (re-encode do vídeo; áudio copiado sem perda)
+async function lgQueimar(file, ass, nomeOut){
+  const toU8=async f=>new Uint8Array(await f.arrayBuffer());
+  await vmFfmpeg.writeFile('lgv.mp4', await toU8(file));
+  await vmFfmpeg.writeFile('lgcap.ass', ass);
+  let blob=null, execErr=null;
+  try{
+    await vmFfmpeg.exec(['-y','-i','lgv.mp4','-vf','ass=lgcap.ass:fontsdir=.','-c:v','libx264','-preset','ultrafast','-crf','23','-c:a','copy','-movflags','+faststart', nomeOut], 15*60*1000);
+    const d=await vmFfmpeg.readFile(nomeOut);
+    blob=new Blob([d.buffer], { type:'video/mp4' });
+  }catch(e){ execErr=new Error('render falhou: '+String(window.__vmFfLast||e.message||e).slice(0,120)); }
+  if(execErr){
+    try{ vmFfmpeg.terminate(); }catch{}
+    vmFfmpeg=null; vmFfmpegOk=false; vmFontOk=false;
+    throw execErr;
+  }
+  for(const fn of ['lgv.mp4','lgcap.ass',nomeOut]){ try{ await vmFfmpeg.deleteFile(fn); }catch{} }
+  return blob;
+}
+
+async function lgGerar(){
+  if(lgRodando) return;
+  if(!lgFiles.length){ toast('Adicione pelo menos um vídeo','warning'); return; }
+  const okf=await vmCarregarFFmpeg();
+  if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+  lgRodando=true; lgCancelar=false; lgOutputs=[];
+  const fila=[...lgFiles];
+  document.getElementById('lgProgressCard').classList.add('visible');
+  document.getElementById('lgOutputList').innerHTML='';
+  document.getElementById('lgBtnZip').classList.remove('visible');
+  document.getElementById('lgProgressFill').style.width='0%';
+  document.getElementById('lgBtnGerar').textContent='⏹ Parar';
+  const estilo=vmLegendaEstilo(document.getElementById('lgCor').value, document.getElementById('lgPos').value);
+  for(let i=0;i<fila.length;i++){
+    if(lgCancelar) break;
+    const item=fila[i];
+    const nomeOut=item.nome.replace(/\.mp4$/i,'')+'_leg.mp4';
+    document.getElementById('lgProgressLabel').textContent=`Vídeo ${i+1} de ${fila.length}...`;
+    try{
+      if(!vmFfmpegOk){ const ok2=await vmCarregarFFmpeg(); if(!ok2) throw new Error('FFmpeg não recarregou — recarregue a página'); }
+      const words=await vmVozDoVideo(item.file, m=>{ document.getElementById('lgStatus').textContent=`${i+1}/${fila.length} · ${m}`; });
+      if(!vmPalavras(words)) throw new Error('nenhuma fala detectada no vídeo (nem isolando a voz da música)');
+      if(!vmFontOk) throw new Error('fonte da legenda não carregou — recarregue a página');
+      document.getElementById('lgStatus').textContent=`Queimando legenda ${i+1}/${fila.length}...`;
+      const blob=await lgQueimar(item.file, vmGerarAss(words, estilo), nomeOut);
+      lgOutputs.push({ nome:nomeOut, blob, ok:true });
+      lgAddOutput(nomeOut, blob, true);
+    }catch(e){
+      console.error(e);
+      lgOutputs.push({ nome:nomeOut, blob:null, ok:false });
+      lgAddOutput(nomeOut, null, false, e.message);
+      if(e.semSaldo){ toast('Saldo insuficiente — recarregue o Saldo IA para continuar.','warning',6000); break; }
+    }
+    document.getElementById('lgProgressFill').style.width=((i+1)/fila.length*100)+'%';
+    document.getElementById('lgProgressCount').textContent=`${i+1} / ${fila.length}`;
+  }
+  lgRodando=false;
+  const feitos=lgOutputs.filter(o=>o.ok).length;
+  document.getElementById('lgBtnGerar').textContent='💬 Legendar vídeos';
+  document.getElementById('lgProgressLabel').textContent=lgCancelar?'Parado':'Concluído!';
+  document.getElementById('lgStatus').textContent='Pronto';
+  if(feitos>0){ const z=document.getElementById('lgBtnZip'); z.classList.add('visible'); z.textContent=`⬇️ Baixar todos (ZIP) — ${feitos} vídeo${feitos>1?'s':''}`; }
+  lgRender(); // atualiza o saldo exibido
+  toast(lgCancelar?`Parado (${feitos} prontos)`:`${feitos} vídeo${feitos!==1?'s':''} legendado${feitos!==1?'s':''}!`, lgCancelar?'info':'success');
+}
+function lgAddOutput(nome, blob, ok, errMsg){
+  const list=document.getElementById('lgOutputList');
+  const item=document.createElement('div'); item.className='vm-out';
+  if(ok&&blob){
+    const url=URL.createObjectURL(blob);
+    item.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name" style="max-width:none" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>`;
+  } else {
+    item.innerHTML=`<div><div class="vm-out-name" style="max-width:none">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,70)}</div></div>`;
+  }
+  list.appendChild(item);
+}
+async function lgBaixarZip(){
+  const oks=lgOutputs.filter(o=>o.ok&&o.blob);
+  if(!oks.length){ toast('Nenhum vídeo legendado','warning'); return; }
+  const zip=new JSZip(); oks.forEach(o=>zip.file(o.nome, o.blob));
+  const blob=await zip.generateAsync({ type:'blob' });
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='videos_legendados.zip'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
+// ══════════════════════════════════════════════════════════
+// CRIATIVOS IA (BETA) — 1 vídeo de referência vira N criativos
+// ══════════════════════════════════════════════════════════
+let crRodando=false, crCancelar=false, crOutputs=[], crVideoFile=null;
+
+function crLog(msg, tipo=''){
+  const el=document.getElementById('crLogArea'); if(!el) return;
+  const l=document.createElement('div'); l.className='log-line '+tipo; l.textContent=msg;
+  el.appendChild(l); el.scrollTop=el.scrollHeight;
+}
+function crProgress(atual, total){
+  document.getElementById('crProgressFill').style.width=(total>0?(atual/total*100):0)+'%';
+  document.getElementById('crProgressCount').textContent=`${atual} / ${total}`;
+}
+function crSetVideo(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  crVideoFile=f;
+  const el=document.getElementById('crVideoNome');
+  el.textContent='✓ '+f.name+' ('+(f.size/1048576).toFixed(1)+' MB)';
+  el.style.display='block';
+}
+function crGerarClick(){ if(crRodando){ crCancelar=true; document.getElementById('crStatus').textContent='Parando após o criativo atual...'; } else crGerar(); }
+
+// Divide o vídeo de referência em "cenas" virtuais (mesmo arquivo, cortes diferentes)
+function crMontarClips(file, dur, clipLen){
+  const clips=[]; let t=0;
+  while(t<dur-0.4){
+    const fim=Math.min(dur, t+clipLen);
+    clips.push({ id:'cr'+clips.length, nome:'cena'+(clips.length+1), file, dur, in:t, out:fim, fixEnd:false });
+    t=fim;
+  }
+  return clips.length?clips:[{ id:'cr0', nome:'cena1', file, dur, in:0, out:Math.max(0.5,dur), fixEnd:false }];
+}
+
+async function crGerar(){
+  const apiKey=(document.getElementById('crApiKey').value||'').trim();
+  if(!apiKey){ toast('Cole sua API key da ElevenLabs','warning'); return; }
+  salvarCacheApiKey(apiKey);
+  if(!crVideoFile){ toast('Envie o vídeo de referência','warning'); return; }
+  const n=parseInt(document.getElementById('crQtd').value)||3;
+  const voiceId=(document.getElementById('crVoiceId').value||'').trim()||'ewn5JTa3lNPY8QVuZJi6';
+  const modelId=document.getElementById('crModel').value;
+  const clipLen=parseFloat(document.getElementById('crClipLen').value)||5;
+  let legenda=document.getElementById('crLegenda').checked;
+  const estilo=vmLegendaEstilo(document.getElementById('crCor').value, document.getElementById('crPos').value);
+  const okf=await vmCarregarFFmpeg();
+  if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+
+  crRodando=true; crCancelar=false; crOutputs=[];
+  document.getElementById('crBtnGerar').textContent='⏹ Parar produção';
+  document.getElementById('crProgressCard').classList.add('visible');
+  document.getElementById('crLogArea').innerHTML='';
+  document.getElementById('crOutputList').innerHTML='';
+  document.getElementById('crBtnZip').classList.remove('visible');
+  crProgress(0, n);
+
+  try{
+    // 1. Entender o vídeo: detecta a voz (mesmo com música de fundo) e transcreve
+    crLog('🎧 Detectando a voz do vídeo (separando da música de fundo)...');
+    document.getElementById('crStatus').textContent='Analisando vídeo...';
+    const words=await vmVozDoVideo(crVideoFile, m=>crLog('   → '+m));
+    const textoOrig=(words||[]).map(w=>w.word).join(' ').replace(/\s+/g,' ').trim();
+    if(!textoOrig||textoOrig.length<20) throw new Error('não foi possível entender a fala (nem isolando a voz da música) — o vídeo tem narração?');
+    crLog('📝 Copy original: "'+textoOrig.slice(0,140)+(textoOrig.length>140?'...':'')+'"');
+
+    // 2. IA escreve as variações da copy
+    crLog(`✍️ Gerando ${n} variações da copy...`);
+    document.getElementById('crStatus').textContent='Escrevendo copies...';
+    const rc=await callApiAuth('gerar-copies', { texto:textoOrig, n });
+    if(!rc.ok) throw new Error(rc.erro||'erro ao gerar copies');
+    const copies=rc.copies;
+    crLog(`✓ ${copies.length} copies prontas`, 'ok');
+
+    // 3. Cenas a partir do próprio vídeo
+    const urlV=URL.createObjectURL(crVideoFile);
+    const durV=await vmGetDur(urlV); URL.revokeObjectURL(urlV);
+    const clipsBase=crMontarClips(crVideoFile, durV, clipLen);
+    crLog(`🎞 ${clipsBase.length} cena(s) extraída(s) do vídeo original`);
+
+    // 4. Um criativo por copy: narração → (legenda) → montagem
+    for(let i=0;i<copies.length;i++){
+      if(crCancelar){ crLog('Produção interrompida.','warn'); break; }
+      const num=String(i+1).padStart(2,'0');
+      const nome=`criativo_ia_${num}.mp4`;
+      document.getElementById('crStatus').textContent=`Criativo ${i+1}/${copies.length}...`;
+      try{
+        const reg=await callApiAuth('registrar-audio', {});
+        if(!reg.ok){ crLog(`[${num}] ✗ Limite de áudios do plano atingido.`,'warn'); abrirModal(); break; }
+        const regV=await callApiAuth('registrar-video', {});
+        if(!regV.ok){ crLog(`[${num}] ✗ ${regV.erro||'Limite semanal de vídeos atingido.'}`,'warn'); abrirModal(); break; }
+        crLog(`[${num}] 🎙 Narrando...`);
+        const audioBlob=await vmTTS(voiceId, copies[i], modelId, apiKey);
+        const audioFile=new File([audioBlob], `cr_${num}.mp3`, { type:'audio/mpeg' });
+        const au=URL.createObjectURL(audioFile); const audioDur=await vmGetDur(au); URL.revokeObjectURL(au);
+        let legendas=null;
+        if(legenda){
+          crLog(`[${num}] 💬 Gerando legenda...`);
+          try{ legendas=await vmTranscrever(audioFile); }
+          catch(e){ if(e.semSaldo){ legenda=false; crLog('Saldo insuficiente — seguindo sem legenda.','warn'); } else crLog('Legenda falhou: '+e.message,'warn'); }
+        }
+        if(!vmFfmpegOk){ const ok2=await vmCarregarFFmpeg(); if(!ok2) throw new Error('FFmpeg não recarregou'); }
+        crLog(`[${num}] ⚙️ Montando vídeo (${Math.round(audioDur)}s)...`);
+        const blob=await agProcessar(nome, vmShuffle(clipsBase), audioFile, audioDur, legendas, estilo);
+        crOutputs.push({ nome, blob, ok:true });
+        crAddOutput(nome, blob, true);
+        crLog(`[${num}] ✓ ${nome} pronto!`,'ok');
+      }catch(e){
+        console.error(e);
+        crOutputs.push({ nome, blob:null, ok:false });
+        crAddOutput(nome, null, false, e.message);
+        crLog(`[${num}] ✗ ${e.message}`,'err');
+      }
+      crProgress(i+1, copies.length);
+    }
+  }catch(e){
+    console.error(e);
+    crLog('✗ '+e.message,'err');
+    toast(e.message,'error',7000);
+  }
+
+  crRodando=false;
+  const feitos=crOutputs.filter(o=>o.ok).length;
+  document.getElementById('crBtnGerar').textContent='✨ Gerar criativos';
+  document.getElementById('crStatus').textContent='Pronto';
+  if(feitos>0){ const z=document.getElementById('crBtnZip'); z.classList.add('visible'); z.textContent=`⬇️ Baixar todos (ZIP) — ${feitos} criativo${feitos>1?'s':''}`; }
+  crLog(`\nFinalizado: ${feitos} criativo(s) gerado(s).`, feitos>0?'info':'err');
+  toast(crCancelar?`Parado (${feitos} prontos)`:`${feitos} criativo${feitos!==1?'s':''} gerado${feitos!==1?'s':''}!`, crCancelar?'info':'success');
+}
+function crAddOutput(nome, blob, ok, errMsg){
+  const list=document.getElementById('crOutputList');
+  const item=document.createElement('div'); item.className='vm-out';
+  if(ok&&blob){
+    const url=URL.createObjectURL(blob);
+    item.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name" style="max-width:none" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>`;
+  } else {
+    item.innerHTML=`<div><div class="vm-out-name" style="max-width:none">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,70)}</div></div>`;
+  }
+  list.appendChild(item);
+}
+async function crBaixarZip(){
+  const oks=crOutputs.filter(o=>o.ok&&o.blob);
+  if(!oks.length){ toast('Nenhum criativo gerado','warning'); return; }
+  const zip=new JSZip(); oks.forEach(o=>zip.file(o.nome, o.blob));
+  const blob=await zip.generateAsync({ type:'blob' });
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='criativos_ia.zip'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
 }
 
 </script>
