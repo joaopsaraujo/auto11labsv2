@@ -10,11 +10,16 @@ const SITE_URL = process.env.SITE_URL || `https://${process.env.VERCEL_URL}` || 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "jjoaopedrojp27@gmail.com";
 const LIMITE_GRATUITO = 10;
 const LIMITE_CONTAS_POR_IP = 2;
-// Preço da legenda automática cobrado do cliente (R$/min) = custo real × margem.
-// Ajuste via env: LEGENDA_CUSTO_MIN (custo real da API por min) e LEGENDA_MARGEM (multiplicador).
+// Preço da legenda automática (R$/min de áudio) = custo real da API × margem.
+// A margem é cobrada de TODAS as contas, menos a do dono (admin), que paga o
+// custo real. Ex.: margem 1.3 → o dono recebe 1,3× o custo em cada uso pago.
+// Ajuste via env: LEGENDA_CUSTO_MIN (custo real por min) e LEGENDA_MARGEM.
 const LEGENDA_CUSTO_MIN = Number(process.env.LEGENDA_CUSTO_MIN || 0.02);
-const LEGENDA_MARGEM = Number(process.env.LEGENDA_MARGEM || 2);
-const PRECO_LEGENDA_MIN = LEGENDA_CUSTO_MIN * LEGENDA_MARGEM;
+const LEGENDA_MARGEM = Number(process.env.LEGENDA_MARGEM || 1.3);
+// Preço por minuto cobrado de um usuário: admin paga custo, os demais pagam com margem.
+function precoLegendaMin(user) {
+  return (user && user.is_admin) ? LEGENDA_CUSTO_MIN : LEGENDA_CUSTO_MIN * LEGENDA_MARGEM;
+}
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
 const LIMITE_VIDEOS_SEMANA = 15; // VideoMix: vídeos por semana no plano gratuito
 const RESEND_API_KEY = process.env.RESEND_API_KEY; // envio de e-mail (recuperação de senha)
@@ -435,17 +440,15 @@ module.exports = async (req, res) => {
         return ok({ ok: true });
       }
 
-      // Recarga de saldo (avulsa, sem relação com plano)
+      // Recarga de saldo (avulsa, sem relação com plano).
+      // Credita o valor cheio que o cliente pagou — o saldo mostra exatamente o
+      // que ele recarregou. A margem do dono vem do preço de uso (precoLegendaMin).
       if (meta.tipo === "recarga") {
-        const bruto = Number(meta.valor || 0);
-        // Credita o valor LÍQUIDO que caiu na conta (já descontada a taxa do
-        // Mercado Pago) — a taxa deixa de sair do bolso do dono do site
-        const liquido = Number(pagamento.transaction_details && pagamento.transaction_details.net_received_amount);
-        const credito = Math.round(Math.min(bruto, liquido > 0 ? liquido : bruto) * 100) / 100;
+        const credito = Number(meta.valor || 0);
         const { data: us } = await sb("GET", `users?id=eq.${userId}&select=saldo`);
         const atual = us && us[0] ? Number(us[0].saldo || 0) : 0;
         await sb("PATCH", `users?id=eq.${userId}`, { saldo: atual + credito });
-        await logPagamento("recarga_creditada", { user_id: userId, valor_pago: bruto, credito, payment_id: data.id });
+        await logPagamento("recarga_creditada", { user_id: userId, valor: credito, payment_id: data.id });
         return ok({ ok: true });
       }
 
@@ -519,7 +522,7 @@ module.exports = async (req, res) => {
   if (path === "saldo" && req.method === "GET") {
     const user = await usuarioAutenticado();
     if (!user) return err(401, "Não autorizado");
-    return ok({ ok: true, saldo: Number(user.saldo || 0), precoLegendaMin: PRECO_LEGENDA_MIN });
+    return ok({ ok: true, saldo: Number(user.saldo || 0), precoLegendaMin: precoLegendaMin(user) });
   }
 
   // ── POST /recarregar — cria pagamento de recarga de saldo (avulso) ──
@@ -664,7 +667,7 @@ module.exports = async (req, res) => {
 
     // Saldo: precisa de saldo para gerar legenda (independente do plano)
     const saldo = Number(user.saldo || 0);
-    const custoEst = ((Number(estDur) || 0) / 60) * PRECO_LEGENDA_MIN;
+    const custoEst = ((Number(estDur) || 0) / 60) * precoLegendaMin(user);
     if (saldo <= 0 || saldo < custoEst) return err(402, "Saldo insuficiente. Recarregue para usar a legenda automática.");
 
     try {
@@ -687,7 +690,7 @@ module.exports = async (req, res) => {
       // Não cobra quando nenhuma fala foi reconhecida (ex: áudio só com música) —
       // permite que o front tente de novo com outro processamento sem custo duplo
       const temFala = words.length > 0 || segments.some((s) => (s.text || "").length > 2);
-      const custo = temFala ? (dur / 60) * PRECO_LEGENDA_MIN : 0;
+      const custo = temFala ? (dur / 60) * precoLegendaMin(user) : 0;
       const novoSaldo = Math.max(0, saldo - custo);
       if (custo > 0) await sb("PATCH", `users?id=eq.${user.id}`, { saldo: novoSaldo });
       return ok({ ok: true, words, segments, custo, saldo: novoSaldo, dur });
