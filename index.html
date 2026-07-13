@@ -1511,6 +1511,12 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
         <label class="vm-check"><input type="checkbox" id="vmAutoDrive"> ☁ Enviar ZIP ao Drive ao terminar</label>
         <div class="vm-flabel">Legenda automática</div>
         <label class="vm-check"><input type="checkbox" id="vmLegenda"> Legenda animada (estilo TikTok)</label>
+        <select id="vmLegEstilo" class="vm-num" style="font-family:'Manrope',sans-serif;font-size:11px;margin-bottom:6px" title="Estilo visual da legenda">
+          <option value="box" selected>🔲 Destaque — palavra com caixa colorida</option>
+          <option value="karaoke">🌈 Karaokê — palavra preenche com cor</option>
+          <option value="word">💥 Uma palavra por vez (grande)</option>
+          <option value="simples">✏️ Simples — sem animação</option>
+        </select>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <select id="vmLegCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Cor do destaque da legenda">
             <option value="amarelo">🟡 Amarelo</option>
@@ -1909,6 +1915,12 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
 
     <div class="card">
       <div class="card-title">🎨 Estilo da legenda</div>
+      <select id="lgEstilo" class="vm-num" style="font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px;margin-bottom:8px" title="Estilo visual da legenda">
+        <option value="box" selected>🔲 Destaque — palavra com caixa colorida (CapCut)</option>
+        <option value="karaoke">🌈 Karaokê — palavra preenche com cor</option>
+        <option value="word">💥 Uma palavra por vez (grande)</option>
+        <option value="simples">✏️ Simples — sem animação</option>
+      </select>
       <div style="display:flex;gap:8px">
         <select id="lgCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px" title="Cor do destaque">
           <option value="amarelo">🟡 Amarelo</option>
@@ -2010,7 +2022,13 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
         <option value="5" selected>~5 segundos</option>
         <option value="7">~7 segundos (mais calmo)</option>
       </select>
-      <label class="vm-check"><input type="checkbox" id="crLegenda" checked> Legenda automática animada (usa saldo)</label>
+      <label class="vm-check"><input type="checkbox" id="crLegenda"> Legenda automática animada (opcional — usa saldo)</label>
+      <select id="crEstilo" class="vm-num" style="font-family:'Manrope',sans-serif;font-size:11px;margin-top:6px" title="Estilo visual da legenda">
+        <option value="box" selected>🔲 Destaque — palavra com caixa colorida</option>
+        <option value="karaoke">🌈 Karaokê — palavra preenche com cor</option>
+        <option value="word">💥 Uma palavra por vez (grande)</option>
+        <option value="simples">✏️ Simples — sem animação</option>
+      </select>
       <div style="display:flex;gap:8px;margin-top:6px">
         <select id="crCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Cor do destaque">
           <option value="amarelo">🟡 Amarelo</option>
@@ -3505,9 +3523,16 @@ async function vmCarregarFFmpeg() {
       wasmURL: await vmToBlobURL(`${core}/ffmpeg-core.wasm`, 'application/wasm'),
     });
     vmFfmpegOk = true;
-    // Carrega uma fonte para legendas (drawtext) — uma vez
+    // Fonte das legendas: Archivo Black (grossa, estilo CapCut); cai p/ DejaVu se falhar
     if(!vmFontOk){
-      try{ const fr=await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf'); const fb=new Uint8Array(await fr.arrayBuffer()); await vmFfmpeg.writeFile('font.ttf', fb); vmFontOk=true; }catch(e){}
+      try{
+        const fr=await fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/archivoblack/ArchivoBlack-Regular.ttf');
+        if(!fr.ok) throw new Error('http '+fr.status);
+        await vmFfmpeg.writeFile('font.ttf', new Uint8Array(await fr.arrayBuffer()));
+        window.__vmFontName='Archivo Black'; vmFontOk=true;
+      }catch(e){
+        try{ const fr=await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf'); const fb=new Uint8Array(await fr.arrayBuffer()); await vmFfmpeg.writeFile('font.ttf', fb); window.__vmFontName='DejaVu Sans'; vmFontOk=true; }catch(e2){}
+      }
     }
     vmSetStatus('Pronto');
     return true;
@@ -4306,25 +4331,77 @@ async function vmTranscrever(file){
 // Gera legenda ASS animada (estilo TikTok: pop + karaokê palavra a palavra)
 function vmAssTime(t){ t=Math.max(0,t||0); const cs=Math.round(t*100); const h=Math.floor(cs/360000), m=Math.floor(cs/6000)%60, s=Math.floor(cs/100)%60, c=cs%100; return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(c).padStart(2,'0')}`; }
 function vmAssEsc(t){ return (t||'').replace(/[{}\\]/g,'').replace(/\r?\n/g,' '); }
-// cor/pos opcionais — sem eles, lê os seletores do VideoMix (comportamento original)
-function vmLegendaEstilo(cor, pos){
+// cor/pos/modo opcionais — sem eles, lê os seletores do VideoMix
+// modos: 'box' (palavra com caixa colorida, estilo CapCut), 'karaoke'
+// (palavra preenche com cor), 'word' (uma palavra por vez), 'simples'
+function vmLegendaEstilo(cor, pos, modo){
   cor = cor || (document.getElementById('vmLegCor') || {}).value || 'amarelo';
   pos = pos || (document.getElementById('vmLegPos') || {}).value || 'meio';
+  modo = modo || (document.getElementById('vmLegEstilo') || {}).value || 'box';
   const cores = { amarelo:['&H0000F0FF','&H00FFFFFF'], verde:['&H0099D334','&H00FFFFFF'], rosa:['&H00B672F4','&H00FFFFFF'], branco:['&H00FFFFFF','&H00B9B9B9'] };
   const posM = { baixo:280, meio:620, centro:900 };
   const [primary, secondary] = cores[cor] || cores.amarelo;
-  return { primary, secondary, marginV: posM[pos] != null ? posM[pos] : 620, fontsize:92 };
+  return {
+    modo, primary, secondary,
+    primaryInline: '&H' + primary.slice(4) + '&',              // cor p/ override inline (\3c)
+    textoNaCaixa: cor === 'branco' ? '&H000000&' : '&HFFFFFF&', // caixa branca pede texto preto
+    marginV: posM[pos] != null ? posM[pos] : 620, fontsize: 92,
+  };
 }
 function vmGerarAss(words, estilo){
   const est = estilo || vmLegendaEstilo();
-  const header = `[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,DejaVu Sans,${est.fontsize},${est.primary},${est.secondary},&H00000000,&H64000000,1,6,2,2,80,80,${est.marginV}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
-  const N=4; let ev='';
-  for(let i=0;i<words.length;i+=N){
-    const line=words.slice(i,i+N); if(!line.length) continue;
-    const start=line[0].start, end=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
-    let txt='{\\fad(60,60)}{\\t(0,120,\\fscx116\\fscy116)\\t(120,240,\\fscx100\\fscy100)}';
-    for(const w of line){ const kcs=Math.max(1,Math.round(((w.end||w.start)-w.start)*100)); txt+=`{\\kf${kcs}}${vmAssEsc(w.word)} `; }
-    ev+=`Dialogue: 0,${vmAssTime(start)},${vmAssTime(end)},Def,,0,0,0,,${txt.trim()}\n`;
+  const modo = est.modo || 'box';
+  const fonte = window.__vmFontName || 'DejaVu Sans';
+  const fs = modo==='word' ? 112 : (est.fontsize || 92);
+  // Estilo base: karaokê usa destaque/branco no próprio estilo; os demais usam texto branco
+  const priStyle = modo==='karaoke' ? est.primary : '&H00FFFFFF';
+  const secStyle = modo==='karaoke' ? '&H00FFFFFF' : (est.secondary || '&H00FFFFFF');
+  const outline = modo==='box' ? 5 : 6;
+  const header = `[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,${fonte},${fs},${priStyle},${secStyle},&H00000000,&H64000000,1,${outline},2,2,60,60,${est.marginV}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
+  const ws=(words||[]).filter(w=>w && String(w.word||'').trim() && w.start!=null);
+  let ev='';
+  if(modo==='word'){
+    // Uma palavra por vez, grande, com "pop"
+    for(let i=0;i<ws.length;i++){
+      const w=ws[i];
+      const fim=(w.end!=null && w.end>w.start) ? w.end : ((ws[i+1]&&ws[i+1].start)||w.start+0.4);
+      const txt=`{\\fad(30,30)\\t(0,90,\\fscx118\\fscy118)\\t(90,170,\\fscx100\\fscy100)\\1c${est.primary}}${vmAssEsc(w.word).trim().toUpperCase()}`;
+      ev+=`Dialogue: 0,${vmAssTime(w.start)},${vmAssTime(fim)},Def,,0,0,0,,${txt}\n`;
+    }
+  } else if(modo==='karaoke'){
+    const N=4;
+    for(let i=0;i<ws.length;i+=N){
+      const line=ws.slice(i,i+N);
+      const start=line[0].start, end=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
+      let txt='{\\fad(60,60)}{\\t(0,120,\\fscx116\\fscy116)\\t(120,240,\\fscx100\\fscy100)}';
+      for(const w of line){ const kcs=Math.max(1,Math.round(((w.end||w.start)-w.start)*100)); txt+=`{\\kf${kcs}}${vmAssEsc(w.word)} `; }
+      ev+=`Dialogue: 0,${vmAssTime(start)},${vmAssTime(end)},Def,,0,0,0,,${txt.trim()}\n`;
+    }
+  } else if(modo==='simples'){
+    const N=5;
+    for(let i=0;i<ws.length;i+=N){
+      const line=ws.slice(i,i+N);
+      const start=line[0].start, end=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
+      ev+=`Dialogue: 0,${vmAssTime(start)},${vmAssTime(end)},Def,,0,0,0,,${line.map(w=>vmAssEsc(w.word).trim()).join(' ')}\n`;
+    }
+  } else {
+    // 'box' — frase curta em CAIXA ALTA; a palavra sendo falada ganha uma
+    // caixa arredondada colorida (contorno grosso), estilo CapCut/Submagic
+    const N=3;
+    for(let i=0;i<ws.length;i+=N){
+      const line=ws.slice(i,i+N);
+      const fimLinha=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
+      for(let j=0;j<line.length;j++){
+        const ini=line[j].start;
+        const fim=(j<line.length-1)?line[j+1].start:fimLinha;
+        if(!(fim>ini)) continue;
+        const txt=line.map((w,k)=>{
+          const p=vmAssEsc(w.word).trim().toUpperCase();
+          return k===j ? `{\\bord16\\3c${est.primaryInline}\\1c${est.textoNaCaixa}\\fscx106\\fscy106}${p}{\\r}` : p;
+        }).join(' ');
+        ev+=`Dialogue: 0,${vmAssTime(ini)},${vmAssTime(fim)},Def,,0,0,0,,${txt}\n`;
+      }
+    }
   }
   return header+ev;
 }
@@ -5301,7 +5378,7 @@ async function lgGerar(){
   document.getElementById('lgBtnZip').classList.remove('visible');
   document.getElementById('lgProgressFill').style.width='0%';
   document.getElementById('lgBtnGerar').textContent='⏹ Parar';
-  const estilo=vmLegendaEstilo(document.getElementById('lgCor').value, document.getElementById('lgPos').value);
+  const estilo=vmLegendaEstilo(document.getElementById('lgCor').value, document.getElementById('lgPos').value, document.getElementById('lgEstilo').value);
   for(let i=0;i<fila.length;i++){
     if(lgCancelar) break;
     const item=fila[i];
@@ -5399,7 +5476,7 @@ async function crGerar(){
   const modelId=document.getElementById('crModel').value;
   const clipLen=parseFloat(document.getElementById('crClipLen').value)||5;
   let legenda=document.getElementById('crLegenda').checked;
-  const estilo=vmLegendaEstilo(document.getElementById('crCor').value, document.getElementById('crPos').value);
+  const estilo=vmLegendaEstilo(document.getElementById('crCor').value, document.getElementById('crPos').value, document.getElementById('crEstilo').value);
   const okf=await vmCarregarFFmpeg();
   if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
 
