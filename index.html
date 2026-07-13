@@ -8,6 +8,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+/* Fontes de legenda (preview no seletor) */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Archivo+Black&family=Bangers&family=Bebas+Neue&family=Luckiest+Guy&family=Poppins:wght@700&display=swap');
 :root{
   --bg:#0a0a0b;
   --surface:#141416;
@@ -1517,6 +1519,14 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
           <option value="word">💥 Uma palavra por vez (grande)</option>
           <option value="simples">✏️ Simples — sem animação</option>
         </select>
+        <select id="vmLegFonte" class="vm-num" style="font-family:'Manrope',sans-serif;font-size:11px;margin-bottom:6px" title="Fonte da legenda">
+          <option value="archivo" selected style="font-family:'Archivo Black'">Archivo Black — grossa (CapCut)</option>
+          <option value="anton" style="font-family:'Anton'">Anton — condensada e alta</option>
+          <option value="poppins" style="font-family:'Poppins';font-weight:700">Poppins Bold — limpa e moderna</option>
+          <option value="bebas" style="font-family:'Bebas Neue'">Bebas Neue — estreita, caixa alta</option>
+          <option value="bangers" style="font-family:'Bangers'">Bangers — quadrinhos</option>
+          <option value="luckiest" style="font-family:'Luckiest Guy'">Luckiest Guy — divertida</option>
+        </select>
         <div style="display:flex;gap:6px;margin-bottom:8px">
           <select id="vmLegCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Cor do destaque da legenda">
             <option value="amarelo">🟡 Amarelo</option>
@@ -1921,6 +1931,14 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
         <option value="word">💥 Uma palavra por vez (grande)</option>
         <option value="simples">✏️ Simples — sem animação</option>
       </select>
+      <select id="lgFonte" class="vm-num" style="font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px;margin-bottom:8px" title="Fonte da legenda">
+        <option value="archivo" selected style="font-family:'Archivo Black'">Archivo Black — grossa (CapCut)</option>
+        <option value="anton" style="font-family:'Anton'">Anton — condensada e alta</option>
+        <option value="poppins" style="font-family:'Poppins';font-weight:700">Poppins Bold — limpa e moderna</option>
+        <option value="bebas" style="font-family:'Bebas Neue'">Bebas Neue — estreita, caixa alta</option>
+        <option value="bangers" style="font-family:'Bangers'">Bangers — quadrinhos</option>
+        <option value="luckiest" style="font-family:'Luckiest Guy'">Luckiest Guy — divertida</option>
+      </select>
       <div style="display:flex;gap:8px">
         <select id="lgCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px" title="Cor do destaque">
           <option value="amarelo">🟡 Amarelo</option>
@@ -2028,6 +2046,14 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
         <option value="karaoke">🌈 Karaokê — palavra preenche com cor</option>
         <option value="word">💥 Uma palavra por vez (grande)</option>
         <option value="simples">✏️ Simples — sem animação</option>
+      </select>
+      <select id="crFonte" class="vm-num" style="font-family:'Manrope',sans-serif;font-size:11px;margin-top:6px" title="Fonte da legenda">
+        <option value="archivo" selected style="font-family:'Archivo Black'">Archivo Black — grossa (CapCut)</option>
+        <option value="anton" style="font-family:'Anton'">Anton — condensada e alta</option>
+        <option value="poppins" style="font-family:'Poppins';font-weight:700">Poppins Bold — limpa e moderna</option>
+        <option value="bebas" style="font-family:'Bebas Neue'">Bebas Neue — estreita, caixa alta</option>
+        <option value="bangers" style="font-family:'Bangers'">Bangers — quadrinhos</option>
+        <option value="luckiest" style="font-family:'Luckiest Guy'">Luckiest Guy — divertida</option>
       </select>
       <div style="display:flex;gap:8px;margin-top:6px">
         <select id="crCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Cor do destaque">
@@ -3481,6 +3507,46 @@ function vmDuracao(){ let d=0; [...vmVLayers,...vmALayers].forEach(l=>l.clips.fo
 function vmTemConteudo(){ return vmVLayers.some(l=>l.clips.length); }
 function vmGarantirLayers(){ if(!vmVLayers.length) vmVLayers.push({id:vmUid(),clips:[]}); if(!vmALayers.length) vmALayers.push({id:vmUid(),clips:[]}); }
 
+// ── Fontes de legenda (escolha do usuário; TTF do Google Fonts via CDN) ──
+const VM_FONTES = {
+  archivo:  { nome:'Archivo Black', url:'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/archivoblack/ArchivoBlack-Regular.ttf' },
+  anton:    { nome:'Anton',         url:'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/anton/Anton-Regular.ttf' },
+  poppins:  { nome:'Poppins',       url:'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/poppins/Poppins-Bold.ttf' },
+  bebas:    { nome:'Bebas Neue',    url:'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/bebasneue/BebasNeue-Regular.ttf' },
+  bangers:  { nome:'Bangers',       url:'https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/bangers/Bangers-Regular.ttf' },
+  luckiest: { nome:'Luckiest Guy',  url:'https://cdn.jsdelivr.net/gh/google/fonts@main/apache/luckiestguy/LuckiestGuy-Regular.ttf' },
+};
+const vmFonteCache = {};       // id -> bytes (baixa 1x por sessão)
+let vmFonteAtual = 'archivo';  // última fonte pedida (re-gravada se o FFmpeg reiniciar)
+
+// Garante que a fonte escolhida está gravada no FFmpeg como font.ttf.
+// Se o download falhar, cai para a DejaVu — a legenda nunca fica sem fonte.
+async function vmGarantirFonte(fonteId){
+  fonteId = VM_FONTES[fonteId] ? fonteId : 'archivo';
+  vmFonteAtual = fonteId;
+  const f = VM_FONTES[fonteId];
+  try{
+    if(!vmFonteCache[fonteId]){
+      const r = await fetch(f.url);
+      if(!r.ok) throw new Error('http '+r.status);
+      vmFonteCache[fonteId] = new Uint8Array(await r.arrayBuffer());
+    }
+    await vmFfmpeg.writeFile('font.ttf', vmFonteCache[fonteId]);
+    window.__vmFontName = f.nome; vmFontOk = true;
+    return f.nome;
+  }catch(e){
+    try{
+      if(!vmFonteCache.dejavu){
+        const r = await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf');
+        vmFonteCache.dejavu = new Uint8Array(await r.arrayBuffer());
+      }
+      await vmFfmpeg.writeFile('font.ttf', vmFonteCache.dejavu);
+      window.__vmFontName = 'DejaVu Sans'; vmFontOk = true;
+      return 'DejaVu Sans';
+    }catch(e2){ vmFontOk = false; return null; }
+  }
+}
+
 // ── FFmpeg ────────────────────────────────────────────────
 // Baixa um recurso e devolve um blob URL same-origin (com retry).
 // Evita o erro de Worker cross-origin do FFmpeg.wasm 0.12 carregado via CDN.
@@ -3523,17 +3589,8 @@ async function vmCarregarFFmpeg() {
       wasmURL: await vmToBlobURL(`${core}/ffmpeg-core.wasm`, 'application/wasm'),
     });
     vmFfmpegOk = true;
-    // Fonte das legendas: Archivo Black (grossa, estilo CapCut); cai p/ DejaVu se falhar
-    if(!vmFontOk){
-      try{
-        const fr=await fetch('https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/archivoblack/ArchivoBlack-Regular.ttf');
-        if(!fr.ok) throw new Error('http '+fr.status);
-        await vmFfmpeg.writeFile('font.ttf', new Uint8Array(await fr.arrayBuffer()));
-        window.__vmFontName='Archivo Black'; vmFontOk=true;
-      }catch(e){
-        try{ const fr=await fetch('https://cdn.jsdelivr.net/npm/dejavu-fonts-ttf@2.37.3/ttf/DejaVuSans-Bold.ttf'); const fb=new Uint8Array(await fr.arrayBuffer()); await vmFfmpeg.writeFile('font.ttf', fb); window.__vmFontName='DejaVu Sans'; vmFontOk=true; }catch(e2){}
-      }
-    }
+    // Grava a fonte de legenda selecionada (re-grava após um reinício do FFmpeg)
+    if(!vmFontOk){ await vmGarantirFonte(vmFonteAtual); }
     vmSetStatus('Pronto');
     return true;
   } catch(e) {
@@ -4357,7 +4414,8 @@ function vmGerarAss(words, estilo){
   const priStyle = modo==='karaoke' ? est.primary : '&H00FFFFFF';
   const secStyle = modo==='karaoke' ? '&H00FFFFFF' : (est.secondary || '&H00FFFFFF');
   const outline = modo==='box' ? 5 : 6;
-  const header = `[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,${fonte},${fs},${priStyle},${secStyle},&H00000000,&H64000000,1,${outline},2,2,60,60,${est.marginV}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
+  // Bold=0: as fontes do catálogo já são pesadas — evita o "negrito falso" do libass
+  const header = `[Script Info]\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\nWrapStyle: 0\nScaledBorderAndShadow: yes\n\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Outline, Shadow, Alignment, MarginL, MarginR, MarginV\nStyle: Def,${fonte},${fs},${priStyle},${secStyle},&H00000000,&H64000000,0,${outline},2,2,60,60,${est.marginV}\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n`;
   const ws=(words||[]).filter(w=>w && String(w.word||'').trim() && w.start!=null);
   let ev='';
   if(modo==='word'){
@@ -4422,6 +4480,7 @@ async function vmGerar(){
   const randN=parseInt((document.getElementById('vmRandN')||{}).value); const randMod=isNaN(randN)?1:randN;
   const randFx=document.getElementById('vmRandFx').checked;
   let legenda=document.getElementById('vmLegenda').checked;
+  if(legenda) await vmGarantirFonte((document.getElementById('vmLegFonte')||{}).value);
   // Ordem dos áudios embaralhada a cada produção (antes seguia sempre a ordem
   // alfabética da pasta — os pares áudio↔vídeo saíam iguais em toda produção)
   const pool=vmShuffle(vmMedia.filter(m=>m.kind==='audio'));
@@ -5158,6 +5217,7 @@ async function agGerar(){
   if(!roteiros.length){ toast('Cole pelo menos um roteiro','warning'); return; }
   const okf=await vmCarregarFFmpeg();
   if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+  if(legenda) await vmGarantirFonte((document.getElementById('vmLegFonte')||{}).value);
 
   agRodando=true; agCancelar=false; agOutputs=[];
   document.getElementById('agBtnGerar').textContent='⏹ Parar produção';
@@ -5371,6 +5431,7 @@ async function lgGerar(){
   if(!lgFiles.length){ toast('Adicione pelo menos um vídeo','warning'); return; }
   const okf=await vmCarregarFFmpeg();
   if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+  await vmGarantirFonte(document.getElementById('lgFonte').value);
   lgRodando=true; lgCancelar=false; lgOutputs=[];
   const fila=[...lgFiles];
   document.getElementById('lgProgressCard').classList.add('visible');
@@ -5479,6 +5540,7 @@ async function crGerar(){
   const estilo=vmLegendaEstilo(document.getElementById('crCor').value, document.getElementById('crPos').value, document.getElementById('crEstilo').value);
   const okf=await vmCarregarFFmpeg();
   if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+  if(legenda) await vmGarantirFonte(document.getElementById('crFonte').value);
 
   crRodando=true; crCancelar=false; crOutputs=[];
   document.getElementById('crBtnGerar').textContent='⏹ Parar produção';
