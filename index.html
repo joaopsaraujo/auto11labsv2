@@ -599,6 +599,15 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
 @keyframes modalIn{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
 .voice-card:hover{transform:translateY(-1px)}
 .vm-btn:hover:not(:disabled){transform:translateY(-1px)}
+
+/* ══ GALERIA DE MODELOS DE LEGENDA ══ */
+.lg-modelos{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px}
+.lg-modelo{border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .15s;background:rgba(255,255,255,.02);position:relative}
+.lg-modelo:hover{border-color:rgba(124,147,251,.4);transform:translateY(-2px)}
+.lg-modelo.sel{border-color:var(--accent2);box-shadow:0 0 0 2px rgba(124,147,251,.35)}
+.lg-modelo.sel::after{content:'✓';position:absolute;top:6px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.lg-modelo-frame{height:62px;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#57493c,#38302a);padding:4px;overflow:hidden;white-space:nowrap}
+.lg-modelo-nome{font-size:10.5px;color:var(--muted2);text-align:center;padding:6px 4px;font-weight:600}
 </style>
 </head>
 <body>
@@ -1511,40 +1520,7 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
         <label class="vm-check"><input type="checkbox" id="vmRandFx"> Randomizar transições (fade/zoom)</label>
         <label class="vm-check"><input type="checkbox" id="vmMixTimeline"> Misturar áudio da timeline com a pasta</label>
         <label class="vm-check"><input type="checkbox" id="vmAutoDrive"> ☁ Enviar ZIP ao Drive ao terminar</label>
-        <div class="vm-flabel">Legenda automática</div>
-        <label class="vm-check"><input type="checkbox" id="vmLegenda"> Legenda animada (estilo TikTok)</label>
-        <select id="vmLegEstilo" class="vm-num" style="font-family:'Manrope',sans-serif;font-size:11px;margin-bottom:6px" title="Estilo visual da legenda">
-          <option value="box" selected>🔲 Destaque — palavra com caixa colorida</option>
-          <option value="karaoke">🌈 Karaokê — palavra preenche com cor</option>
-          <option value="word">💥 Uma palavra por vez (grande)</option>
-          <option value="simples">✏️ Simples — sem animação</option>
-        </select>
-        <select id="vmLegFonte" class="vm-num" style="font-family:'Manrope',sans-serif;font-size:11px;margin-bottom:6px" title="Fonte da legenda">
-          <option value="archivo" selected style="font-family:'Archivo Black'">Archivo Black — grossa (CapCut)</option>
-          <option value="anton" style="font-family:'Anton'">Anton — condensada e alta</option>
-          <option value="poppins" style="font-family:'Poppins';font-weight:700">Poppins Bold — limpa e moderna</option>
-          <option value="bebas" style="font-family:'Bebas Neue'">Bebas Neue — estreita, caixa alta</option>
-          <option value="bangers" style="font-family:'Bangers'">Bangers — quadrinhos</option>
-          <option value="luckiest" style="font-family:'Luckiest Guy'">Luckiest Guy — divertida</option>
-        </select>
-        <div style="display:flex;gap:6px;margin-bottom:8px">
-          <select id="vmLegCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Cor do destaque da legenda">
-            <option value="amarelo">🟡 Amarelo</option>
-            <option value="verde">🟢 Verde</option>
-            <option value="rosa">🩷 Rosa</option>
-            <option value="branco">⚪ Branco</option>
-          </select>
-          <select id="vmLegPos" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;font-size:11px" title="Posição da legenda">
-            <option value="baixo">Embaixo</option>
-            <option value="meio" selected>Meio</option>
-            <option value="centro">Centro</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-bottom:6px">
-          <span style="font-size:11px;color:var(--muted2)">Saldo: <strong id="vmSaldoVal" style="color:var(--accent3)">R$ 0,00</strong></span>
-          <button onclick="vmAbrirRecarga()" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif">+ Recarregar</button>
-        </div>
-        <div id="vmEstCusto" style="font-size:10px;color:var(--muted2);margin-bottom:8px"></div>
+        <div style="font-size:10px;color:var(--muted2);margin-bottom:8px;padding:8px;background:rgba(124,147,251,.05);border-radius:6px;border-left:2px solid rgba(124,147,251,.3);line-height:1.5">💬 <strong style="color:var(--accent3)">Legendas ficam no AutoLegenda</strong> — termine a produção e clique em "Legendar todos" (com 16 modelos visuais e sorteio por vídeo).</div>
         <div id="vmAudioPoolInfo" style="font-size:11px;color:var(--accent3);margin-bottom:8px;font-family:'JetBrains Mono',monospace">0 áudios → 0 vídeos</div>
         <div id="vmLimiteInfo" style="display:none;font-size:10px;color:var(--muted2);margin-bottom:8px;line-height:1.5"></div>
         <div id="vmMissingBanner" style="display:none;font-size:10px;color:var(--warning);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.25);border-radius:6px;padding:8px;margin-bottom:8px"></div>
@@ -1705,7 +1681,8 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
       <div class="vm-prop">
         <div class="vm-prop-title" style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap">
           <span>📦 Gerados</span>
-          <span style="display:flex;gap:6px">
+          <span style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="vmBaixarZipTodos()" title="Baixar todos os vídeos gerados num ZIP" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">⬇️ Baixar ZIP</button>
             <button id="vmDriveBtn" onclick="vmDriveConectar()" title="Conectar Google Drive" style="background:rgba(124,147,251,.12);border:1px solid rgba(124,147,251,.25);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ Conectar Drive</button>
             <button id="vmZipDriveBtn" onclick="vmDriveZipVideos()" title="Enviar todos os vídeos como 1 ZIP e gerar 1 link" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">☁ ZIP → Drive</button>
             <button onclick="lgReceberTodosDoVideoMix()" title="Enviar todos os vídeos gerados ao AutoLegenda (sem baixar)" style="background:rgba(124,147,251,.12);border:1px solid rgba(124,147,251,.25);color:var(--accent3);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif;text-transform:none;letter-spacing:0">💬 Legendar todos</button>
@@ -1924,29 +1901,12 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
     </div>
 
     <div class="card">
-      <div class="card-title">🎨 Estilo da legenda</div>
-      <select id="lgEstilo" class="vm-num" style="font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px;margin-bottom:8px" title="Estilo visual da legenda">
-        <option value="box" selected>🔲 Destaque — palavra com caixa colorida (CapCut)</option>
-        <option value="karaoke">🌈 Karaokê — palavra preenche com cor</option>
-        <option value="word">💥 Uma palavra por vez (grande)</option>
-        <option value="simples">✏️ Simples — sem animação</option>
-      </select>
-      <select id="lgFonte" class="vm-num" style="font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px;margin-bottom:8px" title="Fonte da legenda">
-        <option value="archivo" selected style="font-family:'Archivo Black'">Archivo Black — grossa (CapCut)</option>
-        <option value="anton" style="font-family:'Anton'">Anton — condensada e alta</option>
-        <option value="poppins" style="font-family:'Poppins';font-weight:700">Poppins Bold — limpa e moderna</option>
-        <option value="bebas" style="font-family:'Bebas Neue'">Bebas Neue — estreita, caixa alta</option>
-        <option value="bangers" style="font-family:'Bangers'">Bangers — quadrinhos</option>
-        <option value="luckiest" style="font-family:'Luckiest Guy'">Luckiest Guy — divertida</option>
-      </select>
-      <div style="display:flex;gap:8px">
-        <select id="lgCor" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px" title="Cor do destaque">
-          <option value="amarelo">🟡 Amarelo</option>
-          <option value="verde">🟢 Verde</option>
-          <option value="rosa">🩷 Rosa</option>
-          <option value="branco">⚪ Branco</option>
-        </select>
-        <select id="lgPos" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:10px 12px;font-size:13px" title="Posição">
+      <div class="card-title">🎨 Modelos de legenda <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--muted2)">— toque para selecionar · vários = sorteio por vídeo</span></div>
+      <div id="lgModelos" class="lg-modelos"></div>
+      <div id="lgModelosInfo" style="font-size:11px;color:var(--accent3);margin-top:10px"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center">
+        <span style="font-size:11px;color:var(--muted2);flex-shrink:0">Posição na tela:</span>
+        <select id="lgPos" class="vm-num" style="flex:1;font-family:'Manrope',sans-serif;padding:8px 12px;font-size:12px">
           <option value="baixo">Embaixo</option>
           <option value="meio" selected>Meio</option>
           <option value="centro">Centro</option>
@@ -2531,6 +2491,7 @@ function irParaLegendar() {
   setSidebarActive('legendar');
   vmCarregarSaldo();
   lgRender();
+  lgRenderModelos();
 }
 
 function irParaCriativos() {
@@ -4405,6 +4366,20 @@ function vmLegendaEstilo(cor, pos, modo){
     marginV: posM[pos] != null ? posM[pos] : 620, fontsize: 92,
   };
 }
+// Agrupa palavras em linhas naturais: quebra em pausas (>0.6s), em pontuação
+// final e no máx maxN palavras — a legenda deixa de cortar frases no meio e
+// não fica "presa" na tela durante silêncios longos.
+function vmAgruparPalavras(ws, maxN){
+  const linhas=[]; let atual=[];
+  for(let i=0;i<ws.length;i++){
+    const w=ws[i]; atual.push(w);
+    const prox=ws[i+1];
+    const fimFrase=/[.!?…]"?$/.test(String(w.word||'').trim());
+    const pausa=prox && prox.start!=null && w.end!=null && (prox.start - w.end) > 0.6;
+    if(atual.length>=maxN || fimFrase || pausa || !prox){ linhas.push(atual); atual=[]; }
+  }
+  return linhas;
+}
 function vmGerarAss(words, estilo){
   const est = estilo || vmLegendaEstilo();
   const modo = est.modo || 'box';
@@ -4427,35 +4402,31 @@ function vmGerarAss(words, estilo){
       ev+=`Dialogue: 0,${vmAssTime(w.start)},${vmAssTime(fim)},Def,,0,0,0,,${txt}\n`;
     }
   } else if(modo==='karaoke'){
-    const N=4;
-    for(let i=0;i<ws.length;i+=N){
-      const line=ws.slice(i,i+N);
+    for(const line of vmAgruparPalavras(ws, 4)){
       const start=line[0].start, end=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
       let txt='{\\fad(60,60)}{\\t(0,120,\\fscx116\\fscy116)\\t(120,240,\\fscx100\\fscy100)}';
       for(const w of line){ const kcs=Math.max(1,Math.round(((w.end||w.start)-w.start)*100)); txt+=`{\\kf${kcs}}${vmAssEsc(w.word)} `; }
       ev+=`Dialogue: 0,${vmAssTime(start)},${vmAssTime(end)},Def,,0,0,0,,${txt.trim()}\n`;
     }
   } else if(modo==='simples'){
-    const N=5;
-    for(let i=0;i<ws.length;i+=N){
-      const line=ws.slice(i,i+N);
+    for(const line of vmAgruparPalavras(ws, 6)){
       const start=line[0].start, end=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
       ev+=`Dialogue: 0,${vmAssTime(start)},${vmAssTime(end)},Def,,0,0,0,,${line.map(w=>vmAssEsc(w.word).trim()).join(' ')}\n`;
     }
   } else {
     // 'box' — frase curta em CAIXA ALTA; a palavra sendo falada ganha uma
     // caixa arredondada colorida (contorno grosso), estilo CapCut/Submagic
-    const N=3;
-    for(let i=0;i<ws.length;i+=N){
-      const line=ws.slice(i,i+N);
+    for(const line of vmAgruparPalavras(ws, 3)){
       const fimLinha=line[line.length-1].end!=null?line[line.length-1].end:(line[line.length-1].start+0.5);
       for(let j=0;j<line.length;j++){
         const ini=line[j].start;
-        const fim=(j<line.length-1)?line[j+1].start:fimLinha;
+        // a caixa acompanha a fala: dura até a próxima palavra (limitada a 1.5s
+        // p/ não ficar parada num "uhm" longo) e some junto com a linha
+        const fim=Math.min((j<line.length-1)?line[j+1].start:fimLinha, ini+1.5, fimLinha);
         if(!(fim>ini)) continue;
         const txt=line.map((w,k)=>{
           const p=vmAssEsc(w.word).trim().toUpperCase();
-          return k===j ? `{\\bord16\\3c${est.primaryInline}\\1c${est.textoNaCaixa}\\fscx106\\fscy106}${p}{\\r}` : p;
+          return k===j ? `{\\bord14\\3c${est.primaryInline}\\1c${est.textoNaCaixa}\\fscx106\\fscy106}${p}{\\r}` : p;
         }).join(' ');
         ev+=`Dialogue: 0,${vmAssTime(ini)},${vmAssTime(fim)},Def,,0,0,0,,${txt}\n`;
       }
@@ -4473,14 +4444,14 @@ async function vmGerar(){
   if(vmGerando) return;
   if(!vmTemConteudo()){ toast('Monte o vídeo base (adicione clipes).','error'); return; }
   if(vmMissingCount()){ toast('Há arquivos do projeto faltando. Adicione-os antes de gerar.','error'); return; }
-  const okf=await vmCarregarFFmpeg(); if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'tente recarregar a página'),'error',6000); return; }
+  // trava ANTES de carregar o FFmpeg — clique duplo disparava produções simultâneas
+  vmGerando=true; vmCancelar=false;
+  const okf=await vmCarregarFFmpeg(); if(!okf){ vmGerando=false; toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'tente recarregar a página'),'error',6000); return; }
   const nomeBase=document.getElementById('vmNomeBase').value.trim()||'criativo';
   const fillMode=document.getElementById('vmFitMode').value;
   const stretchSel=document.getElementById('vmStretchClip').value;
   const randN=parseInt((document.getElementById('vmRandN')||{}).value); const randMod=isNaN(randN)?1:randN;
   const randFx=document.getElementById('vmRandFx').checked;
-  let legenda=document.getElementById('vmLegenda').checked;
-  if(legenda) await vmGarantirFonte((document.getElementById('vmLegFonte')||{}).value);
   // Ordem dos áudios embaralhada a cada produção (antes seguia sempre a ordem
   // alfabética da pasta — os pares áudio↔vídeo saíam iguais em toda produção)
   const pool=vmShuffle(vmMedia.filter(m=>m.kind==='audio'));
@@ -4498,12 +4469,11 @@ async function vmGerar(){
   const durTotal=jobs.reduce((a,j)=>a+(j?(j.dur||0):vmDuracao()),0);
   const estMin=Math.max(1, Math.round(durTotal*2/60));
   if(durTotal>900){
-    if(!confirm(`Produção grande: ${jobs.length} vídeo(s), ~${Math.round(durTotal/60)} min de vídeo final.\nEstimativa de renderização: ~${estMin} min (varia com o computador).\nMantenha esta aba aberta até o fim. Continuar?`)) return;
+    if(!confirm(`Produção grande: ${jobs.length} vídeo(s), ~${Math.round(durTotal/60)} min de vídeo final.\nEstimativa de renderização: ~${estMin} min (varia com o computador).\nMantenha esta aba aberta até o fim. Continuar?`)){ vmGerando=false; return; }
   } else if(jobs.length>1){
     toast(`${jobs.length} vídeos · renderização estimada: ~${estMin} min`,'info',4500);
   }
 
-  vmGerando=true; vmCancelar=false;
   document.getElementById('vmProgressWrap').style.display='block';
   document.getElementById('vmBtnGerar').textContent='⏹ Parar produção'; document.getElementById('vmBtnRand').disabled=true;
   document.getElementById('vmOutputList').innerHTML=''; vmOutputs=[];
@@ -4528,17 +4498,7 @@ async function vmGerar(){
     if(randFx) vmAplicarFxAleatorio();
     const targetDur = audio ? audio.dur : vmDuracao();
     const nomeArq=`${nomeBase}_${String(v+1).padStart(3,'0')}.mp4`;
-    let legendas=null;
-    if(legenda && audio){
-      vmSetStatus(`Transcrevendo ${v+1}/${jobs.length}...`);
-      document.getElementById('vmProgressText').textContent=`Transcrevendo áudio ${v+1}/${jobs.length}...`;
-      try{ legendas=await vmTranscrever(audio.file); }
-      catch(e){
-        legendas=null;
-        if(e.semSaldo){ legenda=false; toast('Saldo insuficiente para legenda — recarregue. Gerando sem legenda.','warning',6000); }
-        else toast('Legenda falhou: '+e.message+' — gerando sem legenda','warning',5000);
-      }
-    }
+    // Legenda saiu do VideoMix — gere aqui e mande ao AutoLegenda (botão 💬)
     // Se o render anterior falhou, o FFmpeg foi reiniciado — recarrega antes de seguir
     if(!vmFfmpegOk){
       const ok2=await vmCarregarFFmpeg();
@@ -4546,7 +4506,7 @@ async function vmGerar(){
     }
     vmSetStatus(`Gerando ${v+1}/${jobs.length}...`);
     document.getElementById('vmProgressText').textContent=`Vídeo ${v+1} de ${jobs.length} · ${nomeArq}`;
-    try{ const blob=await vmProcessar(nomeArq, audio?audio.file:null, targetDur, fillMode, stretchSel, legendas); vmAddOutput(nomeArq, blob, true); }
+    try{ const blob=await vmProcessar(nomeArq, audio?audio.file:null, targetDur, fillMode, stretchSel, null); vmAddOutput(nomeArq, blob, true); }
     catch(e){ console.error(e); vmAddOutput(nomeArq, null, false, e.message); }
     document.getElementById('vmProgressFill').style.width=((v+1)/jobs.length*100)+'%';
     // ETA com base no tempo médio dos vídeos já prontos
@@ -4836,6 +4796,18 @@ function vmMostrarLinkDrive(link){
   if(!row){ row=document.createElement('div'); row.id='vmDriveLinkRow'; row.className='vm-out'; row.style.borderColor='rgba(52,211,153,.4)'; list.prepend(row); }
   row.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name">🔗 Link do ZIP (Drive)</div><div class="vm-out-ok">público • copiado</div></div><a href="${link}" target="_blank" class="vm-dl-btn" style="text-decoration:none" title="Abrir link">↗</a>`;
   try{ navigator.clipboard.writeText(link); toast('ZIP enviado ao Drive! Link copiado','success',5000); }catch{ toast('ZIP enviado ao Drive!','success'); }
+}
+
+// Baixa todos os vídeos gerados em um único ZIP (sem passar pelo Drive)
+async function vmBaixarZipTodos(){
+  const outs=vmOutputs.filter(o=>o.ok&&o.blob);
+  if(!outs.length){ toast('Nenhum vídeo gerado ainda','warning'); return; }
+  const zip=new JSZip(); outs.forEach(o=>zip.file(o.nome, o.blob));
+  const blob=await zip.generateAsync({ type:'blob' });
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=((document.getElementById('vmNomeBase').value||'').trim()||'videos')+'.zip'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
 }
 
 function vmAtualizarBotoes(){
@@ -5206,6 +5178,7 @@ function vmTestarVozAg(){
 }
 function agGerarClick(){ if(agRodando){ agCancelar=true; document.getElementById('agStatus').textContent='Parando após o vídeo atual...'; toast('Vai parar após o vídeo atual','info',2500); } else agGerar(); }
 async function agGerar(){
+  if(agRodando) return;
   const apiKey=(document.getElementById('agApiKey').value||'').trim();
   if(!apiKey){ toast('Cole sua API key da ElevenLabs','warning'); return; }
   salvarCacheApiKey(apiKey);
@@ -5215,11 +5188,13 @@ async function agGerar(){
   let legenda=document.getElementById('agLegenda').checked;
   const roteiros=agParseRoteiros(document.getElementById('agRoteiros').value);
   if(!roteiros.length){ toast('Cole pelo menos um roteiro','warning'); return; }
+  // trava ANTES de carregar o FFmpeg — clique duplo disparava produções
+  // simultâneas na mesma instância (Aborted() e saídas duplicadas)
+  agRodando=true; agCancelar=false; agOutputs=[];
   const okf=await vmCarregarFFmpeg();
-  if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+  if(!okf){ agRodando=false; toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
   if(legenda) await vmGarantirFonte((document.getElementById('vmLegFonte')||{}).value);
 
-  agRodando=true; agCancelar=false; agOutputs=[];
   document.getElementById('agBtnGerar').textContent='⏹ Parar produção';
   document.getElementById('agProgressCard').classList.add('visible');
   document.getElementById('agLogArea').innerHTML='';
@@ -5257,6 +5232,13 @@ async function agGerar(){
         agLog(`[${num}] 💬 Transcrevendo p/ legenda...`);
         try{ legendas=await vmTranscrever(audioFile); }
         catch(e){ if(e.semSaldo){ legenda=false; agLog('Saldo insuficiente — seguindo sem legenda.', 'warn'); } else agLog('Legenda falhou: '+e.message, 'warn'); }
+      }
+      // Se o render anterior falhou, o FFmpeg foi reiniciado — recarrega antes
+      // de montar (sem isso: "Cannot read properties of null (reading 'writeFile')")
+      if(!vmFfmpegOk){
+        const ok2=await vmCarregarFFmpeg();
+        if(!ok2) throw new Error('FFmpeg não recarregou — recarregue a página');
+        if(legenda) await vmGarantirFonte(vmFonteAtual);
       }
       document.getElementById('agStatus').textContent=`Montando ${i+1}/${roteiros.length}...`;
       agLog(`[${num}] ⚙️ Montando vídeo...`);
@@ -5312,6 +5294,61 @@ function lgReceberTodosDoVideoMix(){
 // ══════════════════════════════════════════════════════════
 // LEGENDADOR — legenda vídeos prontos em lote
 // ══════════════════════════════════════════════════════════
+// Modelos de legenda (galeria visual): modo + fonte + cor prontos.
+// O usuário seleciona 1 ou vários — com vários, cada vídeo sai com um aleatório.
+const VM_MODELOS=[
+  { id:'capcut-amarelo',   nome:'CapCut Amarelo',   modo:'box',     fonte:'archivo',  cor:'amarelo' },
+  { id:'capcut-verde',     nome:'CapCut Verde',     modo:'box',     fonte:'archivo',  cor:'verde' },
+  { id:'capcut-rosa',      nome:'CapCut Rosa',      modo:'box',     fonte:'archivo',  cor:'rosa' },
+  { id:'caixa-branca',     nome:'Caixa Branca',     modo:'box',     fonte:'archivo',  cor:'branco' },
+  { id:'anton-box',        nome:'Anton Impacto',    modo:'box',     fonte:'anton',    cor:'amarelo' },
+  { id:'comic-box',        nome:'Comic Box',        modo:'box',     fonte:'bangers',  cor:'amarelo' },
+  { id:'poppins-box',      nome:'Poppins Verde',    modo:'box',     fonte:'poppins',  cor:'verde' },
+  { id:'karaoke-classico', nome:'Karaokê Clássico', modo:'karaoke', fonte:'archivo',  cor:'amarelo' },
+  { id:'karaoke-verde',    nome:'Karaokê Verde',    modo:'karaoke', fonte:'poppins',  cor:'verde' },
+  { id:'karaoke-rosa',     nome:'Karaokê Rosa',     modo:'karaoke', fonte:'anton',    cor:'rosa' },
+  { id:'palavra-amarela',  nome:'Palavra Gigante',  modo:'word',    fonte:'archivo',  cor:'amarelo' },
+  { id:'palavra-bebas',    nome:'Manchete Bebas',   modo:'word',    fonte:'bebas',    cor:'branco' },
+  { id:'palavra-fun',      nome:'Divertida',        modo:'word',    fonte:'luckiest', cor:'rosa' },
+  { id:'palavra-verde',    nome:'Neon Verde',       modo:'word',    fonte:'poppins',  cor:'verde' },
+  { id:'simples-branco',   nome:'Simples Branco',   modo:'simples', fonte:'poppins',  cor:'branco' },
+  { id:'simples-archivo',  nome:'Forte e Limpa',    modo:'simples', fonte:'archivo',  cor:'branco' },
+];
+const VM_FONTE_CSS={ archivo:"'Archivo Black',sans-serif", anton:"'Anton',sans-serif", poppins:"'Poppins',sans-serif", bebas:"'Bebas Neue',sans-serif", bangers:"'Bangers',cursive", luckiest:"'Luckiest Guy',cursive" };
+const VM_COR_CSS={ amarelo:'#ffdd00', verde:'#34d399', rosa:'#f472b6', branco:'#ffffff' };
+
+// Pré-visualização em HTML/CSS de como o modelo fica no vídeo
+function vmPreviewModelo(m){
+  const ff=VM_FONTE_CSS[m.fonte]+(m.fonte==='poppins'?';font-weight:700':'');
+  const cor=VM_COR_CSS[m.cor];
+  const sombra='text-shadow:0 2px 4px rgba(0,0,0,.85)';
+  if(m.modo==='box'){
+    const txtCaixa=m.cor==='branco'?'#000':'#fff';
+    return `<span style="font-family:${ff};font-size:14px;color:#fff;${sombra};letter-spacing:.3px">SEU <span style="background:${cor};color:${txtCaixa};padding:1px 6px;border-radius:5px">VÍDEO</span> AQUI</span>`;
+  }
+  if(m.modo==='karaoke') return `<span style="font-family:${ff};font-size:14px;${sombra}"><span style="color:${cor}">seu ví</span><span style="color:#fff">deo aqui</span></span>`;
+  if(m.modo==='word') return `<span style="font-family:${ff};font-size:22px;color:${cor};${sombra}">VÍDEO</span>`;
+  return `<span style="font-family:${ff};font-size:12px;color:#fff;${sombra}">seu vídeo aqui</span>`;
+}
+
+let lgModelosSel=new Set(['capcut-amarelo']);
+function lgRenderModelos(){
+  const grid=document.getElementById('lgModelos'); if(!grid) return;
+  grid.innerHTML=VM_MODELOS.map(m=>`<div class="lg-modelo ${lgModelosSel.has(m.id)?'sel':''}" onclick="lgToggleModelo('${m.id}')" title="${m.nome}">
+    <div class="lg-modelo-frame">${vmPreviewModelo(m)}</div>
+    <div class="lg-modelo-nome">${m.nome}</div>
+  </div>`).join('');
+  const info=document.getElementById('lgModelosInfo');
+  if(info) info.textContent = lgModelosSel.size>1
+    ? `🎲 ${lgModelosSel.size} modelos selecionados — cada vídeo sai com um deles, sorteado`
+    : '1 modelo selecionado — todos os vídeos saem iguais (selecione vários para randomizar)';
+}
+function lgToggleModelo(id){
+  if(lgModelosSel.has(id)){ if(lgModelosSel.size>1) lgModelosSel.delete(id); }
+  else lgModelosSel.add(id);
+  lgRenderModelos();
+}
+
 let lgFiles=[];            // { nome, file }
 let lgRodando=false, lgCancelar=false, lgOutputs=[];
 
@@ -5429,31 +5466,36 @@ async function lgQueimar(file, ass, nomeOut){
 async function lgGerar(){
   if(lgRodando) return;
   if(!lgFiles.length){ toast('Adicione pelo menos um vídeo','warning'); return; }
-  const okf=await vmCarregarFFmpeg();
-  if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
-  await vmGarantirFonte(document.getElementById('lgFonte').value);
+  // trava ANTES de carregar o FFmpeg — evita produções simultâneas por clique duplo
   lgRodando=true; lgCancelar=false; lgOutputs=[];
+  const okf=await vmCarregarFFmpeg();
+  if(!okf){ lgRodando=false; toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
   const fila=[...lgFiles];
   document.getElementById('lgProgressCard').classList.add('visible');
   document.getElementById('lgOutputList').innerHTML='';
   document.getElementById('lgBtnZip').classList.remove('visible');
   document.getElementById('lgProgressFill').style.width='0%';
   document.getElementById('lgBtnGerar').textContent='⏹ Parar';
-  const estilo=vmLegendaEstilo(document.getElementById('lgCor').value, document.getElementById('lgPos').value, document.getElementById('lgEstilo').value);
+  const pos=document.getElementById('lgPos').value;
+  // Modelos escolhidos na galeria: com vários, cada vídeo sorteia um
+  let modelos=VM_MODELOS.filter(m=>lgModelosSel.has(m.id));
+  if(!modelos.length) modelos=[VM_MODELOS[0]];
   for(let i=0;i<fila.length;i++){
     if(lgCancelar) break;
     const item=fila[i];
     const nomeOut=item.nome.replace(/\.mp4$/i,'')+'_leg.mp4';
-    document.getElementById('lgProgressLabel').textContent=`Vídeo ${i+1} de ${fila.length}...`;
+    const mod=modelos[Math.floor(Math.random()*modelos.length)];
+    document.getElementById('lgProgressLabel').textContent=`Vídeo ${i+1} de ${fila.length} · ${mod.nome}`;
     try{
       if(!vmFfmpegOk){ const ok2=await vmCarregarFFmpeg(); if(!ok2) throw new Error('FFmpeg não recarregou — recarregue a página'); }
       const words=await vmVozDoVideo(item.file, m=>{ document.getElementById('lgStatus').textContent=`${i+1}/${fila.length} · ${m}`; });
       if(!vmPalavras(words)) throw new Error('nenhuma fala detectada no vídeo (nem isolando a voz da música)');
+      await vmGarantirFonte(mod.fonte);
       if(!vmFontOk) throw new Error('fonte da legenda não carregou — recarregue a página');
       document.getElementById('lgStatus').textContent=`Queimando legenda ${i+1}/${fila.length}...`;
-      const blob=await lgQueimar(item.file, vmGerarAss(words, estilo), nomeOut);
+      const blob=await lgQueimar(item.file, vmGerarAss(words, vmLegendaEstilo(mod.cor, pos, mod.modo)), nomeOut);
       lgOutputs.push({ nome:nomeOut, blob, ok:true });
-      lgAddOutput(nomeOut, blob, true);
+      lgAddOutput(nomeOut, blob, true, null, mod.nome);
     }catch(e){
       console.error(e);
       lgOutputs.push({ nome:nomeOut, blob:null, ok:false });
@@ -5472,12 +5514,12 @@ async function lgGerar(){
   lgRender(); // atualiza o saldo exibido
   toast(lgCancelar?`Parado (${feitos} prontos)`:`${feitos} vídeo${feitos!==1?'s':''} legendado${feitos!==1?'s':''}!`, lgCancelar?'info':'success');
 }
-function lgAddOutput(nome, blob, ok, errMsg){
+function lgAddOutput(nome, blob, ok, errMsg, modelo){
   const list=document.getElementById('lgOutputList');
   const item=document.createElement('div'); item.className='vm-out';
   if(ok&&blob){
     const url=URL.createObjectURL(blob);
-    item.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name" style="max-width:none" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>`;
+    item.innerHTML=`<div style="flex:1;min-width:0"><div class="vm-out-name" style="max-width:none" title="${nome}">${nome}</div><div class="vm-out-ok">✓ Pronto${modelo?' · '+modelo:''}</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>`;
   } else {
     item.innerHTML=`<div><div class="vm-out-name" style="max-width:none">${nome}</div><div class="vm-out-err">✗ ${(errMsg||'').substring(0,70)}</div></div>`;
   }
@@ -5528,6 +5570,7 @@ function crMontarClips(file, dur, clipLen){
 }
 
 async function crGerar(){
+  if(crRodando) return;
   const apiKey=(document.getElementById('crApiKey').value||'').trim();
   if(!apiKey){ toast('Cole sua API key da ElevenLabs','warning'); return; }
   salvarCacheApiKey(apiKey);
@@ -5538,11 +5581,12 @@ async function crGerar(){
   const clipLen=parseFloat(document.getElementById('crClipLen').value)||5;
   let legenda=document.getElementById('crLegenda').checked;
   const estilo=vmLegendaEstilo(document.getElementById('crCor').value, document.getElementById('crPos').value, document.getElementById('crEstilo').value);
+  // trava ANTES de carregar o FFmpeg — evita produções simultâneas por clique duplo
+  crRodando=true; crCancelar=false; crOutputs=[];
   const okf=await vmCarregarFFmpeg();
-  if(!okf){ toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
+  if(!okf){ crRodando=false; toast('Erro ao carregar FFmpeg: '+(window.__vmFfErr||'recarregue a página'),'error',6000); return; }
   if(legenda) await vmGarantirFonte(document.getElementById('crFonte').value);
 
-  crRodando=true; crCancelar=false; crOutputs=[];
   document.getElementById('crBtnGerar').textContent='⏹ Parar produção';
   document.getElementById('crProgressCard').classList.add('visible');
   document.getElementById('crLogArea').innerHTML='';
