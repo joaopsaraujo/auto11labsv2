@@ -608,6 +608,31 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
 .lg-modelo.sel::after{content:'✓';position:absolute;top:6px;right:8px;width:18px;height:18px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:700}
 .lg-modelo-frame{height:62px;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#57493c,#38302a);padding:4px;overflow:hidden;white-space:nowrap}
 .lg-modelo-nome{font-size:10.5px;color:var(--muted2);text-align:center;padding:6px 4px;font-weight:600}
+
+/* ══ GOOGLE FLOW — Estúdio de Prompts ══ */
+.flow-imgs{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.flow-slot-label{font-size:11px;font-weight:600;color:var(--text);margin-bottom:6px}
+.flow-slot-label span{color:var(--muted2);font-weight:400}
+.flow-drop{position:relative;aspect-ratio:9/16;max-height:220px;border:1px dashed rgba(255,255,255,.14);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .15s;background:rgba(255,255,255,.02);display:flex;align-items:center;justify-content:center}
+.flow-drop:hover{border-color:var(--accent2);background:rgba(124,147,251,.05)}
+.flow-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:2}
+.flow-drop img{width:100%;height:100%;object-fit:cover}
+.flow-ph{font-size:11px;color:var(--muted2);text-align:center;line-height:1.5;padding:10px;pointer-events:none}
+.flow-pg-thumb{position:relative;width:52px;height:92px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.flow-pg-thumb img{width:100%;height:100%;object-fit:cover}
+.flow-pg-thumb span{position:absolute;top:2px;left:3px;background:rgba(0,0,0,.7);color:#fff;font-size:9px;padding:0 4px;border-radius:4px;font-weight:700}
+.flow-pg-thumb button{position:absolute;top:2px;right:2px;width:16px;height:16px;border:none;border-radius:50%;background:rgba(239,68,68,.85);color:#fff;font-size:10px;cursor:pointer;line-height:1;padding:0}
+.flow-chip{font-size:10px;padding:4px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.02);color:var(--muted2);cursor:pointer;font-family:'Manrope',sans-serif;transition:all .15s}
+.flow-chip:hover{color:var(--text);border-color:rgba(124,147,251,.4)}
+.flow-chip.on{background:rgba(34,211,238,.12);border-color:rgba(34,211,238,.4);color:#67e8f9}
+.flow-card{border:1px solid var(--border);border-radius:12px;padding:14px;background:rgba(255,255,255,.015)}
+.flow-card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.flow-card-nome{font-size:13px;font-weight:700;color:var(--text)}
+.flow-card-cena{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#67e8f9;background:rgba(34,211,238,.1);padding:2px 8px;border-radius:999px;font-weight:700}
+.flow-en{font-size:12.5px;color:var(--text);line-height:1.6;font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,.25);border-radius:8px;padding:10px 12px;white-space:pre-wrap}
+.flow-pt{font-size:11.5px;color:var(--muted2);line-height:1.55;margin-top:8px}
+.flow-copy{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.35);color:#67e8f9;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Manrope',sans-serif;white-space:nowrap;transition:all .15s}
+.flow-copy:hover{background:rgba(34,211,238,.2)}
 </style>
 </head>
 <body>
@@ -640,6 +665,9 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
     </div>
     <div class="sidebar-item" id="sidebarItem-criativos" onclick="irParaCriativos()">
       <span class="sidebar-icon">✨</span><span class="sidebar-label">Clonador IA <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
+    <div class="sidebar-item" id="sidebarItem-flow" onclick="irParaFlow()">
+      <span class="sidebar-icon">📄</span><span class="sidebar-label">Google Flow <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-item" id="sidebarItem-conta" onclick="irParaConta()">
@@ -929,6 +957,37 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
           <div class="tool-name">Clonador IA<span class="tool-badge">BETA</span></div>
           <div class="tool-sep"></div>
           <div class="tool-sub"><span id="twClone"></span><span class="tool-cursor"></span></div>
+        </div>
+      </div>
+
+      <!-- CARD GOOGLE FLOW -->
+      <div class="tool-card" onclick="irParaFlow()" style="--tc:#22d3ee;--tc-soft:rgba(34,211,238,.16);--tc-b1:rgba(34,211,238,.4);--tc-b2:rgba(34,211,238,.08)">
+        <span class="shine"></span>
+        <div style="position:relative;z-index:1">
+          <!-- Ícone SVG páginas folheando + faísca (ciano neon) -->
+          <div class="tool-ic">
+            <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><filter id="gn5"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g filter="url(#gn5)">
+                <!-- Páginas ao fundo (folheando) -->
+                <path d="M40 16 Q20 10 12 18 L12 70 Q22 64 40 70 Z" stroke="#22d3ee" stroke-width="1.6" fill="none" opacity=".35"/>
+                <path d="M40 14 Q26 8 18 15 L18 68 Q28 62 40 68 Z" stroke="#22d3ee" stroke-width="1.8" fill="none" opacity=".6"/>
+                <!-- Página da frente (papel/criativo) -->
+                <path d="M40 12 Q54 7 66 14 L66 66 Q54 60 40 66 Z" stroke="#67e8f9" stroke-width="2.2" fill="rgba(10,10,11,.6)"/>
+                <!-- Conteúdo do criativo -->
+                <line x1="47" y1="24" x2="60" y2="27" stroke="#67e8f9" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>
+                <rect x="47" y="32" width="14" height="9" rx="2" stroke="#22d3ee" stroke-width="1.3" fill="none" opacity=".6"/>
+                <line x1="47" y1="48" x2="59" y2="50" stroke="#67e8f9" stroke-width="1.4" stroke-linecap="round" opacity=".5"/>
+                <!-- Lombada -->
+                <line x1="40" y1="12" x2="40" y2="66" stroke="#22d3ee" stroke-width="1.4" opacity=".7"/>
+                <!-- Faísca IA -->
+                <path d="M64 74l1.4 3.8 3.8 1.4-3.8 1.4L64 84l-1.4-3.8-3.8-1.4 3.8-1.4z" fill="#a5f3fc" opacity=".9"/>
+              </g>
+            </svg>
+          </div>
+          <div class="tool-name">Google Flow<span class="tool-badge">BETA</span></div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twFlow"></span><span class="tool-cursor"></span></div>
         </div>
       </div>
 
@@ -2046,6 +2105,75 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
   </div>
 </div>
 
+<!-- GOOGLE FLOW — Estúdio de Prompts (BETA) -->
+<div id="screenFlow" class="screen">
+  <div style="display:flex;flex-direction:column;width:100%">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:none">📄</div>
+      <span class="topbar-name">Google Flow <span style="font-size:9px;background:rgba(251,191,36,.18);color:var(--gold);padding:2px 8px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
+    <div class="topbar-right">
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="card" style="border-color:rgba(34,211,238,.25)">
+      <div style="font-size:13px;line-height:1.7;color:var(--muted2)">
+        <strong style="color:var(--text)">Vídeos folheando seus criativos impressos.</strong> O Google Flow (Veo) é a IA de vídeo do Google —
+        aqui você monta o prompt pronto, sobe suas imagens e cola tudo no Flow para gerar o vídeo do papel sendo folheado, mostrando os entregáveis do CTV.
+        <a href="https://labs.google/flow" target="_blank" rel="noopener" style="color:var(--accent3)">Abrir o Flow ↗</a>
+      </div>
+    </div>
+
+    <!-- 1. Organizador de imagens -->
+    <div class="card">
+      <div class="card-title">1 · Suas imagens</div>
+      <div class="flow-imgs">
+        <div class="flow-slot">
+          <div class="flow-slot-label">📄 Papel de fundo <span>(frame inicial)</span></div>
+          <div class="flow-drop" id="flowDropPapel"><input type="file" accept="image/*" onchange="flowSetImg('papel',this)"><div class="flow-ph">Clique ou arraste<br>a imagem do papel em branco</div></div>
+        </div>
+        <div class="flow-slot">
+          <div class="flow-slot-label">🎬 Capa <span>(1º criativo)</span></div>
+          <div class="flow-drop" id="flowDropCapa"><input type="file" accept="image/*" onchange="flowSetImg('capa',this)"><div class="flow-ph">Clique ou arraste<br>a capa que abre o vídeo</div></div>
+        </div>
+        <div class="flow-slot">
+          <div class="flow-slot-label">📑 Páginas <span>(demais entregáveis)</span></div>
+          <div class="flow-drop" id="flowDropPaginas"><input type="file" accept="image/*" multiple onchange="flowSetPaginas(this)"><div class="flow-ph">Clique ou arraste<br>as páginas seguintes (várias)</div></div>
+        </div>
+      </div>
+      <div id="flowPaginasList" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"></div>
+      <div class="info-tip" style="margin-top:12px">As imagens ficam só no seu navegador (não sobem para nenhum servidor). Você as anexa manualmente no Flow — este painel serve para organizar e lembrar qual vai em cada campo.</div>
+    </div>
+
+    <!-- 2. Prompts -->
+    <div class="card">
+      <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span>2 · Escolha um prompt</span>
+        <span id="flowFiltros" style="display:flex;gap:5px;flex-wrap:wrap"></span>
+      </div>
+      <div id="flowPrompts" style="display:flex;flex-direction:column;gap:12px"></div>
+    </div>
+
+    <!-- 3. Checklist -->
+    <div class="card" style="border-bottom:none">
+      <div class="card-title">3 · Como usar no Flow</div>
+      <ol style="margin:0;padding-left:20px;font-size:13px;color:var(--muted2);line-height:1.9">
+        <li>Abra o <a href="https://labs.google/flow" target="_blank" rel="noopener" style="color:var(--accent3)">Google Flow</a> e crie um projeto de vídeo (modo <strong>Frames to Video</strong> / imagem→vídeo).</li>
+        <li>No 1º frame, anexe a <strong>imagem do papel de fundo</strong> (e a <strong>capa</strong>, se o Flow aceitar imagem inicial + final).</li>
+        <li>Cole o <strong>prompt em inglês</strong> (o Veo entende melhor em inglês) no campo de descrição.</li>
+        <li>Se o seu plano permitir referências extras, anexe as <strong>páginas</strong> como imagens de referência na ordem que devem aparecer.</li>
+        <li>Escolha o formato <strong>9:16 (vertical)</strong> e a duração (8s costuma bastar por página folheada).</li>
+        <li>Gere, baixe o MP4 e traga para o <strong>VideoMix</strong> ou <strong>AutoLegenda</strong> se quiser juntar com áudio/legenda.</li>
+      </ol>
+    </div>
+  </div>
+  </div>
+</div>
+
 <!-- MODAL PAGAMENTO -->
 <div class="modal-overlay" id="modalPagamento">
   <div class="modal">
@@ -2183,6 +2311,11 @@ const TW_CLONE = [
   'A IA reescreve a copy e narra.',
   'Escale seus anúncios sem esforço.',
 ];
+const TW_FLOW = [
+  'Prompts prontos para o Veo.',
+  'Folheie seus criativos impressos.',
+  'Vídeos de apresentação com IA.',
+];
 let twAudioIdx=0,twAudioChar=0,twAudioAp=false;
 let twVideoIdx=0,twVideoChar=0,twVideoAp=false;
 
@@ -2209,6 +2342,7 @@ window.addEventListener('load', () => {
   setTimeout(() => twCardTick('twVideo', TW_VIDEO, {idx:0,char:0,ap:false}, ()=>{}), 1200);
   setTimeout(() => twCardTick('twLeg', TW_LEG, {idx:0,char:0,ap:false}, ()=>{}), 1600);
   setTimeout(() => twCardTick('twClone', TW_CLONE, {idx:0,char:0,ap:false}, ()=>{}), 2000);
+  setTimeout(() => twCardTick('twFlow', TW_FLOW, {idx:0,char:0,ap:false}, ()=>{}), 2400);
 });
 
 let user = null;
@@ -2501,6 +2635,13 @@ function irParaCriativos() {
   const el = document.getElementById('crApiKey');
   if (k && el && !el.value) el.value = k;
   vmCarregarSaldo();
+}
+
+function irParaFlow() {
+  mostrarTela('screenFlow');
+  setSidebarActive('flow');
+  flowRenderFiltros();
+  flowRenderPrompts();
 }
 
 function irParaConta() {
@@ -5533,6 +5674,99 @@ async function lgBaixarZip(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download='videos_legendados.zip'; a.click();
   setTimeout(()=>URL.revokeObjectURL(url), 1500);
+}
+
+// ══════════════════════════════════════════════════════════
+// GOOGLE FLOW (BETA) — Estúdio de prompts p/ folhear criativos impressos
+// ══════════════════════════════════════════════════════════
+// Prompts prontos p/ o Veo/Flow. cena: mao | mesa | estudio | close.
+// O usuário sobe as imagens à parte e anexa manualmente no Flow.
+const FLOW_PROMPTS=[
+  { cena:'mao', nome:'Mão folheando (clássico)',
+    en:`Vertical 9:16 video. A person's hand holds a small stack of printed marketing creatives on white paper against a soft, slightly blurred neutral background. The hand slowly flips through the pages one by one; each page reveals a different bold, colorful social-media ad design. Smooth, natural page-turn motion, gentle camera push-in, soft cinematic daylight, shallow depth of field, photorealistic, 4k, calm confident pace.`,
+    pt:`Vídeo vertical 9:16. Uma mão segura uma pequena pilha de criativos de marketing impressos em papel branco, com fundo neutro levemente desfocado. A mão folheia as páginas uma a uma; cada página revela um anúncio colorido diferente. Movimento suave de virar página, leve aproximação da câmera, luz natural cinematográfica, foco raso, fotorrealista.` },
+  { cena:'mao', nome:'Mão + reveal da capa',
+    en:`Vertical 9:16 video. Close on a hand holding a blank white sheet of paper. The camera holds still as the printed cover design smoothly fades onto the paper, then the hand begins flipping to the next printed creatives one after another. Warm soft lighting, subtle paper texture and grain, realistic hand and shadows, cinematic, high detail.`,
+    pt:`Vídeo vertical 9:16. Close numa mão segurando uma folha branca em branco. A câmera fica parada enquanto a capa impressa surge suavemente sobre o papel; então a mão começa a folhear os próximos criativos, um após o outro. Luz quente e suave, textura de papel sutil, mãos e sombras realistas, cinematográfico.` },
+  { cena:'mao', nome:'Mão estilo unboxing',
+    en:`Vertical 9:16 video, energetic social-media style. Two hands present a stack of freshly printed ad creatives on white paper toward the camera, then quickly and smoothly flip through each design showing off the variety. Bright even lighting, crisp focus, subtle motion blur on the flips, upbeat and modern, photorealistic.`,
+    pt:`Vídeo vertical 9:16, estilo redes sociais energético. Duas mãos apresentam uma pilha de criativos recém-impressos em papel branco para a câmera e folheiam rápido e suave cada design, mostrando a variedade. Iluminação clara e uniforme, foco nítido, leve motion blur nas viradas, moderno e animado, fotorrealista.` },
+  { cena:'mesa', nome:'Flat lay (câmera de cima)',
+    en:`Vertical 9:16 top-down video. A stack of printed vertical ad creatives on white paper sits centered on a clean light desk. The pages turn one by one on their own, each revealing a new colorful marketing design. Perfectly overhead camera, soft even studio light, minimal aesthetic, gentle rhythmic pacing, photorealistic, 4k.`,
+    pt:`Vídeo vertical 9:16, câmera de cima. Uma pilha de criativos verticais impressos em papel branco no centro de uma mesa clara e limpa. As páginas viram sozinhas, uma a uma, revelando um novo design colorido. Câmera perfeitamente aérea, luz de estúdio suave e uniforme, estética minimalista, ritmo constante, fotorrealista.` },
+  { cena:'mesa', nome:'Flat lay minimalista',
+    en:`Vertical 9:16 overhead shot on a matte white surface. A single sheet shows the printed cover, then a hand enters from the side and slides each new printed creative on top of the previous, building a neat stack. Clean minimal styling, soft shadows, muted premium look, slow and elegant, photorealistic.`,
+    pt:`Vídeo vertical 9:16, tomada aérea sobre superfície branca fosca. Uma folha mostra a capa impressa; então uma mão entra pela lateral e desliza cada novo criativo impresso sobre o anterior, montando uma pilha organizada. Estilo clean e minimalista, sombras suaves, visual premium, lento e elegante, fotorrealista.` },
+  { cena:'mesa', nome:'Flat lay dinâmico',
+    en:`Vertical 9:16 top-down video, modern and punchy. Printed ad creatives on white paper flip and swap rapidly on a bright desk, snapping from one design to the next in a satisfying rhythm. Vibrant colors, crisp shadows, quick smooth transitions, high energy, photorealistic, 4k.`,
+    pt:`Vídeo vertical 9:16, câmera de cima, moderno e impactante. Criativos impressos em papel branco viram e trocam rapidamente sobre uma mesa clara, saltando de um design para o outro num ritmo satisfatório. Cores vibrantes, sombras nítidas, transições rápidas e suaves, muita energia, fotorrealista.` },
+  { cena:'estudio', nome:'Estúdio flutuante',
+    en:`Vertical 9:16 video. A sheet of white paper with a printed marketing creative floats upright in the center of a seamless neutral studio background. Pages peel away and dissolve to reveal the next creative behind, one by one. Dramatic soft studio lighting, subtle floating motion, premium product-ad feel, photorealistic, 4k.`,
+    pt:`Vídeo vertical 9:16. Uma folha de papel branco com um criativo impresso flutua em pé no centro de um fundo de estúdio neutro e contínuo. As páginas se desprendem e se dissolvem revelando o próximo criativo atrás, um a um. Luz de estúdio suave e dramática, leve flutuação, clima de anúncio premium, fotorrealista.` },
+  { cena:'estudio', nome:'Estúdio giratório',
+    en:`Vertical 9:16 video. Printed ad creatives on white paper stand on a slowly rotating pedestal against a soft gradient studio backdrop. As it turns, each sheet lifts and flips to the next design. Elegant rim lighting, smooth turntable motion, luxury brand aesthetic, cinematic, photorealistic, high detail.`,
+    pt:`Vídeo vertical 9:16. Criativos impressos em papel branco sobre um pedestal que gira lentamente, com fundo de estúdio em gradiente suave. Enquanto gira, cada folha levanta e vira para o próximo design. Iluminação de contorno elegante, movimento suave de mesa giratória, estética de marca de luxo, cinematográfico, fotorrealista.` },
+  { cena:'estudio', nome:'Estúdio contraste',
+    en:`Vertical 9:16 video on a dark seamless studio background with a single focused spotlight. A white paper with the printed cover glows in the light; pages flip forward revealing each new bright creative that pops against the dark. Moody premium lighting, strong contrast, slow confident pace, photorealistic, 4k.`,
+    pt:`Vídeo vertical 9:16 em fundo de estúdio escuro e contínuo, com um único spot de luz focado. Um papel branco com a capa impressa brilha na luz; as páginas viram para frente revelando cada novo criativo vibrante que salta contra o escuro. Iluminação premium e dramática, forte contraste, ritmo lento e confiante, fotorrealista.` },
+  { cena:'close', nome:'Close nos detalhes',
+    en:`Vertical 9:16 macro video. Extreme close-up on printed marketing creatives on white paper; the camera glides across the surface showing crisp text and colors, then a page turns and the lens racks focus to the next design's details. Tactile paper texture, shallow depth of field, soft directional light, premium and detailed, photorealistic, 4k.`,
+    pt:`Vídeo vertical 9:16, macro. Close extremo em criativos de marketing impressos em papel branco; a câmera desliza pela superfície mostrando texto e cores nítidos, então uma página vira e a lente muda o foco para os detalhes do próximo design. Textura de papel tátil, foco raso, luz direcional suave, premium e detalhado, fotorrealista.` },
+  { cena:'close', nome:'Close folhear rápido',
+    en:`Vertical 9:16 video, tight close framing on the corner of a printed booklet on white paper. A thumb flips quickly through the pages, each printed ad creative blurring past then settling for a beat. Warm natural light, fine paper grain, satisfying flip-book motion, realistic hands, photorealistic, 4k.`,
+    pt:`Vídeo vertical 9:16, enquadramento fechado no canto de um caderno impresso em papel branco. Um polegar folheia rápido as páginas; cada criativo impresso passa borrado e então pausa por um instante. Luz natural quente, grão fino de papel, movimento satisfatório de flip-book, mãos realistas, fotorrealista.` },
+  { cena:'close', nome:'Close cinematográfico',
+    en:`Vertical 9:16 video. Slow cinematic close-up: a printed creative on white paper fills the frame, a hand gently lifts the corner and turns the page, revealing the next design with a soft focus pull. Golden soft light, elegant slow motion, delicate paper movement, premium editorial feel, photorealistic, high detail.`,
+    pt:`Vídeo vertical 9:16. Close cinematográfico e lento: um criativo impresso em papel branco preenche o quadro, uma mão levanta gentilmente o canto e vira a página, revelando o próximo design com uma mudança suave de foco. Luz dourada e suave, câmera lenta elegante, movimento delicado do papel, clima editorial premium, fotorrealista.` },
+];
+const FLOW_CENAS={ mao:'✋ Mão', mesa:'🔲 Mesa', estudio:'💡 Estúdio', close:'🔍 Close' };
+let flowFiltro='todos';
+const flowImgs={ papel:null, capa:null, paginas:[] };
+
+function flowSetImg(tipo, input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  if(flowImgs[tipo]) URL.revokeObjectURL(flowImgs[tipo]);
+  flowImgs[tipo]=URL.createObjectURL(f);
+  const drop=document.getElementById(tipo==='papel'?'flowDropPapel':'flowDropCapa');
+  if(drop) drop.innerHTML=`<input type="file" accept="image/*" onchange="flowSetImg('${tipo}',this)"><img src="${flowImgs[tipo]}" alt="">`;
+}
+function flowSetPaginas(input){
+  for(const f of Array.from(input.files||[])) flowImgs.paginas.push(URL.createObjectURL(f));
+  input.value='';
+  flowRenderPaginas();
+}
+function flowRemovePagina(i){
+  URL.revokeObjectURL(flowImgs.paginas[i]);
+  flowImgs.paginas.splice(i,1);
+  flowRenderPaginas();
+}
+function flowRenderPaginas(){
+  const el=document.getElementById('flowPaginasList'); if(!el) return;
+  el.innerHTML=flowImgs.paginas.map((u,i)=>`<div class="flow-pg-thumb"><span>${i+1}</span><button onclick="flowRemovePagina(${i})" title="Remover">✕</button><img src="${u}" alt=""></div>`).join('');
+}
+function flowRenderFiltros(){
+  const el=document.getElementById('flowFiltros'); if(!el) return;
+  const chips=[['todos','Todos']].concat(Object.entries(FLOW_CENAS));
+  el.innerHTML=chips.map(([id,label])=>`<button class="flow-chip ${flowFiltro===id?'on':''}" onclick="flowSetFiltro('${id}')">${label}</button>`).join('');
+}
+function flowSetFiltro(id){ flowFiltro=id; flowRenderFiltros(); flowRenderPrompts(); }
+function flowRenderPrompts(){
+  const el=document.getElementById('flowPrompts'); if(!el) return;
+  const lista=FLOW_PROMPTS.filter(p=>flowFiltro==='todos'||p.cena===flowFiltro);
+  window.__flowLista=lista;
+  el.innerHTML=lista.map((p,i)=>`<div class="flow-card">
+    <div class="flow-card-top">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0"><span class="flow-card-nome">${p.nome}</span><span class="flow-card-cena">${FLOW_CENAS[p.cena]}</span></div>
+      <button class="flow-copy" onclick="flowCopy(${i},this)">📋 Copiar</button>
+    </div>
+    <div class="flow-en">${p.en}</div>
+    <div class="flow-pt"><strong style="color:var(--muted2)">PT:</strong> ${p.pt}</div>
+  </div>`).join('');
+}
+async function flowCopy(i, btn){
+  const p=(window.__flowLista||[])[i]; if(!p) return;
+  try{ await navigator.clipboard.writeText(p.en); if(btn){ const t=btn.textContent; btn.textContent='✓ Copiado'; setTimeout(()=>btn.textContent=t,1600); } toast('Prompt (inglês) copiado — cole no Flow','success',2500); }
+  catch{ toast('Não foi possível copiar automaticamente','warning'); }
 }
 
 // ══════════════════════════════════════════════════════════
