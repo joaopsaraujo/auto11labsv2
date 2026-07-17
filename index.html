@@ -2150,15 +2150,25 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
   <div class="app-body">
     <div class="card" style="border-color:rgba(34,211,238,.25)">
       <div style="font-size:13px;line-height:1.7;color:var(--muted2)">
-        <strong style="color:var(--text)">Vídeos folheando seus criativos impressos.</strong> O Google Flow (Veo) é a IA de vídeo do Google —
-        aqui você monta o prompt pronto, sobe suas imagens e cola tudo no Flow para gerar o vídeo do papel sendo folheado, mostrando os entregáveis do CTV.
-        <a href="https://labs.google/flow" target="_blank" rel="noopener" style="color:var(--accent3)">Abrir o Flow ↗</a>
+        <strong style="color:var(--text)">Vídeos folheando seus criativos impressos — gerados aqui mesmo.</strong>
+        O site chama o <strong style="color:var(--text)">Veo</strong> (a IA de vídeo por trás do Google Flow) com a sua chave do Google:
+        suba as imagens, escolha um prompt e gere o clipe ou o folheado completo sem sair do Auto11Labs.
+        Prefere usar o site do Flow? Os prompts continuam disponíveis para copiar.
       </div>
     </div>
 
-    <!-- 1. Organizador de imagens -->
+    <!-- 1. Chave do Google -->
     <div class="card">
-      <div class="card-title">1 · Suas imagens</div>
+      <div class="card-title">1 · Sua chave do Google (Veo)</div>
+      <div class="input-wrap">
+        <input type="password" id="veoApiKey" placeholder="AIza..." autocomplete="off" onblur="veoSalvarKey(this.value.trim())">
+      </div>
+      <div class="info-tip">Crie a chave em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:var(--accent3)">aistudio.google.com/apikey</a> — o Veo exige <strong>faturamento ativo</strong> no projeto (não tem nível grátis) e cobra por segundo de vídeo gerado. A chave fica só no seu navegador e a cobrança é direto do Google para você.</div>
+    </div>
+
+    <!-- 2. Organizador de imagens -->
+    <div class="card">
+      <div class="card-title">2 · Suas imagens</div>
       <div class="flow-imgs">
         <div class="flow-slot">
           <div class="flow-slot-label">📄 Papel de fundo <span>(frame inicial)</span></div>
@@ -2174,21 +2184,102 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
         </div>
       </div>
       <div id="flowPaginasList" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"></div>
-      <div class="info-tip" style="margin-top:12px">As imagens ficam só no seu navegador (não sobem para nenhum servidor). Você as anexa manualmente no Flow — este painel serve para organizar e lembrar qual vai em cada campo.</div>
+
+      <!-- Ajuste da composição: como o criativo "senta" no papel -->
+      <div id="flowAjusteWrap" style="display:none;margin-top:14px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px">
+        <div class="vm-flabel" style="margin-top:0">Posição do criativo sobre o papel (prévia do 1º quadro)</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start">
+          <img id="flowCompPrev" alt="" style="width:150px;border-radius:10px;border:1px solid var(--border);background:#000">
+          <div style="flex:1;min-width:200px">
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Largura <span id="flowCfgWVal" style="font-family:'JetBrains Mono',monospace;color:var(--text)"></span></div>
+            <input type="range" class="vm-range" id="flowCfgW" min="20" max="100" value="62" oninput="flowCfgMudou()">
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Horizontal <span id="flowCfgXVal" style="font-family:'JetBrains Mono',monospace;color:var(--text)"></span></div>
+            <input type="range" class="vm-range" id="flowCfgX" min="0" max="100" value="50" oninput="flowCfgMudou()">
+            <div style="font-size:11px;color:var(--muted2);margin-bottom:4px;display:flex;justify-content:space-between">Vertical <span id="flowCfgYVal" style="font-family:'JetBrains Mono',monospace;color:var(--text)"></span></div>
+            <input type="range" class="vm-range" id="flowCfgY" min="0" max="100" value="50" oninput="flowCfgMudou()">
+            <div style="font-size:10px;color:var(--muted2)">Encaixe o criativo na área do papel — o mesmo ajuste vale para todas as páginas.</div>
+          </div>
+        </div>
+      </div>
+      <div class="info-tip" style="margin-top:12px">As imagens ficam só no seu navegador — vão direto do navegador para o Google na hora de gerar. Nada é enviado ao servidor do Auto11Labs.</div>
     </div>
 
-    <!-- 2. Prompts -->
+    <!-- 3. Prompts -->
     <div class="card">
       <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <span>2 · Escolha um prompt</span>
+        <span>3 · Escolha um prompt</span>
         <span id="flowFiltros" style="display:flex;gap:5px;flex-wrap:wrap"></span>
       </div>
       <div id="flowPrompts" style="display:flex;flex-direction:column;gap:12px"></div>
     </div>
 
-    <!-- 3. Checklist -->
+    <!-- 4. Gerar clipe único -->
+    <div class="card">
+      <div class="card-title">4 · Gerar clipe único (aqui no site)</div>
+      <div class="vm-flabel" style="margin-top:0">Prompt (inglês — use um da galeria acima ou escreva o seu)</div>
+      <textarea id="veoPrompt" style="min-height:90px" placeholder="Clique em 🎬 Usar em um prompt da galeria, ou escreva aqui..."></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <div style="flex:2;min-width:180px">
+          <div class="vm-flabel" style="margin-top:0">Imagem inicial</div>
+          <select id="veoImgSel" class="vm-num" style="font-family:'Manrope',sans-serif"></select>
+        </div>
+        <div style="flex:2;min-width:180px">
+          <div class="vm-flabel" style="margin-top:0">Modelo</div>
+          <select id="veoModel" class="vm-num" style="font-family:'Manrope',sans-serif">
+            <option value="veo-3.1-fast-generate-preview" selected>Veo 3.1 Fast — rápido/barato (~US$0,15/s)</option>
+            <option value="veo-3.1-generate-preview">Veo 3.1 — qualidade máxima (~US$0,40/s)</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:110px">
+          <div class="vm-flabel" style="margin-top:0">Duração</div>
+          <select id="veoDur" class="vm-num" style="font-family:'Manrope',sans-serif">
+            <option value="4">4 s</option>
+            <option value="6">6 s</option>
+            <option value="8" selected>8 s</option>
+          </select>
+        </div>
+      </div>
+      <div id="veoEst" style="font-size:11px;color:var(--muted2);margin:8px 0 10px;font-family:'JetBrains Mono',monospace"></div>
+      <button class="vm-btn vm-btn-green" id="veoBtnGerar" onclick="veoGerarClipe()">🎬 Gerar clipe no Veo</button>
+      <div id="veoStatus" style="display:none;font-size:11px;color:var(--accent3);margin-top:10px;font-family:'JetBrains Mono',monospace"></div>
+      <div id="veoOuts" style="display:flex;flex-direction:column;gap:10px;margin-top:10px"></div>
+    </div>
+
+    <!-- 5. Folheado completo -->
+    <div class="card">
+      <div class="card-title">5 · Folheado completo (capa + páginas → 1 vídeo)</div>
+      <div style="font-size:12px;color:var(--muted2);line-height:1.6;margin-bottom:10px">
+        O site monta cada criativo sobre o papel, gera cada virada de página no Veo
+        (1º quadro → último quadro) e o FFmpeg emenda tudo num vídeo só. Requer <strong>papel + capa</strong> (e as páginas que quiser).
+      </div>
+      <label class="vm-check"><input type="checkbox" id="veoReveal" checked onchange="flowEstimar()"> Começar do papel em branco (reveal da capa)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+        <div style="flex:2;min-width:180px">
+          <div class="vm-flabel" style="margin-top:0">Modelo</div>
+          <select id="veoFlipModel" class="vm-num" style="font-family:'Manrope',sans-serif" onchange="flowEstimar()">
+            <option value="veo-3.1-fast-generate-preview" selected>Veo 3.1 Fast — rápido/barato (~US$0,15/s)</option>
+            <option value="veo-3.1-generate-preview">Veo 3.1 — qualidade máxima (~US$0,40/s)</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:140px">
+          <div class="vm-flabel" style="margin-top:0">Duração por virada</div>
+          <select id="veoFlipDur" class="vm-num" style="font-family:'Manrope',sans-serif" onchange="flowEstimar()">
+            <option value="4" selected>4 s</option>
+            <option value="6">6 s</option>
+            <option value="8">8 s</option>
+          </select>
+        </div>
+      </div>
+      <div id="flowKeyframes" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"></div>
+      <div id="flowFlipEst" style="font-size:11px;color:var(--muted2);margin:8px 0 10px;font-family:'JetBrains Mono',monospace"></div>
+      <button class="vm-btn vm-btn-green" id="veoBtnFolhear" onclick="veoFolhearClick()">📖 Gerar folheado completo</button>
+      <div id="flowFlipStatus" style="display:none;font-size:11px;color:var(--accent3);margin-top:10px;font-family:'JetBrains Mono',monospace"></div>
+      <div id="flowFlipOut" style="margin-top:10px"></div>
+    </div>
+
+    <!-- Alternativa manual -->
     <div class="card" style="border-bottom:none">
-      <div class="card-title">3 · Como usar no Flow</div>
+      <div class="card-title">Prefere gerar manualmente no site do Flow?</div>
       <ol style="margin:0;padding-left:20px;font-size:13px;color:var(--muted2);line-height:1.9">
         <li>Abra o <a href="https://labs.google/flow" target="_blank" rel="noopener" style="color:var(--accent3)">Google Flow</a> e crie um projeto de vídeo (modo <strong>Frames to Video</strong> / imagem→vídeo).</li>
         <li>No 1º frame, anexe a <strong>imagem do papel de fundo</strong> (e a <strong>capa</strong>, se o Flow aceitar imagem inicial + final).</li>
@@ -2676,6 +2767,14 @@ function irParaFlow() {
   setSidebarActive('flow');
   flowRenderFiltros();
   flowRenderPrompts();
+  const k = localStorage.getItem('a11_gkey');
+  const el = document.getElementById('veoApiKey');
+  if (k && el && !el.value) el.value = k;
+  if (!window.__veoInit) {
+    window.__veoInit = true;
+    ['veoModel', 'veoDur'].forEach(id => { const e = document.getElementById(id); if (e) e.addEventListener('change', veoEstimar); });
+  }
+  flowRefresh();
 }
 
 function irParaConta() {
@@ -5763,16 +5862,17 @@ function flowSetImg(tipo, input){
   flowImgs[tipo]=URL.createObjectURL(f);
   const drop=document.getElementById(tipo==='papel'?'flowDropPapel':'flowDropCapa');
   if(drop) drop.innerHTML=`<input type="file" accept="image/*" onchange="flowSetImg('${tipo}',this)"><img src="${flowImgs[tipo]}" alt="">`;
+  flowRefresh();
 }
 function flowSetPaginas(input){
   for(const f of Array.from(input.files||[])) flowImgs.paginas.push(URL.createObjectURL(f));
   input.value='';
-  flowRenderPaginas();
+  flowRenderPaginas(); flowRefresh();
 }
 function flowRemovePagina(i){
   URL.revokeObjectURL(flowImgs.paginas[i]);
   flowImgs.paginas.splice(i,1);
-  flowRenderPaginas();
+  flowRenderPaginas(); flowRefresh();
 }
 function flowRenderPaginas(){
   const el=document.getElementById('flowPaginasList'); if(!el) return;
@@ -5791,7 +5891,10 @@ function flowRenderPrompts(){
   el.innerHTML=lista.map((p,i)=>`<div class="flow-card">
     <div class="flow-card-top">
       <div style="display:flex;align-items:center;gap:8px;min-width:0"><span class="flow-card-nome">${p.nome}</span><span class="flow-card-cena">${FLOW_CENAS[p.cena]}</span></div>
-      <button class="flow-copy" onclick="flowCopy(${i},this)">📋 Copiar</button>
+      <span style="display:flex;gap:6px">
+        <button class="flow-copy" onclick="flowUsar(${i})" title="Usar este prompt para gerar aqui no site">🎬 Usar</button>
+        <button class="flow-copy" onclick="flowCopy(${i},this)" title="Copiar para colar no site do Flow">📋 Copiar</button>
+      </span>
     </div>
     <div class="flow-en">${p.en}</div>
     <div class="flow-pt"><strong style="color:var(--muted2)">PT:</strong> ${p.pt}</div>
@@ -5801,6 +5904,275 @@ async function flowCopy(i, btn){
   const p=(window.__flowLista||[])[i]; if(!p) return;
   try{ await navigator.clipboard.writeText(p.en); if(btn){ const t=btn.textContent; btn.textContent='✓ Copiado'; setTimeout(()=>btn.textContent=t,1600); } toast('Prompt (inglês) copiado — cole no Flow','success',2500); }
   catch{ toast('Não foi possível copiar automaticamente','warning'); }
+}
+// Aplica um prompt da galeria no gerador (card 4)
+function flowUsar(i){
+  const p=(window.__flowLista||[])[i]; if(!p) return;
+  const ta=document.getElementById('veoPrompt'); if(!ta) return;
+  ta.value=p.en; veoEstimar();
+  ta.scrollIntoView({ behavior:'smooth', block:'center' });
+  toast('Prompt aplicado no gerador (card 4)','success',2200);
+}
+
+// ── Geração direta no Veo (API oficial do Google; chave do usuário) ──
+// Tudo roda no navegador: imagens e chave nunca passam pelo servidor do site.
+const VEO_BASE='https://generativelanguage.googleapis.com/v1beta';
+const VEO_USD={ 'veo-3.1-fast-generate-preview':0.15, 'veo-3.1-generate-preview':0.40 }; // US$/segundo (aprox.)
+const USD_BRL=5.5; // câmbio aproximado só p/ estimativa
+function veoSalvarKey(k){ if(k) localStorage.setItem('a11_gkey', k); }
+function veoKey(){ const el=document.getElementById('veoApiKey'); const k=((el&&el.value)||'').trim(); if(k) veoSalvarKey(k); return k; }
+
+// Traduz os erros mais comuns da API p/ mensagens acionáveis
+function veoErro(data, status){
+  const m=(data&&data.error&&data.error.message)||('HTTP '+status);
+  if(/API key not valid|API_KEY_INVALID/i.test(m)) return 'chave inválida — confira em aistudio.google.com/apikey';
+  if(/billing|billed users|FAILED_PRECONDITION/i.test(m)) return 'sua chave não tem faturamento ativo (o Veo é pago) — ative o billing no projeto do Google';
+  if(/quota|RESOURCE_EXHAUSTED|429/i.test(m+status)) return 'cota do Google atingida — aguarde alguns minutos';
+  if(/not found|not supported/i.test(m)) return 'modelo indisponível na sua conta — tente o outro modelo';
+  return String(m).slice(0,160);
+}
+
+async function veoStart(key, model, prompt, imgB64, lastB64, dur){
+  const inst={ prompt };
+  if(imgB64) inst.image={ bytesBase64Encoded:imgB64, mimeType:'image/jpeg' };
+  if(lastB64) inst.lastFrame={ bytesBase64Encoded:lastB64, mimeType:'image/jpeg' };
+  const r=await fetch(`${VEO_BASE}/models/${model}:predictLongRunning`, {
+    method:'POST', headers:{ 'x-goog-api-key':key, 'Content-Type':'application/json' },
+    body:JSON.stringify({ instances:[inst], parameters:{ aspectRatio:'9:16', durationSeconds:dur } }),
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(veoErro(data, r.status));
+  if(!data.name) throw new Error('resposta sem operação — tente de novo');
+  return data.name;
+}
+
+// Aguarda a operação (o Veo leva 1–6 min); tolera falhas passageiras de rede
+async function veoAguardar(key, opName, onTick, cancelado){
+  const t0=Date.now(); let falhas=0;
+  while(true){
+    if(cancelado && cancelado()) throw new Error('cancelado');
+    if(Date.now()-t0 > 15*60*1000) throw new Error('tempo esgotado (15 min) — tente de novo');
+    await sleep(9000);
+    if(onTick) onTick(Math.round((Date.now()-t0)/1000));
+    let op;
+    try{
+      const r=await fetch(`${VEO_BASE}/${opName}`, { headers:{ 'x-goog-api-key':key } });
+      op=await r.json();
+      if(!r.ok) throw new Error(veoErro(op, r.status));
+      falhas=0;
+    }catch(e){ if(++falhas>=4) throw e; continue; }
+    if(!op.done) continue;
+    if(op.error) throw new Error(veoErro({ error:op.error }, 0));
+    const resp=op.response||{}; const gv=resp.generateVideoResponse||resp;
+    const amostras=gv.generatedSamples||gv.generatedVideos||[];
+    if(!amostras.length && gv.raiMediaFilteredCount>0)
+      throw new Error('o Google filtrou o conteúdo ('+String((gv.raiMediaFilteredReasons||['política'])[0]).slice(0,90)+') — ajuste o prompt/imagens');
+    const s=amostras[0]; const uri=s&&((s.video&&s.video.uri)||s.uri);
+    if(!uri) throw new Error('o Veo não retornou vídeo — tente de novo');
+    return uri;
+  }
+}
+
+async function veoBaixar(key, uri){
+  let r=await fetch(uri, { headers:{ 'x-goog-api-key':key } }).catch(()=>null);
+  if(!r||!r.ok) r=await fetch(uri+(uri.includes('?')?'&':'?')+'key='+encodeURIComponent(key)).catch(()=>null);
+  if(!r||!r.ok) throw new Error('falha ao baixar o vídeo gerado'+(r?' (HTTP '+r.status+')':''));
+  return await r.blob();
+}
+
+// ── Compositor: desenha o criativo sobre a foto do papel ──
+const flowCfg={ w:62, x:50, y:50 }; // % da largura / posição do centro
+function flowLoadImg(url){ return new Promise((res,rej)=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>rej(new Error('imagem inválida')); im.src=url; }); }
+async function flowCompor(bgUrl, artUrl){
+  const bg=await flowLoadImg(bgUrl);
+  const MAX=1280, sc=Math.min(1, MAX/Math.max(bg.naturalWidth, bg.naturalHeight));
+  const W=Math.round(bg.naturalWidth*sc), H=Math.round(bg.naturalHeight*sc);
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  ctx.drawImage(bg, 0, 0, W, H);
+  if(artUrl){
+    const art=await flowLoadImg(artUrl);
+    const aw=W*(flowCfg.w/100), ah=aw*(art.naturalHeight/art.naturalWidth);
+    const ax=W*(flowCfg.x/100)-aw/2, ay=H*(flowCfg.y/100)-ah/2;
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,.28)'; ctx.shadowBlur=Math.round(W*0.02); ctx.shadowOffsetY=Math.round(W*0.008);
+    ctx.drawImage(art, ax, ay, aw, ah);
+    ctx.restore();
+  }
+  return cv.toDataURL('image/jpeg', 0.9);
+}
+let flowPrevTimer=null;
+function flowCfgMudou(){
+  const g=id=>document.getElementById(id);
+  if(!g('flowCfgW')) return;
+  flowCfg.w=+g('flowCfgW').value; flowCfg.x=+g('flowCfgX').value; flowCfg.y=+g('flowCfgY').value;
+  g('flowCfgWVal').textContent=flowCfg.w+'%'; g('flowCfgXVal').textContent=flowCfg.x+'%'; g('flowCfgYVal').textContent=flowCfg.y+'%';
+  clearTimeout(flowPrevTimer); flowPrevTimer=setTimeout(flowPreviewComp, 120);
+}
+async function flowPreviewComp(){
+  const wrap=document.getElementById('flowAjusteWrap'); if(!wrap) return;
+  const art=flowImgs.capa||flowImgs.paginas[0];
+  if(!flowImgs.papel||!art){ wrap.style.display='none'; return; }
+  wrap.style.display='block';
+  try{ document.getElementById('flowCompPrev').src=await flowCompor(flowImgs.papel, art); }catch{}
+}
+
+// ── Seleção de imagem inicial (clipe único) ──
+function flowImgSelAtualizar(){
+  const sel=document.getElementById('veoImgSel'); if(!sel) return;
+  const cur=sel.value;
+  const ops=[['none','🚫 Sem imagem (só o prompt)']];
+  if(flowImgs.papel) ops.push(['papel','📄 Papel de fundo (puro)']);
+  if(flowImgs.capa) ops.push(flowImgs.papel?['capa','🎬 Capa sobre o papel']:['capa-pura','🎬 Capa (imagem pura)']);
+  flowImgs.paginas.forEach((_,i)=>{ if(flowImgs.papel) ops.push(['pag'+i,'📑 Página '+(i+1)+' sobre o papel']); });
+  sel.innerHTML=ops.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+  if([...sel.options].some(o=>o.value===cur)) sel.value=cur;
+  else if(flowImgs.papel&&flowImgs.capa) sel.value='capa';
+}
+async function flowImgB64(valor){
+  let d=null;
+  if(valor==='papel') d=await flowCompor(flowImgs.papel, null);
+  else if(valor==='capa') d=await flowCompor(flowImgs.papel, flowImgs.capa);
+  else if(valor==='capa-pura') d=await flowCompor(flowImgs.capa, null);
+  else if(valor&&valor.startsWith('pag')) d=await flowCompor(flowImgs.papel, flowImgs.paginas[+valor.slice(3)]);
+  return d ? d.split(',')[1] : null;
+}
+
+// ── Estimativas de custo (preço do Google, aproximado) ──
+function veoEstimar(){
+  const el=document.getElementById('veoEst'); if(!el) return;
+  const usd=(VEO_USD[document.getElementById('veoModel').value]||0.15)*(+document.getElementById('veoDur').value);
+  el.textContent=`Estimativa: ~US$ ${usd.toFixed(2)} (≈ R$ ${(usd*USD_BRL).toFixed(2).replace('.',',')}) — cobrado pelo Google na sua chave`;
+}
+function flowEstimar(){
+  const el=document.getElementById('flowFlipEst'); if(!el) return;
+  const arts=(flowImgs.capa?1:0)+flowImgs.paginas.length;
+  const reveal=document.getElementById('veoReveal').checked;
+  // sem capa não há o que gerar; com capa, no mínimo 1 trecho (clipe simples)
+  const segs=arts===0 ? 0 : Math.max(1,(reveal?1:0)+arts-1);
+  const d=+document.getElementById('veoFlipDur').value;
+  const usd=(VEO_USD[document.getElementById('veoFlipModel').value]||0.15)*d*segs;
+  el.textContent=segs
+    ? `${segs} trecho(s) × ${d}s = ${segs*d}s de vídeo · ~US$ ${usd.toFixed(2)} (≈ R$ ${(usd*USD_BRL).toFixed(2).replace('.',',')}) · espera ~${segs*2}–${segs*4} min`
+    : 'Suba a capa (e as páginas) no card 2 para calcular';
+}
+function flowRenderKeyframes(){
+  const el=document.getElementById('flowKeyframes'); if(!el) return;
+  if(!flowImgs.capa){ el.innerHTML=''; return; }
+  const arts=[flowImgs.capa, ...flowImgs.paginas];
+  el.innerHTML=arts.map((u,i)=>`<div class="flow-pg-thumb" title="${i===0?'Capa':'Página '+i}"><span>${i===0?'C':i}</span><img src="${u}" alt=""></div>`).join('');
+}
+function flowRefresh(){ flowCfgMudou(); flowImgSelAtualizar(); flowRenderKeyframes(); flowEstimar(); veoEstimar(); }
+
+// ── Clipe único ──
+let veoGerando=false, veoOutsArr=[];
+function veoAddOut(blob, nome, containerId){
+  const list=document.getElementById(containerId||'veoOuts'); if(!list) return;
+  const idx=veoOutsArr.length; veoOutsArr.push({ nome, blob });
+  const url=URL.createObjectURL(blob);
+  const div=document.createElement('div');
+  div.style.cssText='border:1px solid var(--border);border-radius:12px;padding:10px;background:rgba(255,255,255,.015)';
+  div.innerHTML=`<video src="${url}" controls playsinline style="width:100%;max-width:240px;border-radius:8px;background:#000"></video>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <span class="vm-out-name" style="max-width:none;flex:1" title="${nome}">${nome}</span>
+      <a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a>
+      <button class="vm-dl-btn" title="Enviar ao AutoLegenda" onclick="veoParaLegenda(${idx})">💬</button>
+    </div>`;
+  list.prepend(div);
+}
+function veoParaLegenda(i){ const o=veoOutsArr[i]; if(!o) return; lgReceberBlob(o.nome, o.blob); toast('Enviado ao AutoLegenda (aba 💬)','success',2500); }
+
+async function veoGerarClipe(){
+  if(veoGerando) return;
+  const key=veoKey(); if(!key){ toast('Cole sua chave do Google no card 1','warning'); return; }
+  const prompt=(document.getElementById('veoPrompt').value||'').trim();
+  if(prompt.length<10){ toast('Escolha um prompt na galeria (🎬 Usar) ou escreva um','warning'); return; }
+  const model=document.getElementById('veoModel').value, dur=+document.getElementById('veoDur').value;
+  const btn=document.getElementById('veoBtnGerar'), st=document.getElementById('veoStatus');
+  veoGerando=true; btn.disabled=true; btn.textContent='⏳ Gerando (1–3 min)...'; st.style.display='block';
+  try{
+    st.textContent='Preparando a imagem...';
+    const img=await flowImgB64(document.getElementById('veoImgSel').value);
+    st.textContent='Enviando ao Veo...';
+    const op=await veoStart(key, model, prompt, img, null, dur);
+    const uri=await veoAguardar(key, op, s=>{ st.textContent=`Gerando no Veo... ${s}s (normalmente 1–3 min)`; });
+    st.textContent='Baixando o vídeo...';
+    veoAddOut(await veoBaixar(key, uri), `veo_${Date.now().toString(36)}.mp4`);
+    toast('Clipe gerado!','success');
+  }catch(e){ toast('Veo: '+e.message,'error',9000); }
+  st.style.display='none'; veoGerando=false; btn.disabled=false; btn.textContent='🎬 Gerar clipe no Veo';
+}
+
+// ── Folheado completo: composições → viradas no Veo (1º→último frame) → concat ──
+const FLOW_FLIP_PROMPT='A hand smoothly flips the printed page to reveal the next design underneath. The paper, framing and background stay consistent between the first and last frame. Realistic paper physics, soft natural lighting, subtle camera drift, photorealistic, vertical 9:16.';
+const FLOW_REVEAL_PROMPT='The printed cover design smoothly materializes onto the blank white paper, as if freshly printed, while the paper, framing and background stay consistent. Soft natural lighting, subtle camera drift, photorealistic, vertical 9:16.';
+let veoFolheando=false, veoFolhearCancel=false;
+function veoFolhearClick(){
+  if(veoFolheando){ veoFolhearCancel=true; const st=document.getElementById('flowFlipStatus'); if(st) st.textContent='Cancelando após o trecho atual...'; }
+  else veoFolhear();
+}
+async function veoFolhear(){
+  const key=veoKey(); if(!key){ toast('Cole sua chave do Google no card 1','warning'); return; }
+  if(!flowImgs.papel||!flowImgs.capa){ toast('Suba o papel de fundo e a capa no card 2','warning'); return; }
+  const model=document.getElementById('veoFlipModel').value;
+  const dur=+document.getElementById('veoFlipDur').value;
+  const reveal=document.getElementById('veoReveal').checked;
+  const btn=document.getElementById('veoBtnFolhear'), st=document.getElementById('flowFlipStatus');
+  veoFolheando=true; veoFolhearCancel=false; btn.textContent='⏹ Parar'; st.style.display='block';
+  try{
+    st.textContent='Montando os quadros (composição das páginas no papel)...';
+    const arts=[flowImgs.capa, ...flowImgs.paginas];
+    const frames=[];
+    if(reveal) frames.push((await flowCompor(flowImgs.papel, null)).split(',')[1]);
+    for(const a of arts) frames.push((await flowCompor(flowImgs.papel, a)).split(',')[1]);
+    // pares (1º frame → último frame); com 1 frame só, vira um clipe simples
+    const pares=[];
+    for(let i=0;i<frames.length-1;i++) pares.push([frames[i], frames[i+1], (i===0&&reveal)?FLOW_REVEAL_PROMPT:FLOW_FLIP_PROMPT]);
+    if(!pares.length) pares.push([frames[0], null, FLOW_FLIP_PROMPT]);
+    const clips=[];
+    for(let i=0;i<pares.length;i++){
+      if(veoFolhearCancel) throw new Error('cancelado');
+      const [a,b,pr]=pares[i];
+      st.textContent=`Trecho ${i+1}/${pares.length} · enviando ao Veo...`;
+      const op=await veoStart(key, model, pr, a, b, dur);
+      const uri=await veoAguardar(key, op, s=>{ st.textContent=`Trecho ${i+1}/${pares.length} · gerando (${s}s)...`; }, ()=>veoFolhearCancel);
+      st.textContent=`Trecho ${i+1}/${pares.length} · baixando...`;
+      clips.push(await veoBaixar(key, uri));
+    }
+    st.textContent='Emendando os trechos (FFmpeg)...';
+    const final=clips.length===1 ? clips[0] : await flowConcat(clips);
+    document.getElementById('flowFlipOut').innerHTML='';
+    veoAddOut(final, `folheado_${Date.now().toString(36)}.mp4`, 'flowFlipOut');
+    toast('Folheado completo gerado!','success',5000);
+  }catch(e){ toast('Folheado: '+e.message, e.message==='cancelado'?'info':'error', 9000); }
+  st.style.display='none'; veoFolheando=false; veoFolhearCancel=false; btn.textContent='📖 Gerar folheado completo';
+}
+// Junta os MP4s do Veo: tenta cópia direta (rápida); se falhar, re-encoda
+async function flowConcat(blobs){
+  const ok=await vmCarregarFFmpeg(); if(!ok) throw new Error('FFmpeg não carregou — recarregue a página');
+  const files=[];
+  try{
+    let list='';
+    for(let i=0;i<blobs.length;i++){ const fn=`fw${i}.mp4`; await vmFfmpeg.writeFile(fn, new Uint8Array(await blobs[i].arrayBuffer())); files.push(fn); list+=`file '${fn}'\n`; }
+    await vmFfmpeg.writeFile('fwlist.txt', list); files.push('fwlist.txt');
+    try{
+      await vmFfmpeg.exec(['-y','-f','concat','-safe','0','-i','fwlist.txt','-c','copy','fwout.mp4'], 240000);
+    }catch(e1){
+      const base=['-y']; blobs.forEach((_,i)=>base.push('-i',`fw${i}.mp4`));
+      try{
+        const fc=blobs.map((_,i)=>`[${i}:v][${i}:a]`).join('')+`concat=n=${blobs.length}:v=1:a=1[v][a]`;
+        await vmFfmpeg.exec([...base,'-filter_complex',fc,'-map','[v]','-map','[a]','-c:v','libx264','-preset','ultrafast','-crf','23','-c:a','aac','-b:a','160k','-movflags','+faststart','fwout.mp4'], 10*60*1000);
+      }catch(e2){
+        const fc=blobs.map((_,i)=>`[${i}:v]`).join('')+`concat=n=${blobs.length}:v=1:a=0[v]`;
+        await vmFfmpeg.exec([...base,'-filter_complex',fc,'-map','[v]','-c:v','libx264','-preset','ultrafast','-crf','23','-movflags','+faststart','fwout.mp4'], 10*60*1000);
+      }
+    }
+    const d=await vmFfmpeg.readFile('fwout.mp4');
+    return new Blob([d.buffer], { type:'video/mp4' });
+  } finally {
+    for(const f of files){ try{ await vmFfmpeg.deleteFile(f); }catch{} }
+    try{ await vmFfmpeg.deleteFile('fwout.mp4'); }catch{}
+  }
 }
 
 // ══════════════════════════════════════════════════════════
