@@ -991,14 +991,42 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
         </div>
       </div>
 
-    </div>
+      <!-- CARD GERADOR AUTOMÁTICO -->
+      <div class="tool-card" onclick="irParaAuto()" style="--tc:#fb7185;--tc-soft:rgba(251,113,133,.16);--tc-b1:rgba(251,113,133,.4);--tc-b2:rgba(251,113,133,.08)">
+        <span class="shine"></span>
+        <div style="position:relative;z-index:1">
+          <!-- Ícone SVG robô (rosa neon) -->
+          <div class="tool-ic">
+            <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><filter id="gn6"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g filter="url(#gn6)">
+                <!-- Antena -->
+                <line x1="40" y1="9" x2="40" y2="19" stroke="#fb7185" stroke-width="2" stroke-linecap="round"/>
+                <circle cx="40" cy="7" r="3" stroke="#fda4af" stroke-width="1.8" fill="none"/>
+                <!-- Cabeça -->
+                <rect x="18" y="19" width="44" height="37" rx="11" stroke="#fb7185" stroke-width="2.2" fill="rgba(10,10,11,.6)"/>
+                <!-- Orelhas -->
+                <rect x="11" y="30" width="5" height="14" rx="2" stroke="#fb7185" stroke-width="1.6" fill="none" opacity=".55"/>
+                <rect x="64" y="30" width="5" height="14" rx="2" stroke="#fb7185" stroke-width="1.6" fill="none" opacity=".55"/>
+                <!-- Olhos -->
+                <circle cx="31" cy="35" r="4.5" fill="#fda4af"/>
+                <circle cx="49" cy="35" r="4.5" fill="#fda4af"/>
+                <!-- Boca -->
+                <line x1="31" y1="47" x2="49" y2="47" stroke="#fb7185" stroke-width="1.8" stroke-linecap="round" opacity=".7"/>
+                <!-- Pescoço + corpo -->
+                <line x1="40" y1="56" x2="40" y2="61" stroke="#fb7185" stroke-width="1.8" opacity=".6"/>
+                <path d="M28 61h24a4 4 0 0 1 4 4v9a4 4 0 0 1-4 4H28a4 4 0 0 1-4-4v-9a4 4 0 0 1 4-4z" stroke="#fb7185" stroke-width="1.8" fill="none" opacity=".5"/>
+                <!-- Faísca IA -->
+                <path d="M64 61l1.2 3.2 3.2 1.2-3.2 1.2L64 71l-1.2-3.2L59.6 66.4l3.2-1.2z" fill="#fecdd3" opacity=".9"/>
+              </g>
+            </svg>
+          </div>
+          <div class="tool-name">Gerador Automático<span class="tool-badge">BETA</span></div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twGerauto"></span><span class="tool-cursor"></span></div>
+        </div>
+      </div>
 
-    <!-- Gerador Automático (BETA) -->
-    <div onclick="irParaAuto()" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 22px;border:1px dashed rgba(251,191,36,.35);border-radius:999px;transition:all .2s;background:rgba(251,191,36,.04)"
-      onmouseover="this.style.background='rgba(251,191,36,.1)'" onmouseout="this.style.background='rgba(251,191,36,.04)'">
-      <span style="font-size:18px">🤖</span>
-      <span style="font-size:13px;font-weight:600">Gerador Automático — cole o roteiro e o site faz o vídeo inteiro</span>
-      <span style="font-size:9px;background:rgba(251,191,36,.18);color:var(--gold);padding:2px 8px;border-radius:999px;font-weight:800">BETA</span>
     </div>
 
     <!-- uso info -->
@@ -2316,6 +2344,11 @@ const TW_FLOW = [
   'Folheie seus criativos impressos.',
   'Vídeos de apresentação com IA.',
 ];
+const TW_GERAUTO = [
+  'Cole o roteiro, receba o vídeo.',
+  'Narração + cenas + montagem.',
+  'Do texto ao criativo, sozinho.',
+];
 let twAudioIdx=0,twAudioChar=0,twAudioAp=false;
 let twVideoIdx=0,twVideoChar=0,twVideoAp=false;
 
@@ -2343,6 +2376,7 @@ window.addEventListener('load', () => {
   setTimeout(() => twCardTick('twLeg', TW_LEG, {idx:0,char:0,ap:false}, ()=>{}), 1600);
   setTimeout(() => twCardTick('twClone', TW_CLONE, {idx:0,char:0,ap:false}, ()=>{}), 2000);
   setTimeout(() => twCardTick('twFlow', TW_FLOW, {idx:0,char:0,ap:false}, ()=>{}), 2400);
+  setTimeout(() => twCardTick('twGerauto', TW_GERAUTO, {idx:0,char:0,ap:false}, ()=>{}), 2800);
 });
 
 let user = null;
