@@ -633,29 +633,37 @@ module.exports = async (req, res) => {
     }
   }
 
-  // ── GET /pexels — banco de vídeos grátis (stock) p/ completar a timeline ──
+  // ── GET /pexels — banco de vídeos grátis (stock) verticais 9:16 ──
+  //    q vazio = vídeos populares. per=1..80 vídeos por página. Devolve várias
+  //    qualidades por vídeo (o front escolhe: leve p/ FFmpeg ou alta p/ baixar).
   if (path === "pexels" && req.method === "GET") {
     const user = await usuarioAutenticado();
     if (!user) return err(401, "Não autorizado");
     if (!process.env.PEXELS_API_KEY) return err(503, "Banco de vídeos não configurado (defina PEXELS_API_KEY)");
     const q = String(query.q || "").slice(0, 80);
-    const page = Math.max(1, Math.min(50, parseInt(query.page) || 1));
-    if (!q) return err(400, "Busca vazia");
+    const page = Math.max(1, Math.min(100, parseInt(query.page) || 1));
+    const per = Math.max(1, Math.min(80, parseInt(query.per) || 12));
     try {
-      const r = await fetch(`https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&orientation=portrait&per_page=12&page=${page}`, {
-        headers: { Authorization: process.env.PEXELS_API_KEY },
-      });
+      const url = q
+        ? `https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&orientation=portrait&per_page=${per}&page=${page}`
+        : `https://api.pexels.com/videos/popular?min_width=1080&min_height=1920&per_page=${per}&page=${page}`;
+      const r = await fetch(url, { headers: { Authorization: process.env.PEXELS_API_KEY } });
       const data = await r.json();
       if (!r.ok) return err(502, "Erro na busca de vídeos");
       const videos = (data.videos || []).map((v) => {
-        // pega o menor mp4 vertical com pelo menos ~540px de largura —
-        // leve p/ baixar e p/ a memória do FFmpeg no navegador
-        const files = (v.video_files || []).filter((f) => f.file_type === "video/mp4" && f.width);
-        files.sort((a, b) => (a.width || 0) - (b.width || 0));
-        const best = files.find((f) => (f.width || 0) >= 540) || files[files.length - 1];
-        return best ? { id: v.id, image: v.image, duration: v.duration, url: best.link } : null;
-      }).filter(Boolean);
-      return ok({ ok: true, videos });
+        const files = (v.video_files || []).filter((f) => f.file_type === "video/mp4" && f.width && f.height);
+        if (!files.length) return null;
+        // só verticais (9:16) — descarta paisagem que às vezes vem no "popular"
+        const vert = files.filter((f) => f.height >= f.width);
+        const pool = vert.length ? vert : files;
+        pool.sort((a, b) => (a.width || 0) - (b.width || 0));
+        const leve = pool.find((f) => (f.width || 0) >= 540) || pool[0];       // p/ o FFmpeg no navegador
+        const alta = pool[pool.length - 1];                                     // melhor qualidade p/ baixar
+        const vertical = (leve.height || 0) >= (leve.width || 0);
+        return { id: v.id, image: v.image, duration: v.duration, w: leve.width, h: leve.height, vertical, url: leve.link, urlHD: alta.link };
+      }).filter((v) => v && v.vertical);
+      const totalPag = per ? Math.ceil((data.total_results || 0) / per) : 1;
+      return ok({ ok: true, videos, page, totalResults: data.total_results || null, totalPaginas: totalPag });
     } catch (e) {
       return err(500, "Erro na busca: " + e.message);
     }

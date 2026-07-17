@@ -633,6 +633,21 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
 .flow-pt{font-size:11.5px;color:var(--muted2);line-height:1.55;margin-top:8px}
 .flow-copy{background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.35);color:#67e8f9;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Manrope',sans-serif;white-space:nowrap;transition:all .15s}
 .flow-copy:hover{background:rgba(34,211,238,.2)}
+
+/* ══ BANCO DE VÍDEOS (Pexels 9:16) ══ */
+.bv-cats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.bv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:10px}
+.bv-card{position:relative;aspect-ratio:9/16;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--border)}
+.bv-card img{width:100%;height:100%;object-fit:cover;display:block}
+.bv-dur{position:absolute;top:5px;right:5px;background:rgba(0,0,0,.72);color:#fff;font-size:9px;padding:1px 6px;border-radius:5px;font-family:'JetBrains Mono',monospace;pointer-events:none}
+.bv-ov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(180deg,rgba(0,0,0,.1),rgba(0,0,0,.55));opacity:0;transition:opacity .15s}
+.bv-card:hover .bv-ov{opacity:1}
+.bv-ov button{width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.bv-ov button:hover{background:var(--accent)}
+.bv-modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.bv-modal.visible{display:flex}
+.bv-modal video{max-height:88vh;max-width:96vw;border-radius:12px;background:#000}
+.bv-modal-x{position:absolute;top:14px;right:20px;background:none;border:none;color:#fff;font-size:30px;cursor:pointer;line-height:1}
 </style>
 </head>
 <body>
@@ -671,6 +686,9 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
     </div>
     <div class="sidebar-item" id="sidebarItem-tradutor" onclick="irParaTradutor()">
       <span class="sidebar-icon">🌐</span><span class="sidebar-label">Tradutor PDF <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
+    <div class="sidebar-item" id="sidebarItem-banco" onclick="irParaBanco()">
+      <span class="sidebar-icon">🎞️</span><span class="sidebar-label">Banco de Vídeos</span>
     </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-item" id="sidebarItem-conta" onclick="irParaConta()">
@@ -1056,6 +1074,33 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
           <div class="tool-name">Tradutor PDF<span class="tool-badge">BETA</span></div>
           <div class="tool-sep"></div>
           <div class="tool-sub"><span id="twTrad"></span><span class="tool-cursor"></span></div>
+        </div>
+      </div>
+
+      <!-- CARD BANCO DE VÍDEOS -->
+      <div class="tool-card" onclick="irParaBanco()" style="--tc:#fb923c;--tc-soft:rgba(251,146,60,.16);--tc-b1:rgba(251,146,60,.4);--tc-b2:rgba(251,146,60,.08)">
+        <span class="shine"></span>
+        <div style="position:relative;z-index:1">
+          <!-- Ícone SVG grade de vídeos 9:16 (laranja neon) -->
+          <div class="tool-ic">
+            <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><filter id="gn8"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g filter="url(#gn8)">
+                <!-- Três tiles verticais 9:16 -->
+                <rect x="8" y="20" width="18" height="48" rx="3" stroke="#fb923c" stroke-width="2" fill="rgba(10,10,11,.5)"/>
+                <rect x="31" y="14" width="18" height="60" rx="3" stroke="#fdba74" stroke-width="2.2" fill="rgba(10,10,11,.6)"/>
+                <rect x="54" y="20" width="18" height="48" rx="3" stroke="#fb923c" stroke-width="2" fill="rgba(10,10,11,.5)"/>
+                <!-- Play no tile central -->
+                <path d="M37 38l9 6-9 6z" stroke="#fed7aa" stroke-width="1.8" fill="none" stroke-linejoin="round"/>
+                <!-- Detalhes -->
+                <line x1="12" y1="60" x2="22" y2="60" stroke="#fb923c" stroke-width="1.4" stroke-linecap="round" opacity=".5"/>
+                <line x1="58" y1="60" x2="68" y2="60" stroke="#fb923c" stroke-width="1.4" stroke-linecap="round" opacity=".5"/>
+              </g>
+            </svg>
+          </div>
+          <div class="tool-name">Banco de Vídeos</div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twBanco"></span><span class="tool-cursor"></span></div>
         </div>
       </div>
 
@@ -2406,6 +2451,48 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
   </div>
 </div>
 
+<!-- BANCO DE VÍDEOS (Pexels 9:16) -->
+<div id="screenBanco" class="screen">
+  <div style="display:flex;flex-direction:column;width:100%">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:none">🎞️</div>
+      <span class="topbar-name">Banco de Vídeos</span>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--muted2)" id="bvStatus"></span>
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="card" style="border-color:rgba(251,146,60,.25)">
+      <div style="font-size:13px;line-height:1.7;color:var(--muted2)">
+        <strong style="color:var(--text)">Milhares de vídeos verticais 9:16, grátis.</strong>
+        Stock por <a href="https://www.pexels.com" target="_blank" rel="noopener" style="color:var(--accent3)">Pexels</a> — busque por tema, baixe em alta ou mande direto para o VideoMix. Uso livre, sem precisar dar crédito.
+      </div>
+    </div>
+
+    <div class="card" style="border-bottom:none">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" id="bvQuery" class="vm-num" placeholder="Buscar vídeos... (ex: cidade, natureza, academia, comida)" style="flex:1;font-family:'Manrope',sans-serif;padding:11px 14px" onkeydown="if(event.key==='Enter')bvBuscar(this.value)">
+        <button class="vm-btn vm-btn-blue" style="width:auto;padding:0 22px" onclick="bvBuscar(document.getElementById('bvQuery').value)">🔍 Buscar</button>
+      </div>
+      <div class="bv-cats" id="bvCats"></div>
+      <div class="bv-grid" id="bvGrid"></div>
+      <button id="bvMais" class="vm-btn vm-btn-blue" style="display:none;margin:16px auto 0;max-width:280px" onclick="bvBuscar(null, true)">Carregar mais vídeos ↓</button>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- LIGHTBOX DE PREVIEW (Banco de Vídeos) -->
+<div class="bv-modal" id="bvModal" onclick="if(event.target===this)bvFecharPreview()">
+  <button class="bv-modal-x" onclick="bvFecharPreview()">✕</button>
+  <video id="bvModalVid" controls playsinline loop></video>
+</div>
+
 <!-- MODAL PAGAMENTO -->
 <div class="modal-overlay" id="modalPagamento">
   <div class="modal">
@@ -2558,6 +2645,11 @@ const TW_TRAD = [
   'Imagens e textos, outro idioma.',
   'Digital ou escaneado, com IA.',
 ];
+const TW_BANCO = [
+  'Milhares de vídeos verticais.',
+  'Stock 9:16 grátis, pronto pro Reels.',
+  'Baixe ou mande direto ao VideoMix.',
+];
 let twAudioIdx=0,twAudioChar=0,twAudioAp=false;
 let twVideoIdx=0,twVideoChar=0,twVideoAp=false;
 
@@ -2587,6 +2679,7 @@ window.addEventListener('load', () => {
   setTimeout(() => twCardTick('twFlow', TW_FLOW, {idx:0,char:0,ap:false}, ()=>{}), 2400);
   setTimeout(() => twCardTick('twGerauto', TW_GERAUTO, {idx:0,char:0,ap:false}, ()=>{}), 2800);
   setTimeout(() => twCardTick('twTrad', TW_TRAD, {idx:0,char:0,ap:false}, ()=>{}), 3200);
+  setTimeout(() => twCardTick('twBanco', TW_BANCO, {idx:0,char:0,ap:false}, ()=>{}), 3600);
 });
 
 let user = null;
@@ -2900,6 +2993,12 @@ function irParaTradutor() {
   mostrarTela('screenTradutor');
   setSidebarActive('tradutor');
   trCarregarSaldo();
+}
+
+function irParaBanco() {
+  mostrarTela('screenBanco');
+  setSidebarActive('banco');
+  bvInit();
 }
 
 function irParaConta() {
@@ -6298,6 +6397,96 @@ async function flowConcat(blobs){
     for(const f of files){ try{ await vmFfmpeg.deleteFile(f); }catch{} }
     try{ await vmFfmpeg.deleteFile('fwout.mp4'); }catch{}
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// BANCO DE VÍDEOS (Pexels 9:16) — busca, baixa e manda ao VideoMix
+// ══════════════════════════════════════════════════════════
+const BV_CATS=['Populares','Natureza','Cidade','Academia','Comida','Praia','Negócios','Tecnologia','Viagem','Moda','Carros','Música','Pôr do sol','Fitness','Abstrato','Animais'];
+let bvVids=[], bvPage=1, bvQ='', bvLoading=false, bvEnd=false, bvIniciado=false;
+
+function bvInit(){
+  const cats=document.getElementById('bvCats');
+  if(cats && !cats.children.length){
+    cats.innerHTML=BV_CATS.map(c=>`<button class="flow-chip" onclick="bvCat('${c}')">${c}</button>`).join('');
+  }
+  if(!bvIniciado){ bvIniciado=true; bvBuscar(''); } // abre com os populares
+}
+function bvCat(c){
+  const termos={ 'Populares':'', 'Natureza':'nature', 'Cidade':'city', 'Academia':'gym workout', 'Comida':'food', 'Praia':'beach', 'Negócios':'business', 'Tecnologia':'technology', 'Viagem':'travel', 'Moda':'fashion', 'Carros':'car', 'Música':'music', 'Pôr do sol':'sunset', 'Fitness':'fitness', 'Abstrato':'abstract background', 'Animais':'animals' };
+  const q=termos[c]!=null?termos[c]:c;
+  document.getElementById('bvQuery').value = q ? c : '';
+  bvBuscar(q);
+  document.querySelectorAll('#bvCats .flow-chip').forEach(b=>b.classList.toggle('on', b.textContent===c));
+}
+async function bvBuscar(q, mais){
+  if(bvLoading) return;
+  if(!mais){ bvQ=(q||'').trim(); bvPage=1; bvEnd=false; bvVids=[]; document.getElementById('bvGrid').innerHTML=''; }
+  else { if(bvEnd) return; bvPage++; }
+  bvLoading=true;
+  document.getElementById('bvStatus').textContent='Carregando...';
+  const mais_btn=document.getElementById('bvMais'); if(mais_btn) mais_btn.textContent='Carregando...';
+  let r; try{ r=await callApiAuth(`pexels?q=${encodeURIComponent(bvQ)}&per=80&page=${bvPage}`, null, 'GET'); }catch{ r={ ok:false, erro:'conexão' }; }
+  bvLoading=false;
+  if(mais_btn) mais_btn.textContent='Carregar mais vídeos ↓';
+  const grid=document.getElementById('bvGrid');
+  if(!r.ok){
+    document.getElementById('bvStatus').textContent=r.erro||'Erro';
+    if(/configurado/i.test(r.erro||'') && !grid.children.length) grid.innerHTML=`<div style="grid-column:1/-1;color:var(--warning);font-size:12px;text-align:center;padding:20px">${r.erro}</div>`;
+    return;
+  }
+  const vids=r.videos||[];
+  if(!vids.length){ bvEnd=true; document.getElementById('bvMais').style.display='none'; document.getElementById('bvStatus').textContent=grid.children.length?'Fim dos resultados':'Nada encontrado'; if(!grid.children.length) grid.innerHTML='<div style="grid-column:1/-1;color:var(--muted2);font-size:12px;text-align:center;padding:20px">Nada encontrado — tente outro termo</div>'; return; }
+  const start=bvVids.length; bvVids.push(...vids);
+  grid.insertAdjacentHTML('beforeend', vids.map((v,i)=>bvCard(v, start+i)).join(''));
+  document.getElementById('bvStatus').textContent=`${bvVids.length} vídeos`;
+  document.getElementById('bvMais').style.display='block';
+}
+function bvCard(v, i){
+  return `<div class="bv-card">
+    <img src="${v.image}" loading="lazy" alt="">
+    <span class="bv-dur">${v.duration||''}s</span>
+    <div class="bv-ov">
+      <button onclick="bvPreview(${i})" title="Ver">▶</button>
+      <button onclick="bvBaixar(${i},this)" title="Baixar em alta">⬇️</button>
+      <button onclick="bvParaVM(${i},this)" title="Usar no VideoMix">🎬</button>
+    </div>
+  </div>`;
+}
+function bvPreview(i){
+  const v=bvVids[i]; if(!v) return;
+  const m=document.getElementById('bvModal'), pl=document.getElementById('bvModalVid');
+  pl.src=v.urlHD||v.url; m.classList.add('visible'); pl.play().catch(()=>{});
+}
+function bvFecharPreview(){
+  const m=document.getElementById('bvModal'), pl=document.getElementById('bvModalVid');
+  try{ pl.pause(); }catch{} pl.removeAttribute('src'); pl.load(); m.classList.remove('visible');
+}
+async function bvBaixar(i, btn){
+  const v=bvVids[i]; if(!v) return;
+  const t=btn.textContent; btn.textContent='⏳';
+  try{
+    toast('Baixando em alta...','info',2500);
+    const resp=await fetch(v.urlHD||v.url); if(!resp.ok) throw new Error('download falhou');
+    const blob=await resp.blob(); const url=URL.createObjectURL(blob);
+    const a=document.createElement('a'); a.href=url; a.download=`pexels_${v.id}.mp4`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 3000);
+    toast('Vídeo baixado!','success',2200);
+  }catch(e){ toast('Erro ao baixar: '+e.message,'error',4000); }
+  btn.textContent=t;
+}
+async function bvParaVM(i, btn){
+  const v=bvVids[i]; if(!v) return;
+  const t=btn.textContent; btn.textContent='⏳';
+  try{
+    toast('Baixando p/ o VideoMix...','info',2500);
+    const resp=await fetch(v.url); if(!resp.ok) throw new Error('download falhou');
+    const blob=await resp.blob();
+    const file=new File([blob], `pexels_${v.id}.mp4`, { type:'video/mp4' });
+    await vmAddClipes([file]);
+    toast('Adicionado à timeline do VideoMix!','success',3000);
+  }catch(e){ toast('Erro: '+e.message,'error',4000); }
+  btn.textContent=t;
 }
 
 // ══════════════════════════════════════════════════════════
