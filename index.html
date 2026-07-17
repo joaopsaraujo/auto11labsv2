@@ -669,6 +669,9 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
     <div class="sidebar-item" id="sidebarItem-flow" onclick="irParaFlow()">
       <span class="sidebar-icon">📄</span><span class="sidebar-label">Google Flow <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
     </div>
+    <div class="sidebar-item" id="sidebarItem-tradutor" onclick="irParaTradutor()">
+      <span class="sidebar-icon">🌐</span><span class="sidebar-label">Tradutor PDF <span style="font-size:8px;background:rgba(251,191,36,.15);color:var(--gold);padding:1px 5px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
     <div class="sidebar-divider"></div>
     <div class="sidebar-item" id="sidebarItem-conta" onclick="irParaConta()">
       <span class="sidebar-icon">💳</span><span class="sidebar-label">Saldo IA</span>
@@ -1024,6 +1027,35 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
           <div class="tool-name">Gerador Automático<span class="tool-badge">BETA</span></div>
           <div class="tool-sep"></div>
           <div class="tool-sub"><span id="twGerauto"></span><span class="tool-cursor"></span></div>
+        </div>
+      </div>
+
+      <!-- CARD TRADUTOR PDF -->
+      <div class="tool-card" onclick="irParaTradutor()" style="--tc:#f472b6;--tc-soft:rgba(244,114,182,.16);--tc-b1:rgba(244,114,182,.4);--tc-b2:rgba(244,114,182,.08)">
+        <span class="shine"></span>
+        <div style="position:relative;z-index:1">
+          <!-- Ícone SVG documento + globo (rosa neon) -->
+          <div class="tool-ic">
+            <svg viewBox="0 0 80 88" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs><filter id="gn7"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+              <g filter="url(#gn7)">
+                <!-- Documento -->
+                <path d="M20 8h28l14 14v52a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" stroke="#f472b6" stroke-width="2.2" fill="rgba(10,10,11,.55)"/>
+                <path d="M48 8v14h14" stroke="#f472b6" stroke-width="2" fill="none" stroke-linejoin="round"/>
+                <!-- Linhas de texto -->
+                <line x1="24" y1="30" x2="40" y2="30" stroke="#f9a8d4" stroke-width="1.6" stroke-linecap="round" opacity=".7"/>
+                <line x1="24" y1="37" x2="44" y2="37" stroke="#f9a8d4" stroke-width="1.6" stroke-linecap="round" opacity=".5"/>
+                <!-- Globo (tradução) -->
+                <circle cx="46" cy="58" r="15" stroke="#f472b6" stroke-width="2.2" fill="rgba(10,10,11,.6)"/>
+                <ellipse cx="46" cy="58" rx="6" ry="15" stroke="#f9a8d4" stroke-width="1.5" fill="none" opacity=".7"/>
+                <line x1="31" y1="58" x2="61" y2="58" stroke="#f9a8d4" stroke-width="1.5" stroke-linecap="round" opacity=".7"/>
+                <path d="M33 51h26M33 65h26" stroke="#f9a8d4" stroke-width="1.3" stroke-linecap="round" opacity=".5"/>
+              </g>
+            </svg>
+          </div>
+          <div class="tool-name">Tradutor PDF<span class="tool-badge">BETA</span></div>
+          <div class="tool-sep"></div>
+          <div class="tool-sub"><span id="twTrad"></span><span class="tool-cursor"></span></div>
         </div>
       </div>
 
@@ -2293,6 +2325,87 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
   </div>
 </div>
 
+<!-- TRADUTOR DE PDF (BETA) -->
+<div id="screenTradutor" class="screen">
+  <div style="display:flex;flex-direction:column;width:100%">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-icon" style="background:none">🌐</div>
+      <span class="topbar-name">Tradutor PDF <span style="font-size:9px;background:rgba(251,191,36,.18);color:var(--gold);padding:2px 8px;border-radius:999px;font-weight:800;vertical-align:middle">BETA</span></span>
+    </div>
+    <div class="topbar-right">
+      <span style="font-size:11px;color:var(--muted2)" id="trStatus">Pronto</span>
+      <button class="btn-icon" onclick="irParaHome()">← Início</button>
+      <button class="btn-icon" onclick="sair()">Sair</button>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="card" style="border-color:rgba(244,114,182,.25)">
+      <div style="font-size:13px;line-height:1.7;color:var(--muted2)">
+        <strong style="color:var(--text)">Traduza PDFs mantendo imagens e layout.</strong>
+        O site lê o PDF no seu navegador, traduz os textos com IA e recoloca por cima, gerando um PDF novo no idioma escolhido.
+        Se a página for escaneada (texto dentro de imagem), ele usa leitura óptica (OCR) automaticamente.
+      </div>
+    </div>
+
+    <!-- 1. Arquivo -->
+    <div class="card">
+      <div class="card-title">1 · Seu PDF</div>
+      <div class="vm-drop" style="margin:0">
+        <input type="file" id="trInput" accept="application/pdf,.pdf" onchange="trSetPdf(this)">
+        <div style="font-size:18px;margin-bottom:4px">📄</div>
+        <div style="font-size:12px;color:var(--muted2)">Clique ou arraste um arquivo <strong style="color:var(--accent2)">.pdf</strong></div>
+      </div>
+      <div id="trArqInfo" style="display:none;font-size:12px;color:var(--success);margin-top:10px;font-family:'JetBrains Mono',monospace"></div>
+    </div>
+
+    <!-- 2. Opções -->
+    <div class="card">
+      <div class="card-title">2 · Idioma e opções</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+          <div class="vm-flabel" style="margin-top:0">Traduzir para</div>
+          <select id="trAlvo" class="vm-num" style="font-family:'Manrope',sans-serif">
+            <option value="português">🇧🇷 Português</option>
+            <option value="inglês">🇺🇸 Inglês</option>
+            <option value="espanhol">🇪🇸 Espanhol</option>
+            <option value="francês">🇫🇷 Francês</option>
+            <option value="italiano">🇮🇹 Italiano</option>
+            <option value="alemão">🇩🇪 Alemão</option>
+          </select>
+        </div>
+        <div style="flex:1;min-width:150px">
+          <div class="vm-flabel" style="margin-top:0">Páginas escaneadas (OCR)</div>
+          <select id="trOcr" class="vm-num" style="font-family:'Manrope',sans-serif">
+            <option value="auto" selected>Automático (usa OCR só quando precisa)</option>
+            <option value="nunca">Nunca (só texto real, mais rápido)</option>
+          </select>
+        </div>
+      </div>
+      <label class="vm-check" style="margin-top:10px"><input type="checkbox" id="trBilingue"> Guardar o original ao lado (PDF bilíngue: página original + traduzida)</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-top:10px">
+        <span style="font-size:11px;color:var(--muted2)">Saldo: <strong id="trSaldoVal" style="color:var(--accent3)">R$ 0,00</strong></span>
+        <button onclick="vmAbrirRecarga()" style="background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.3);color:var(--success);border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;font-family:'Manrope',sans-serif">+ Recarregar</button>
+      </div>
+      <div id="trCusto" style="font-size:11px;color:var(--muted2);margin-top:8px;font-family:'JetBrains Mono',monospace"></div>
+    </div>
+
+    <button class="btn-generate" id="trBtnGerar" onclick="trGerarClick()">🌐 Traduzir PDF</button>
+
+    <div class="progress-card card" id="trProgressCard">
+      <div class="progress-header">
+        <span class="progress-label" id="trProgressLabel">Traduzindo...</span>
+        <span class="progress-count" id="trProgressCount">0 / 0</span>
+      </div>
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="trProgressFill"></div></div>
+      <div id="trPreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:center"></div>
+      <div id="trOut" style="margin-top:12px"></div>
+    </div>
+  </div>
+  </div>
+</div>
+
 <!-- MODAL PAGAMENTO -->
 <div class="modal-overlay" id="modalPagamento">
   <div class="modal">
@@ -2440,6 +2553,11 @@ const TW_GERAUTO = [
   'Narração + cenas + montagem.',
   'Do texto ao criativo, sozinho.',
 ];
+const TW_TRAD = [
+  'Traduza PDFs sem perder o layout.',
+  'Imagens e textos, outro idioma.',
+  'Digital ou escaneado, com IA.',
+];
 let twAudioIdx=0,twAudioChar=0,twAudioAp=false;
 let twVideoIdx=0,twVideoChar=0,twVideoAp=false;
 
@@ -2468,6 +2586,7 @@ window.addEventListener('load', () => {
   setTimeout(() => twCardTick('twClone', TW_CLONE, {idx:0,char:0,ap:false}, ()=>{}), 2000);
   setTimeout(() => twCardTick('twFlow', TW_FLOW, {idx:0,char:0,ap:false}, ()=>{}), 2400);
   setTimeout(() => twCardTick('twGerauto', TW_GERAUTO, {idx:0,char:0,ap:false}, ()=>{}), 2800);
+  setTimeout(() => twCardTick('twTrad', TW_TRAD, {idx:0,char:0,ap:false}, ()=>{}), 3200);
 });
 
 let user = null;
@@ -2775,6 +2894,12 @@ function irParaFlow() {
     ['veoModel', 'veoDur'].forEach(id => { const e = document.getElementById(id); if (e) e.addEventListener('change', veoEstimar); });
   }
   flowRefresh();
+}
+
+function irParaTradutor() {
+  mostrarTela('screenTradutor');
+  setSidebarActive('tradutor');
+  trCarregarSaldo();
 }
 
 function irParaConta() {
@@ -6173,6 +6298,183 @@ async function flowConcat(blobs){
     for(const f of files){ try{ await vmFfmpeg.deleteFile(f); }catch{} }
     try{ await vmFfmpeg.deleteFile('fwout.mp4'); }catch{}
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// TRADUTOR DE PDF (BETA) — mantém imagens/layout, traduz o texto (Groq)
+// ══════════════════════════════════════════════════════════
+// Tudo no navegador: pdf.js lê e renderiza, o texto vai ao backend (/traduzir),
+// a tradução é colada por cima no canvas e jsPDF remonta o PDF.
+let trPdfBytes=null, trPdfNome='', trNumPags=0, trRodando=false, trCancel=false;
+let trLibsOk=false, trTessOk=false;
+let vmPrecoTraducaoPag=0.02;
+
+function trStatus(m){ const el=document.getElementById('trStatus'); if(el) el.textContent=m; }
+function trScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('não foi possível carregar '+src.split('/').pop())); document.head.appendChild(s); }); }
+async function trCarregarLibs(){
+  if(trLibsOk) return;
+  trStatus('Carregando componentes...');
+  if(!window.pdfjsLib) await trScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+  if(window.pdfjsLib && !pdfjsLib.GlobalWorkerOptions.workerSrc){
+    try{ pdfjsLib.GlobalWorkerOptions.workerSrc=await vmToBlobURL('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js','text/javascript'); }catch{}
+  }
+  if(!window.jspdf) await trScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  trLibsOk=true; trStatus('Pronto');
+}
+async function trCarregarTesseract(){ if(trTessOk) return; if(!window.Tesseract) await trScript('https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'); trTessOk=true; }
+
+// ── Saldo / custo ──
+async function trCarregarSaldo(){
+  if(!user){ trAtualizarSaldo(); return; }
+  try{ const r=await callApiAuth('saldo',null,'GET'); if(r.ok){ user.saldo=r.saldo; if(r.precoTraducaoPag!=null) vmPrecoTraducaoPag=r.precoTraducaoPag; if(r.precoLegendaMin!=null) vmPrecoLegendaMin=r.precoLegendaMin; localStorage.setItem(USER_KEY,JSON.stringify(user)); } }catch{}
+  trAtualizarSaldo(); trAtualizarCusto();
+}
+function trAtualizarSaldo(){ const el=document.getElementById('trSaldoVal'); if(el) el.textContent='R$ '+Number((user&&user.saldo)||0).toFixed(2).replace('.',','); }
+function trAtualizarCusto(){
+  const el=document.getElementById('trCusto'); if(!el) return;
+  if(!trNumPags){ el.textContent=''; return; }
+  const c=trNumPags*vmPrecoTraducaoPag;
+  el.textContent=`${trNumPags} página(s) × R$ ${vmPrecoTraducaoPag.toFixed(3).replace('.',',')} = ~R$ ${c.toFixed(2).replace('.',',')} do Saldo IA (páginas sem texto não custam)`;
+}
+
+async function trSetPdf(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  if(!/\.pdf$/i.test(f.name) && f.type!=='application/pdf'){ toast('Envie um arquivo .pdf','warning'); return; }
+  try{
+    trPdfBytes=new Uint8Array(await f.arrayBuffer());
+    trPdfNome=f.name.replace(/\.pdf$/i,'');
+    await trCarregarLibs();
+    const pdf=await pdfjsLib.getDocument({ data:trPdfBytes.slice() }).promise;
+    trNumPags=pdf.numPages;
+    const info=document.getElementById('trArqInfo');
+    info.style.display='block'; info.textContent=`✓ ${f.name} · ${trNumPags} página(s)`;
+    trAtualizarCusto();
+  }catch(e){ trPdfBytes=null; toast('Não foi possível abrir o PDF: '+e.message,'error',6000); }
+}
+
+// ── Extração de texto (linhas) a partir do pdf.js ──
+function trBlocosDeTexto(tc, vp){
+  const itens=[];
+  for(const it of (tc.items||[])){
+    if(!it.str || !it.str.trim()) continue;
+    const t=pdfjsLib.Util.transform(vp.transform, it.transform);
+    const fh=Math.hypot(t[2],t[3])||10;
+    itens.push({ str:it.str, x:t[4], yBase:t[5], y:t[5]-fh, w:Math.max((it.width||0)*vp.scale,4), h:fh });
+  }
+  itens.sort((a,b)=>(a.yBase-b.yBase)||(a.x-b.x));
+  const linhas=[]; let cur=null;
+  for(const it of itens){
+    if(cur && Math.abs(it.yBase-cur.yBase)<=cur.h*0.6){
+      cur.str += ((it.x-(cur.x+cur.w))>cur.h*0.3 ? ' ':'') + it.str;
+      const right=Math.max(cur.x+cur.w, it.x+it.w); cur.x=Math.min(cur.x,it.x); cur.w=right-cur.x;
+      cur.y=Math.min(cur.y,it.y); cur.h=Math.max(cur.h,it.h); cur.yBase=Math.max(cur.yBase,it.yBase);
+    } else { cur={ str:it.str, x:it.x, y:it.y, w:it.w, h:it.h, yBase:it.yBase }; linhas.push(cur); }
+  }
+  return linhas.map(l=>({ texto:l.str.trim(), x:l.x, y:l.y, w:l.w, h:l.h })).filter(b=>b.texto);
+}
+async function trBlocosOCR(canvas){
+  await trCarregarTesseract();
+  const { data }=await Tesseract.recognize(canvas, 'por+eng+spa');
+  return (data.lines||[]).filter(l=>l.text&&l.text.trim()).map(l=>({
+    texto:l.text.trim().replace(/\s*\n\s*/g,' '), x:l.bbox.x0, y:l.bbox.y0, w:l.bbox.x1-l.bbox.x0, h:l.bbox.y1-l.bbox.y0,
+  }));
+}
+
+// ── Overlay: cobre o texto original e escreve a tradução ──
+function trAmostraCor(ctx, b, cv){
+  const pts=[[b.x+2,b.y-3],[b.x+b.w/2,b.y-3],[b.x+b.w-2,b.y-3],[b.x-3,b.y+b.h/2]];
+  let r=0,g=0,bl=0,c=0;
+  for(const [px,py] of pts){ const xx=Math.round(px),yy=Math.round(py); if(xx<0||yy<0||xx>=cv.width||yy>=cv.height) continue; try{ const d=ctx.getImageData(xx,yy,1,1).data; r+=d[0]; g+=d[1]; bl+=d[2]; c++; }catch{} }
+  if(!c) return { css:'#ffffff', lum:1 };
+  r=Math.round(r/c); g=Math.round(g/c); bl=Math.round(bl/c);
+  return { css:`rgb(${r},${g},${bl})`, lum:(0.299*r+0.587*g+0.114*bl)/255 };
+}
+function trDesenhaOverlays(ctx, cv, blocos, traducoes){
+  for(let i=0;i<blocos.length;i++){
+    const b=blocos[i], txt=String(traducoes[i]!=null?traducoes[i]:b.texto).trim(); if(!txt) continue;
+    const bg=trAmostraCor(ctx, b, cv);
+    ctx.fillStyle=bg.css;
+    ctx.fillRect(Math.max(0,b.x-2), Math.max(0,b.y-2), b.w+4, b.h+4);
+    ctx.fillStyle = bg.lum<0.5 ? '#ffffff' : '#111111';
+    ctx.textBaseline='alphabetic';
+    let fs=Math.max(6, b.h*0.82);
+    ctx.font=`${fs}px Arial, Helvetica, sans-serif`;
+    let guard=0;
+    while(ctx.measureText(txt).width>b.w && fs>6 && guard++<120){ fs-=1; ctx.font=`${fs}px Arial, Helvetica, sans-serif`; }
+    ctx.fillText(txt, b.x, b.y + b.h*0.82);
+  }
+}
+
+function trGerarClick(){ if(trRodando){ trCancel=true; trStatus('Parando...'); } else trGerar(); }
+async function trGerar(){
+  if(trRodando) return;
+  if(!trPdfBytes){ toast('Envie um PDF primeiro','warning'); return; }
+  if(!user){ toast('Faça login para traduzir','warning'); return; }
+  await trCarregarLibs();
+  const alvo=document.getElementById('trAlvo').value;
+  const ocrMode=document.getElementById('trOcr').value;
+  const bilingue=document.getElementById('trBilingue').checked;
+  const jsPDFctor=window.jspdf.jsPDF;
+
+  trRodando=true; trCancel=false;
+  const btn=document.getElementById('trBtnGerar'); btn.textContent='⏹ Parar';
+  document.getElementById('trProgressCard').classList.add('visible');
+  document.getElementById('trPreview').innerHTML=''; document.getElementById('trOut').innerHTML='';
+  document.getElementById('trProgressFill').style.width='0%';
+
+  let out=null, feitas=0, semSaldo=false;
+  try{
+    const pdf=await pdfjsLib.getDocument({ data:trPdfBytes.slice() }).promise;
+    const n=pdf.numPages;
+    for(let p=1;p<=n;p++){
+      if(trCancel) break;
+      document.getElementById('trProgressLabel').textContent=`Página ${p} de ${n}...`;
+      document.getElementById('trProgressCount').textContent=`${p-1} / ${n}`;
+      const page=await pdf.getPage(p);
+      const vp=page.getViewport({ scale:2 });
+      const cv=document.createElement('canvas'); cv.width=Math.round(vp.width); cv.height=Math.round(vp.height);
+      const ctx=cv.getContext('2d', { willReadFrequently:true });
+      await page.render({ canvasContext:ctx, viewport:vp }).promise;
+      const origData = bilingue ? cv.toDataURL('image/jpeg',0.85) : null;
+
+      let blocos=trBlocosDeTexto(await page.getTextContent(), vp);
+      const letras=blocos.reduce((a,b)=>a+b.texto.length,0);
+      if(ocrMode==='auto' && letras<12){
+        trStatus(`Lendo página ${p} (OCR)...`);
+        try{ blocos=await trBlocosOCR(cv); }catch(e){}
+      }
+      if(blocos.length && !trCancel){
+        trStatus(`Traduzindo página ${p}...`);
+        let r; try{ r=await callApiAuth('traduzir', { textos:blocos.map(b=>b.texto), alvo }); }catch{ r={ ok:false, erro:'conexão' }; }
+        if(!r.ok){
+          if((r.erro||'').toLowerCase().includes('saldo')){ semSaldo=true; break; }
+          toast(`Página ${p}: ${r.erro||'erro'} — mantida no original`,'warning',4000);
+        } else {
+          if(r.saldo!=null && user){ user.saldo=r.saldo; localStorage.setItem(USER_KEY,JSON.stringify(user)); trAtualizarSaldo(); }
+          trDesenhaOverlays(ctx, cv, blocos, r.traducoes||blocos.map(b=>b.texto));
+        }
+      }
+
+      const w=cv.width, h=cv.height, orient=w>h?'landscape':'portrait';
+      const addPg=(data)=>{ if(!out) out=new jsPDFctor({ orientation:orient, unit:'px', format:[w,h] }); else out.addPage([w,h], orient); out.addImage(data,'JPEG',0,0,w,h); };
+      if(bilingue && origData) addPg(origData);
+      addPg(cv.toDataURL('image/jpeg',0.85));
+      feitas++;
+      if(p<=3){ const im=document.createElement('img'); im.src=cv.toDataURL('image/jpeg',0.4); im.style.cssText='width:88px;border-radius:8px;border:1px solid var(--border)'; document.getElementById('trPreview').appendChild(im); }
+      document.getElementById('trProgressFill').style.width=(p/n*100)+'%';
+    }
+    document.getElementById('trProgressCount').textContent=`${feitas} / ${trNumPags}`;
+    if(semSaldo) toast('Saldo insuficiente — recarregue para traduzir o resto.','warning',6000);
+    if(out && feitas){
+      const blob=out.output('blob');
+      const nome=(trPdfNome||'documento')+'_traduzido.pdf';
+      const url=URL.createObjectURL(blob);
+      document.getElementById('trOut').innerHTML=`<div class="vm-out" style="border-color:rgba(244,114,182,.35)"><div style="flex:1;min-width:0"><div class="vm-out-name" style="max-width:none" title="${nome}">${nome}</div><div class="vm-out-ok">✓ ${feitas} página(s) · ${(blob.size/1048576).toFixed(1)} MB</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a></div>`;
+      document.getElementById('trProgressLabel').textContent=trCancel?'Parado':'Concluído!';
+      toast(trCancel?`Parado — ${feitas} página(s)`:'PDF traduzido!','success');
+    } else if(!trCancel && !semSaldo){ toast('Não foi possível traduzir este PDF','warning'); }
+  }catch(e){ console.error(e); toast('Erro ao traduzir: '+e.message,'error',6000); }
+  trRodando=false; trCancel=false; btn.textContent='🌐 Traduzir PDF'; trStatus('Pronto');
 }
 
 // ══════════════════════════════════════════════════════════

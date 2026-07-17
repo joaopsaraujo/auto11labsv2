@@ -20,6 +20,11 @@ const LEGENDA_MARGEM = Number(process.env.LEGENDA_MARGEM || 1.3);
 function precoLegendaMin(user) {
   return (user && user.is_admin) ? LEGENDA_CUSTO_MIN : LEGENDA_CUSTO_MIN * LEGENDA_MARGEM;
 }
+// Tradução de PDF: preço por página (mesma lógica de margem; admin paga custo).
+const TRADUCAO_CUSTO_PAG = Number(process.env.TRADUCAO_CUSTO_PAG || 0.015);
+function precoTraducaoPag(user) {
+  return (user && user.is_admin) ? TRADUCAO_CUSTO_PAG : TRADUCAO_CUSTO_PAG * LEGENDA_MARGEM;
+}
 const SESSION_TTL = 30 * 24 * 60 * 60 * 1000; // 30 dias
 const LIMITE_VIDEOS_SEMANA = 15; // VideoMix: vídeos por semana no plano gratuito
 const RESEND_API_KEY = process.env.RESEND_API_KEY; // envio de e-mail (recuperação de senha)
@@ -522,7 +527,7 @@ module.exports = async (req, res) => {
   if (path === "saldo" && req.method === "GET") {
     const user = await usuarioAutenticado();
     if (!user) return err(401, "Não autorizado");
-    return ok({ ok: true, saldo: Number(user.saldo || 0), precoLegendaMin: precoLegendaMin(user) });
+    return ok({ ok: true, saldo: Number(user.saldo || 0), precoLegendaMin: precoLegendaMin(user), precoTraducaoPag: precoTraducaoPag(user) });
   }
 
   // ── POST /recarregar — cria pagamento de recarga de saldo (avulso) ──
@@ -696,6 +701,59 @@ module.exports = async (req, res) => {
       return ok({ ok: true, words, segments, custo, saldo: novoSaldo, dur });
     } catch (e) {
       return err(500, "Erro ao transcrever: " + e.message);
+    }
+  }
+
+  // ── POST /traduzir — traduz os textos de UMA página de PDF (Groq); cobra 1 página do saldo ──
+  if (path === "traduzir" && req.method === "POST") {
+    const user = await usuarioAutenticado();
+    if (!user) return err(401, "Não autorizado");
+    const GKEY = process.env.GROQ_API_KEY;
+    if (!GKEY) return err(503, "Tradução não configurada (defina GROQ_API_KEY)");
+    const textos = Array.isArray(body.textos) ? body.textos.slice(0, 200).map((t) => String(t == null ? "" : t)) : null;
+    const alvo = String(body.alvo || "português").slice(0, 40);
+    if (!textos || !textos.length) return err(400, "Nenhum texto para traduzir");
+
+    // Cobra 1 página por chamada. Trechos vazios/sem letra não custam nada.
+    const temConteudo = textos.some((t) => /[\p{L}\p{N}]/u.test(t));
+    const saldo = Number(user.saldo || 0);
+    const custo = temConteudo ? precoTraducaoPag(user) : 0;
+    if (custo > 0 && (saldo <= 0 || saldo < custo)) {
+      return err(402, "Saldo insuficiente. Recarregue para continuar traduzindo.");
+    }
+    if (!temConteudo) return ok({ ok: true, traducoes: textos, custo: 0, saldo });
+
+    try {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${GKEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.2,
+          max_tokens: 6000,
+          messages: [
+            { role: "system", content: `You are a professional translator. Translate each string of the given JSON array into ${alvo}. Rules: keep EXACTLY the same number of items and the same order; translate only natural language, keep numbers, emails, URLs, codes and proper names as-is; if an item has no translatable text, return it unchanged; never merge or split items; never add commentary. Respond with ONLY a JSON array of the translated strings.` },
+            { role: "user", content: JSON.stringify(textos) },
+          ],
+        }),
+      });
+      const data = await r.json();
+      if (!r.ok) return err(502, (data.error && data.error.message) || "Erro na tradução");
+      let traducoes = null;
+      try {
+        const m = String((data.choices && data.choices[0].message.content) || "").match(/\[[\s\S]*\]/);
+        if (m) traducoes = JSON.parse(m[0]);
+      } catch {}
+      // Se a IA devolveu formato inesperado, não cobra e devolve o original
+      if (!Array.isArray(traducoes) || traducoes.length !== textos.length) {
+        return ok({ ok: true, traducoes: textos, custo: 0, saldo, aviso: "formato" });
+      }
+      traducoes = traducoes.map((t, i) => (typeof t === "string" ? t : textos[i]));
+      const novoSaldo = Math.max(0, saldo - custo);
+      await sb("PATCH", `users?id=eq.${user.id}`, { saldo: novoSaldo });
+      return ok({ ok: true, traducoes, custo, saldo: novoSaldo });
+    } catch (e) {
+      return err(500, "Erro ao traduzir: " + e.message);
     }
   }
 
