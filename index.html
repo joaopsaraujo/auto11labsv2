@@ -6566,12 +6566,64 @@ function trBlocosDeTexto(tc, vp){
   return [...linhas, ...rot].map(l=>({ texto:l.str.trim(), x:l.x, y:l.y, angle:l.angle||0, w:l.w, h:l.h })).filter(b=>b.texto);
 }
 function trNorm(s){ return String(s||'').trim().replace(/\s+/g,' ').toLowerCase(); }
+// Nunca deixa JSON/aspas da IA vazarem para o documento (defesa dupla c/ o backend)
+function trLimpa(s){
+  s=String(s==null?'':s).replace(/\s+/g,' ').trim();
+  if(/^\[[\s\S]*\]$/.test(s)){ try{ const a=JSON.parse(s); if(Array.isArray(a)) s=a.map(x=>String(x)).join(' '); }catch{} }
+  return s.replace(/^["'«“‘]+\s*/,'').replace(/\s*["'»”’]+$/,'').trim();
+}
+// Quebra o texto em linhas que caibam na largura w (fonte já definida no ctx)
+function trQuebra(ctx, txt, w){
+  const palavras=txt.split(' '); const linhas=[]; let cur='';
+  for(const p of palavras){
+    const t=cur?cur+' '+p:p;
+    if(!cur || ctx.measureText(t).width<=w) cur=t;
+    else { linhas.push(cur); cur=p; }
+  }
+  if(cur) linhas.push(cur);
+  return linhas;
+}
+// Agrupa linhas horizontais em PARÁGRAFOS (mesma coluna, espaçamento e fonte
+// parecidos). A IA traduz a frase inteira com contexto — em vez de fragmentos
+// linha a linha — e o texto volta com quebra de linha no mesmo espaço.
+function trParagrafos(blocos){
+  const horiz=blocos.filter(b=>!b.angle).sort((a,b)=>(a.y-b.y)||(a.x-b.x));
+  const rot=blocos.filter(b=>b.angle);
+  const paras=[];
+  for(const l of horiz){
+    const p=paras[paras.length-1];
+    const u=p&&p.lines[p.lines.length-1];
+    const hRef=u?Math.max(u.h,l.h):0;
+    const overlapX=u?Math.min(u.x+u.w,l.x+l.w)-Math.max(u.x,l.x):0;
+    if(u && (l.y-u.y)>0 && (l.y-u.y)<=hRef*1.8 && overlapX>-hRef*2 && Math.abs(l.h-u.h)<=hRef*0.35){
+      p.lines.push(l);
+    } else paras.push({ lines:[l] });
+  }
+  const out=paras.map(p=>{
+    const ls=p.lines;
+    const x=Math.min(...ls.map(l=>l.x));
+    const right=Math.max(...ls.map(l=>l.x+l.w));
+    const h=Math.max(...ls.map(l=>l.h));
+    return {
+      texto:ls.map(l=>l.texto).join(' ').replace(/\s+/g,' ').trim(),
+      x, w:right-x, h, angle:0,
+      y:ls[0].y,                                   // baseline da 1ª linha
+      lines:ls.map(l=>({x:l.x,y:l.y,w:l.w,h:l.h})),
+      lh: ls.length>1 ? (ls[ls.length-1].y-ls[0].y)/(ls.length-1) : h*1.25,
+      yTop: ls[0].y-ls[0].h,
+      yBot: ls[ls.length-1].y,
+    };
+  });
+  return [...out, ...rot];
+}
 async function trBlocosOCR(canvas){
   await trCarregarTesseract();
   const { data }=await Tesseract.recognize(canvas, 'por+eng+spa');
-  return (data.lines||[]).filter(l=>l.text&&l.text.trim()).map(l=>({
-    texto:l.text.trim().replace(/\s*\n\s*/g,' '), x:l.bbox.x0, y:l.bbox.y0, w:l.bbox.x1-l.bbox.x0, h:l.bbox.y1-l.bbox.y0,
-  }));
+  return (data.lines||[]).filter(l=>l.text&&l.text.trim()).map(l=>{
+    const h=l.bbox.y1-l.bbox.y0;
+    // y = linha de base (o overlay desenha a partir da baseline)
+    return { texto:l.text.trim().replace(/\s*\n\s*/g,' '), x:l.bbox.x0, y:l.bbox.y0+h*0.85, angle:0, w:l.bbox.x1-l.bbox.x0, h };
+  });
 }
 
 // ── Overlay: cobre o texto original e escreve a tradução (respeita rotação) ──
@@ -6592,26 +6644,50 @@ function trAmostraCor(ctx, cv, b, cos, sin){
 function trDesenhaOverlays(ctx, cv, blocos, traducoes){
   let n=0;
   for(let i=0;i<blocos.length;i++){
-    const b=blocos[i], txt=String(traducoes[i]!=null?traducoes[i]:b.texto).trim();
+    const b=blocos[i], txt=trLimpa(traducoes[i]!=null?traducoes[i]:b.texto);
     // não cobre quando a tradução é igual ao original (números, códigos, cotas)
     // — preserva as linhas do desenho e o texto que não mudou
     if(!txt || trNorm(txt)===trNorm(b.texto)) continue;
     n++;
-    const cos=Math.cos(b.angle||0), sin=Math.sin(b.angle||0);
-    const bg=trAmostraCor(ctx, cv, b, cos, sin);
-    ctx.save();
-    ctx.translate(b.x, b.y);
-    if(b.angle) ctx.rotate(b.angle);
-    ctx.fillStyle=bg.css;
-    ctx.fillRect(-2, -b.h, b.w+4, b.h*1.28);
-    ctx.fillStyle = bg.lum<0.5 ? '#ffffff' : '#111111';
-    ctx.textBaseline='alphabetic';
-    let fs=Math.max(5, b.h*0.88);
-    ctx.font=`${fs}px Arial, Helvetica, sans-serif`;
-    let guard=0;
-    while(ctx.measureText(txt).width>b.w && fs>5 && guard++<160){ fs-=0.5; ctx.font=`${fs}px Arial, Helvetica, sans-serif`; }
-    ctx.fillText(txt, 0, 0);
-    ctx.restore();
+    if(b.lines && b.lines.length>1){
+      // ── Parágrafo: reescreve com quebra de linha no mesmo espaço ──
+      // 1) layout: encolhe a fonte até o texto caber no nº de linhas original
+      ctx.textBaseline='alphabetic';
+      let fs=Math.max(6, b.h*0.9), linhas;
+      for(let g=0; g<60; g++){
+        ctx.font=`${fs}px Arial, Helvetica, sans-serif`;
+        linhas=trQuebra(ctx, txt, b.w);
+        if(linhas.length<=b.lines.length || fs<=6) break;
+        fs=Math.max(6, fs-Math.max(0.5, fs*0.08));
+      }
+      const lh=b.lh||b.h*1.25;
+      // 2) cobre da 1ª à última linha DESENHADA (se passar do original, estende)
+      const fimY=Math.max(b.yBot, b.y+(linhas.length-1)*lh);
+      const bg=trAmostraCor(ctx, cv, { x:b.x, y:b.yTop+b.h, w:b.w, h:b.h }, 1, 0);
+      ctx.fillStyle=bg.css;
+      ctx.fillRect(b.x-2, b.yTop-2, b.w+4, (fimY-b.yTop)+b.h*0.35+4);
+      // 3) escreve
+      ctx.fillStyle = bg.lum<0.5 ? '#ffffff' : '#111111';
+      ctx.font=`${fs}px Arial, Helvetica, sans-serif`;
+      linhas.forEach((ln,k)=>ctx.fillText(ln, b.x, b.y+k*lh));
+    } else {
+      // ── Linha única ou texto girado ──
+      const cos=Math.cos(b.angle||0), sin=Math.sin(b.angle||0);
+      const bg=trAmostraCor(ctx, cv, b, cos, sin);
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      if(b.angle) ctx.rotate(b.angle);
+      ctx.fillStyle=bg.css;
+      ctx.fillRect(-2, -b.h, b.w+4, b.h*1.28);
+      ctx.fillStyle = bg.lum<0.5 ? '#ffffff' : '#111111';
+      ctx.textBaseline='alphabetic';
+      let fs=Math.max(5, b.h*0.88);
+      ctx.font=`${fs}px Arial, Helvetica, sans-serif`;
+      let guard=0;
+      while(ctx.measureText(txt).width>b.w && fs>5 && guard++<160){ fs-=0.5; ctx.font=`${fs}px Arial, Helvetica, sans-serif`; }
+      ctx.fillText(txt, 0, 0);
+      ctx.restore();
+    }
   }
   return n;
 }
@@ -6663,6 +6739,8 @@ async function trGerar(){
         trStatus(`Lendo página ${p} (OCR)...`);
         try{ blocos=await trBlocosOCR(cv); }catch(e){}
       }
+      // agrupa linhas em parágrafos — a IA traduz frases inteiras com contexto
+      blocos=trParagrafos(blocos);
       if(blocos.length && !trCancel){
         trStatus(`Traduzindo página ${p}...`);
         let r; try{ r=await callApiAuth('traduzir', { textos:blocos.map(b=>b.texto), alvo }); }catch{ r={ ok:false, erro:'conexão' }; }

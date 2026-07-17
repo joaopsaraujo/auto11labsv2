@@ -731,35 +731,54 @@ module.exports = async (req, res) => {
     }
     if (!temConteudo) return ok({ ok: true, traducoes: textos, custo: 0, saldo });
 
-    // Traduz um lote pequeno via Groq; devolve array do mesmo tamanho ou null.
+    // Limpa a resposta da IA: nunca deixa JSON/aspas vazarem para o documento.
+    function limpaTrad(s) {
+      s = String(s == null ? "" : s).replace(/\s+/g, " ").trim();
+      if (/^\[[\s\S]*\]$/.test(s)) {
+        try { const a = JSON.parse(s); if (Array.isArray(a)) s = a.map((x) => String(x)).join(" "); } catch {}
+      }
+      s = s.replace(/^["'«“‘]+\s*/, "").replace(/\s*["'»”’]+$/, "").trim();
+      return s;
+    }
+
+    // Traduz um lote via Groq usando marcadores numerados (⟦n⟧ …) — muito mais
+    // robusto que pedir JSON: o modelo não inventa arrays nem quebra a contagem.
+    // Os itens do lote são parágrafos da MESMA página, então servem de contexto
+    // uns aos outros e as frases saem coerentes. Devolve array (com null onde
+    // o modelo não respondeu) ou null se o lote falhou quase todo.
     async function traduzLote(arr) {
+      const marcado = arr.map((t, i) => `⟦${i + 1}⟧ ${String(t).replace(/\s+/g, " ").trim()}`).join("\n");
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${GKEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          temperature: 0.1,
-          max_tokens: 6000,
+          temperature: 0.15,
+          max_tokens: 7000,
           messages: [
-            { role: "system", content: `You are a professional translator for technical and general documents. Translate each string of the given JSON array into ${alvo}. Rules: return a JSON array with EXACTLY ${arr.length} items in the same order; translate only natural language; keep numbers, measurements, dimensions, codes, emails, URLs and proper names unchanged; if an item is only a number/symbol/code, return it identical; never merge, split, add or drop items; no commentary. Respond with ONLY the JSON array.` },
-            { role: "user", content: JSON.stringify(arr) },
+            { role: "system", content: `You translate document text into ${alvo}. The user sends numbered items (⟦n⟧ ...) which are paragraphs/lines of the SAME page in reading order — use the neighbors as context so sentences stay coherent and natural. Reply with the SAME numbered markers, same count, same order, each item translated into fluent ${alvo}. Keep list markers (like "1)", "a.", "•"), numbers, measurements, codes, emails, URLs and proper names unchanged. If an item is only numbers/symbols/codes, or is already in ${alvo}, repeat it unchanged. Output ONLY the numbered items — no commentary, no JSON, no quotes.` },
+            { role: "user", content: marcado },
           ],
         }),
       });
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((data.error && data.error.message) || ("HTTP " + r.status));
-      let out = null;
-      try {
-        const m = String((data.choices && data.choices[0].message.content) || "").match(/\[[\s\S]*\]/);
-        if (m) out = JSON.parse(m[0]);
-      } catch {}
-      return Array.isArray(out) && out.length === arr.length ? out : null;
+      const content = String((data.choices && data.choices[0].message.content) || "");
+      const out = new Array(arr.length).fill(null);
+      const rx = /⟦(\d+)⟧([^⟦]*)/g; let m, acertos = 0;
+      while ((m = rx.exec(content))) {
+        const idx = parseInt(m[1]) - 1;
+        if (idx >= 0 && idx < arr.length && out[idx] == null) {
+          const t = limpaTrad(m[2]);
+          if (t) { out[idx] = t; acertos++; }
+        }
+      }
+      return acertos >= Math.ceil(arr.length * 0.5) ? out : null;
     }
 
     try {
-      // Lotes de 40 itens: a IA acerta muito mais a contagem e o resultado
-      // de uma página densa (planta, tabela) não é descartado por inteiro.
-      const CH = 40;
+      // Lotes de 25 parágrafos: contexto bom e contagem que a IA respeita.
+      const CH = 25;
       const saida = textos.slice();
       let algumOk = false, erroUlt = null;
       for (let i = 0; i < textos.length; i += CH) {
@@ -769,7 +788,7 @@ module.exports = async (req, res) => {
         let tr = null;
         try { tr = await traduzLote(parte); if (!tr) tr = await traduzLote(parte); }
         catch (e) { erroUlt = e.message; }
-        if (tr) { algumOk = true; for (let j = 0; j < parte.length; j++) if (typeof tr[j] === "string") saida[i + j] = tr[j]; }
+        if (tr) { algumOk = true; for (let j = 0; j < parte.length; j++) if (typeof tr[j] === "string" && tr[j]) saida[i + j] = tr[j]; }
       }
       // Nenhum lote traduziu (serviço fora do ar / cota) → não cobra e avisa
       if (!algumOk) {
