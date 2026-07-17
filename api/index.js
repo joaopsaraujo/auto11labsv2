@@ -723,35 +723,54 @@ module.exports = async (req, res) => {
     }
     if (!temConteudo) return ok({ ok: true, traducoes: textos, custo: 0, saldo });
 
-    try {
+    // Traduz um lote pequeno via Groq; devolve array do mesmo tamanho ou null.
+    async function traduzLote(arr) {
       const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${GKEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
-          temperature: 0.2,
+          temperature: 0.1,
           max_tokens: 6000,
           messages: [
-            { role: "system", content: `You are a professional translator. Translate each string of the given JSON array into ${alvo}. Rules: keep EXACTLY the same number of items and the same order; translate only natural language, keep numbers, emails, URLs, codes and proper names as-is; if an item has no translatable text, return it unchanged; never merge or split items; never add commentary. Respond with ONLY a JSON array of the translated strings.` },
-            { role: "user", content: JSON.stringify(textos) },
+            { role: "system", content: `You are a professional translator for technical and general documents. Translate each string of the given JSON array into ${alvo}. Rules: return a JSON array with EXACTLY ${arr.length} items in the same order; translate only natural language; keep numbers, measurements, dimensions, codes, emails, URLs and proper names unchanged; if an item is only a number/symbol/code, return it identical; never merge, split, add or drop items; no commentary. Respond with ONLY the JSON array.` },
+            { role: "user", content: JSON.stringify(arr) },
           ],
         }),
       });
-      const data = await r.json();
-      if (!r.ok) return err(502, (data.error && data.error.message) || "Erro na tradução");
-      let traducoes = null;
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error((data.error && data.error.message) || ("HTTP " + r.status));
+      let out = null;
       try {
         const m = String((data.choices && data.choices[0].message.content) || "").match(/\[[\s\S]*\]/);
-        if (m) traducoes = JSON.parse(m[0]);
+        if (m) out = JSON.parse(m[0]);
       } catch {}
-      // Se a IA devolveu formato inesperado, não cobra e devolve o original
-      if (!Array.isArray(traducoes) || traducoes.length !== textos.length) {
-        return ok({ ok: true, traducoes: textos, custo: 0, saldo, aviso: "formato" });
+      return Array.isArray(out) && out.length === arr.length ? out : null;
+    }
+
+    try {
+      // Lotes de 40 itens: a IA acerta muito mais a contagem e o resultado
+      // de uma página densa (planta, tabela) não é descartado por inteiro.
+      const CH = 40;
+      const saida = textos.slice();
+      let algumOk = false, erroUlt = null;
+      for (let i = 0; i < textos.length; i += CH) {
+        const parte = textos.slice(i, i + CH);
+        // pula lotes sem nada traduzível (só números/códigos)
+        if (!parte.some((t) => /[\p{L}]/u.test(t))) continue;
+        let tr = null;
+        try { tr = await traduzLote(parte); if (!tr) tr = await traduzLote(parte); }
+        catch (e) { erroUlt = e.message; }
+        if (tr) { algumOk = true; for (let j = 0; j < parte.length; j++) if (typeof tr[j] === "string") saida[i + j] = tr[j]; }
       }
-      traducoes = traducoes.map((t, i) => (typeof t === "string" ? t : textos[i]));
+      // Nenhum lote traduziu (serviço fora do ar / cota) → não cobra e avisa
+      if (!algumOk) {
+        await logPagamento("traducao_falhou", { user_id: user.id }, erroUlt);
+        return ok({ ok: true, traducoes: textos, custo: 0, saldo, aviso: "falhou", detalhe: erroUlt });
+      }
       const novoSaldo = Math.max(0, saldo - custo);
       await sb("PATCH", `users?id=eq.${user.id}`, { saldo: novoSaldo });
-      return ok({ ok: true, traducoes, custo, saldo: novoSaldo });
+      return ok({ ok: true, traducoes: saida, custo, saldo: novoSaldo });
     } catch (e) {
       return err(500, "Erro ao traduzir: " + e.message);
     }

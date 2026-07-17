@@ -6352,26 +6352,31 @@ async function trSetPdf(input){
   }catch(e){ trPdfBytes=null; toast('Não foi possível abrir o PDF: '+e.message,'error',6000); }
 }
 
-// ── Extração de texto (linhas) a partir do pdf.js ──
+// ── Extração de texto a partir do pdf.js (guarda o ângulo p/ texto girado) ──
+// x,y = origem da linha de base (baseline); angle em radianos no espaço do canvas.
 function trBlocosDeTexto(tc, vp){
   const itens=[];
   for(const it of (tc.items||[])){
     if(!it.str || !it.str.trim()) continue;
     const t=pdfjsLib.Util.transform(vp.transform, it.transform);
+    const angle=Math.atan2(t[1], t[0]);
     const fh=Math.hypot(t[2],t[3])||10;
-    itens.push({ str:it.str, x:t[4], yBase:t[5], y:t[5]-fh, w:Math.max((it.width||0)*vp.scale,4), h:fh });
+    itens.push({ str:it.str, x:t[4], y:t[5], angle, w:Math.max((it.width||0)*vp.scale,4), h:fh });
   }
-  itens.sort((a,b)=>(a.yBase-b.yBase)||(a.x-b.x));
+  // horizontais: agrupa por linha (mesma baseline, contíguos). Girados: cada um sozinho.
+  const horiz=itens.filter(i=>Math.abs(i.angle)<0.06).sort((a,b)=>(a.y-b.y)||(a.x-b.x));
+  const rot=itens.filter(i=>Math.abs(i.angle)>=0.06);
   const linhas=[]; let cur=null;
-  for(const it of itens){
-    if(cur && Math.abs(it.yBase-cur.yBase)<=cur.h*0.6){
-      cur.str += ((it.x-(cur.x+cur.w))>cur.h*0.3 ? ' ':'') + it.str;
-      const right=Math.max(cur.x+cur.w, it.x+it.w); cur.x=Math.min(cur.x,it.x); cur.w=right-cur.x;
-      cur.y=Math.min(cur.y,it.y); cur.h=Math.max(cur.h,it.h); cur.yBase=Math.max(cur.yBase,it.yBase);
-    } else { cur={ str:it.str, x:it.x, y:it.y, w:it.w, h:it.h, yBase:it.yBase }; linhas.push(cur); }
+  for(const it of horiz){
+    const gap=it.x-(cur?cur.x+cur.w:0);
+    if(cur && Math.abs(it.y-cur.y)<=cur.h*0.6 && gap>=-cur.h && gap<cur.h*2.5){
+      cur.str += (gap>cur.h*0.3 ? ' ':'') + it.str;
+      cur.w=Math.max(cur.x+cur.w, it.x+it.w)-cur.x; cur.h=Math.max(cur.h,it.h);
+    } else { cur={ str:it.str, x:it.x, y:it.y, angle:0, w:it.w, h:it.h }; linhas.push(cur); }
   }
-  return linhas.map(l=>({ texto:l.str.trim(), x:l.x, y:l.y, w:l.w, h:l.h })).filter(b=>b.texto);
+  return [...linhas, ...rot].map(l=>({ texto:l.str.trim(), x:l.x, y:l.y, angle:l.angle||0, w:l.w, h:l.h })).filter(b=>b.texto);
 }
+function trNorm(s){ return String(s||'').trim().replace(/\s+/g,' ').toLowerCase(); }
 async function trBlocosOCR(canvas){
   await trCarregarTesseract();
   const { data }=await Tesseract.recognize(canvas, 'por+eng+spa');
@@ -6380,29 +6385,46 @@ async function trBlocosOCR(canvas){
   }));
 }
 
-// ── Overlay: cobre o texto original e escreve a tradução ──
-function trAmostraCor(ctx, b, cv){
-  const pts=[[b.x+2,b.y-3],[b.x+b.w/2,b.y-3],[b.x+b.w-2,b.y-3],[b.x-3,b.y+b.h/2]];
+// ── Overlay: cobre o texto original e escreve a tradução (respeita rotação) ──
+// Amostra a cor do fundo em pontos na extensão da linha (fora dos glifos).
+function trAmostraCor(ctx, cv, b, cos, sin){
+  const pts=[
+    [b.x - b.h*0.5*cos, b.y - b.h*0.5*sin],
+    [b.x + (b.w+b.h*0.5)*cos, b.y + (b.w+b.h*0.5)*sin],
+    [b.x + b.w*0.5*cos + b.h*1.4*sin, b.y + b.w*0.5*sin - b.h*1.4*cos],
+  ];
   let r=0,g=0,bl=0,c=0;
   for(const [px,py] of pts){ const xx=Math.round(px),yy=Math.round(py); if(xx<0||yy<0||xx>=cv.width||yy>=cv.height) continue; try{ const d=ctx.getImageData(xx,yy,1,1).data; r+=d[0]; g+=d[1]; bl+=d[2]; c++; }catch{} }
   if(!c) return { css:'#ffffff', lum:1 };
   r=Math.round(r/c); g=Math.round(g/c); bl=Math.round(bl/c);
   return { css:`rgb(${r},${g},${bl})`, lum:(0.299*r+0.587*g+0.114*bl)/255 };
 }
+// Retorna quantos blocos foram efetivamente reescritos (tradução ≠ original)
 function trDesenhaOverlays(ctx, cv, blocos, traducoes){
+  let n=0;
   for(let i=0;i<blocos.length;i++){
-    const b=blocos[i], txt=String(traducoes[i]!=null?traducoes[i]:b.texto).trim(); if(!txt) continue;
-    const bg=trAmostraCor(ctx, b, cv);
+    const b=blocos[i], txt=String(traducoes[i]!=null?traducoes[i]:b.texto).trim();
+    // não cobre quando a tradução é igual ao original (números, códigos, cotas)
+    // — preserva as linhas do desenho e o texto que não mudou
+    if(!txt || trNorm(txt)===trNorm(b.texto)) continue;
+    n++;
+    const cos=Math.cos(b.angle||0), sin=Math.sin(b.angle||0);
+    const bg=trAmostraCor(ctx, cv, b, cos, sin);
+    ctx.save();
+    ctx.translate(b.x, b.y);
+    if(b.angle) ctx.rotate(b.angle);
     ctx.fillStyle=bg.css;
-    ctx.fillRect(Math.max(0,b.x-2), Math.max(0,b.y-2), b.w+4, b.h+4);
+    ctx.fillRect(-2, -b.h, b.w+4, b.h*1.28);
     ctx.fillStyle = bg.lum<0.5 ? '#ffffff' : '#111111';
     ctx.textBaseline='alphabetic';
-    let fs=Math.max(6, b.h*0.82);
+    let fs=Math.max(5, b.h*0.88);
     ctx.font=`${fs}px Arial, Helvetica, sans-serif`;
     let guard=0;
-    while(ctx.measureText(txt).width>b.w && fs>6 && guard++<120){ fs-=1; ctx.font=`${fs}px Arial, Helvetica, sans-serif`; }
-    ctx.fillText(txt, b.x, b.y + b.h*0.82);
+    while(ctx.measureText(txt).width>b.w && fs>5 && guard++<160){ fs-=0.5; ctx.font=`${fs}px Arial, Helvetica, sans-serif`; }
+    ctx.fillText(txt, 0, 0);
+    ctx.restore();
   }
+  return n;
 }
 
 function trGerarClick(){ if(trRodando){ trCancel=true; trStatus('Parando...'); } else trGerar(); }
@@ -6416,13 +6438,22 @@ async function trGerar(){
   const bilingue=document.getElementById('trBilingue').checked;
   const jsPDFctor=window.jspdf.jsPDF;
 
+  // Pré-checagem grátis (texto vazio não custa nada): a tradução está ligada?
+  try{
+    const chk=await callApiAuth('traduzir', { textos:[''], alvo });
+    if(!chk.ok && /configurada|GROQ/i.test(chk.erro||'')){
+      toast('Tradução indisponível no servidor (falta configurar a chave GROQ_API_KEY na Vercel).','error',9000);
+      return;
+    }
+  }catch{}
+
   trRodando=true; trCancel=false;
   const btn=document.getElementById('trBtnGerar'); btn.textContent='⏹ Parar';
   document.getElementById('trProgressCard').classList.add('visible');
   document.getElementById('trPreview').innerHTML=''; document.getElementById('trOut').innerHTML='';
   document.getElementById('trProgressFill').style.width='0%';
 
-  let out=null, feitas=0, semSaldo=false;
+  let out=null, feitas=0, semSaldo=false, traduzidos=0, falhou=false;
   try{
     const pdf=await pdfjsLib.getDocument({ data:trPdfBytes.slice() }).promise;
     const n=pdf.numPages;
@@ -6451,7 +6482,8 @@ async function trGerar(){
           toast(`Página ${p}: ${r.erro||'erro'} — mantida no original`,'warning',4000);
         } else {
           if(r.saldo!=null && user){ user.saldo=r.saldo; localStorage.setItem(USER_KEY,JSON.stringify(user)); trAtualizarSaldo(); }
-          trDesenhaOverlays(ctx, cv, blocos, r.traducoes||blocos.map(b=>b.texto));
+          if(r.aviso==='falhou') falhou=true;
+          traduzidos += trDesenhaOverlays(ctx, cv, blocos, r.traducoes||blocos.map(b=>b.texto));
         }
       }
 
@@ -6471,7 +6503,12 @@ async function trGerar(){
       const url=URL.createObjectURL(blob);
       document.getElementById('trOut').innerHTML=`<div class="vm-out" style="border-color:rgba(244,114,182,.35)"><div style="flex:1;min-width:0"><div class="vm-out-name" style="max-width:none" title="${nome}">${nome}</div><div class="vm-out-ok">✓ ${feitas} página(s) · ${(blob.size/1048576).toFixed(1)} MB</div></div><a href="${url}" download="${nome}"><button class="vm-dl-btn" title="Baixar">⬇️</button></a></div>`;
       document.getElementById('trProgressLabel').textContent=trCancel?'Parado':'Concluído!';
-      toast(trCancel?`Parado — ${feitas} página(s)`:'PDF traduzido!','success');
+      if(traduzidos===0 && !trCancel){
+        toast(falhou?'A IA não conseguiu traduzir agora (serviço/cota) — tente de novo em instantes. Nada foi cobrado.'
+                    :'Nenhum texto foi traduzido — confira se o PDF tem texto de verdade (ou ative o OCR) e se o idioma-alvo é diferente do original.','warning',8000);
+      } else {
+        toast(trCancel?`Parado — ${feitas} página(s)`:`PDF traduzido! ${traduzidos} trecho(s) no novo idioma.`,'success');
+      }
     } else if(!trCancel && !semSaldo){ toast('Não foi possível traduzir este PDF','warning'); }
   }catch(e){ console.error(e); toast('Erro ao traduzir: '+e.message,'error',6000); }
   trRodando=false; trCancel=false; btn.textContent='🌐 Traduzir PDF'; trStatus('Pronto');
