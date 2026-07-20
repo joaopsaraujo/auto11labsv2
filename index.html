@@ -1387,6 +1387,7 @@ input:focus,textarea:focus{box-shadow:0 0 0 3px rgba(124,147,251,.1)}
                 <th>Email</th>
                 <th>Plano</th>
                 <th>Áudios/mês</th>
+                <th>Saldo IA</th>
                 <th>Cadastro</th>
                 <th>IP</th>
                 <th>Ações</th>
@@ -3201,6 +3202,7 @@ function renderUsers(users) {
       <td>${u.email}</td>
       <td><span class="badge badge-${u.plano}">${u.plano}</span></td>
       <td>${u.audios_mes || 0}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:12px;color:${Number(u.saldo||0)>0?'var(--success)':'var(--muted2)'}">R$ ${Number(u.saldo||0).toFixed(2).replace('.',',')}</td>
       <td>${new Date(u.criado_em).toLocaleDateString('pt-BR')}</td>
       <td style="font-size:11px;color:var(--muted2)">${u.ip_cadastro || '—'}</td>
       <td>
@@ -3209,6 +3211,7 @@ function renderUsers(users) {
           <button class="btn-sm btn-sm-gold" onclick="alterarPlano('${u.id}','vitalicio')">Vitalício</button>
           <button class="btn-sm btn-sm-danger" onclick="alterarPlano('${u.id}','gratuito')">Free</button>
           <button class="btn-sm btn-sm-success" onclick="resetarUso('${u.id}')">Reset</button>
+          <button class="btn-sm btn-sm-success" title="Creditar/debitar Saldo IA" onclick="creditarSaldo('${u.id}','${u.email}',${Number(u.saldo||0)})">💰 Saldo</button>
           ${u.is_admin ? '' : `<button class="btn-sm btn-sm-danger" title="Excluir conta definitivamente" onclick="excluirUsuario('${u.id}','${u.email}')">🗑</button>`}
         </div>
       </td>
@@ -3218,6 +3221,19 @@ function renderUsers(users) {
 
 async function alterarPlano(userId, plano) {
   await callApiAuth('admin/alterar-plano', { user_id: userId, plano });
+  carregarAdmin();
+}
+
+// Credita (ou debita, com valor negativo) Saldo IA de um usuário.
+// Não movimenta dinheiro: só ajusta o crédito interno no banco.
+async function creditarSaldo(userId, email, atual) {
+  const txt = prompt(`Saldo IA de ${email}\nAtual: R$ ${Number(atual).toFixed(2).replace('.', ',')}\n\nQuanto adicionar? (use negativo para tirar, ex: -10)`, '50');
+  if (txt === null) return;
+  const valor = parseFloat(String(txt).replace(',', '.'));
+  if (!valor) { toast('Valor inválido', 'warning'); return; }
+  const r = await callApiAuth('admin/creditar-saldo', { user_id: userId, valor });
+  if (r.ok) toast(`Saldo de ${email}: R$ ${Number(r.saldo).toFixed(2).replace('.', ',')}`, 'success', 4000);
+  else toast(r.erro || 'Erro ao creditar', 'error', 5000);
   carregarAdmin();
 }
 

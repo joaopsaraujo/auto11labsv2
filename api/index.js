@@ -807,7 +807,7 @@ module.exports = async (req, res) => {
   if (path === "admin/usuarios" && req.method === "GET") {
     const admin = await usuarioAutenticado();
     if (!admin || !admin.is_admin) return err(403, "Acesso negado");
-    const { data: users } = await sb("GET", "users?select=id,email,plano,audios_mes,plano_expira_em,criado_em,is_admin,ip_cadastro&order=criado_em.desc");
+    const { data: users } = await sb("GET", "users?select=id,email,plano,audios_mes,saldo,plano_expira_em,criado_em,is_admin,ip_cadastro&order=criado_em.desc");
     return ok({ ok: true, users });
   }
 
@@ -839,6 +839,27 @@ module.exports = async (req, res) => {
     if (!user_id) return err(400, "Parâmetros obrigatórios");
     await sb("PATCH", `users?id=eq.${user_id}`, { audios_mes: 0 });
     return ok({ ok: true });
+  }
+
+  // ── POST /admin/creditar-saldo — credita (ou debita) Saldo IA de um usuário ──
+  //    Use para dar saldo a você mesmo, brindes, testes ou compensações.
+  //    Não movimenta dinheiro: só ajusta o crédito interno no banco.
+  if (path === "admin/creditar-saldo" && req.method === "POST") {
+    const admin = await usuarioAutenticado();
+    if (!admin || !admin.is_admin) return err(403, "Acesso negado");
+    const { user_id, valor } = body;
+    if (!user_id || valor == null) return err(400, "Parâmetros obrigatórios");
+    const delta = Math.round(Number(valor) * 100) / 100;
+    if (!isFinite(delta) || delta === 0) return err(400, "Valor inválido");
+    if (Math.abs(delta) > 10000) return err(400, "Valor muito alto (máximo R$ 10.000 por vez)");
+    const { data: us } = await sb("GET", `users?id=eq.${user_id}&select=id,email,saldo`);
+    if (!us || !us[0]) return err(404, "Usuário não encontrado");
+    const atual = Number(us[0].saldo || 0);
+    const novo = Math.max(0, Math.round((atual + delta) * 100) / 100);
+    const upd = await sb("PATCH", `users?id=eq.${user_id}`, { saldo: novo });
+    if (!upd.ok) return err(500, "Erro ao creditar: " + ((upd.data && upd.data.message) || upd.status));
+    await logPagamento("admin_creditou_saldo", { admin_id: admin.id, user_id, email: us[0].email, delta, de: atual, para: novo });
+    return ok({ ok: true, saldo: novo, anterior: atual });
   }
 
   // ── POST /admin/excluir-usuario — apaga a conta e os dados vinculados ──
